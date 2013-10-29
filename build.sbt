@@ -2,11 +2,20 @@ organization := "com.ansvia.manticore"
 
 name := "manticore"
 
+version := "0.1"
+
 description := ""
 
 scalaVersion := "2.9.2"
 
+seq(ProguardPlugin.proguardSettings :_*)
 
+proguardOptions += keepMain("com.ansvia.manticore.Manticore")
+
+proguardOptions ++= Seq(
+    "-keep class ch.qos.logback.*",
+    "-keep class org.slf4j.*"
+)
 
 resolvers ++= Seq(
 	"Sonatype Releases" at "https://oss.sonatype.org/content/groups/scala-tools",
@@ -49,3 +58,4 @@ pomExtra := (
       <url>http://www.mindtalk.com/u/robin</url>
     </developer>
   </developers>)
+
