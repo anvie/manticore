@@ -200,6 +200,12 @@ object Manticore extends Slf4jLogger {
 
         println("")
         println(" + result:\n")
+        val pattern = {
+            val p = result.dnas.head
+            "%d(%d) %d(%d) %d(%d) X(%d)".format(p(0)._1, p(0)._2, p(1)._1, p(1)._2,
+                p(2)._1, p(2)._2, p(3)._2)
+        }
+        println("   Pattern: " + pattern)
         println("   Processed " + result.dnas.length + " DNA and " + result.chromosomes + " chromosomes.")
         println("   Positives: %d, Negatives: %d".format(result.positives, result.negatives))
         println("   Probability:")
