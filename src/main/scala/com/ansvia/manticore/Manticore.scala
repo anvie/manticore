@@ -5,15 +5,32 @@ import com.ansvia.commons.logging.Slf4jLogger
 import java.io.File
 import org.apache.commons.io.FileUtils
 import scala.actors.threadpool.AtomicInteger
+import com.ansvia.manticore.Manticore.{DNA, DNAS}
+
+
+case class CalculationResult(dnas:DNAS, positives:Int, negatives:Int, chromosomes:Int) {
+    def upPercent = {
+        val total = positives + negatives
+        (positives * 100) / total
+    }
+    def downPercent = {
+        val total = positives + negatives
+        (negatives * 100) / total
+    }
+
+    override def toString = "Result[+%d,-%d,*:%d]".format(positives, negatives, chromosomes)
+
+}
+
 
 
 object Manticore extends Slf4jLogger {
 
     type FourSeq = Seq[Seq[Int]]
     type DNA = Seq[(Int, Long)]
-    type FourSeqI = Seq[DNA]
+    type DNAS = Seq[DNA]
 
-    def padToFourSeq(ds:DataSource):FourSeqI = {
+    def getDnas(ds:DataSource):DNAS = {
         var rv = Seq.newBuilder[Seq[(Int, Long)]]
         var buff = Seq.newBuilder[(Int, Long)]
         var buffCount = 0
@@ -67,8 +84,14 @@ object Manticore extends Slf4jLogger {
         }
         rv.result()
     }
+    
+    def process(ds:DataSource):CalculationResult = {
+        val dnas = getDnas(ds)
+        val (post, neg, chrom) = breakDown(dnas, ds.indexedData)
+        CalculationResult(dnas, post, neg, chrom)
+    }
 
-    def prettyPrint(fs:FourSeqI){
+    def prettyPrint(fs:DNAS){
         fs.foreach { f =>
 //            debug("f: " + f)
             val lastF = if (f(3)._1 == -1)
@@ -79,59 +102,10 @@ object Manticore extends Slf4jLogger {
         }
         println("")
     }
-    
-    case class ChromosomeFinder(dna:DNA, index:Int, data:IndexedSeq[Int],
-                                positivePattern:Seq[Int], negativePattern:Seq[Int],
-                                positives:AtomicInteger, negatives:AtomicInteger,
-                                chromosomes:AtomicInteger) extends Thread {
-        override def run(){
 
-            var i1 = dna(3)._2.toInt
-            var i2 = dna(2)._2.toInt
-            var i3 = dna(1)._2.toInt
-            var i4 = dna(0)._2.toInt
 
-            if (i4 > 1){
-                println("       (thread-%s) processing DNA #%d  %d(%02d) %d(%02d) %d(%02d) X(%02d)".format(
-                    Thread.currentThread().getId, index,
-                    dna(0)._1,dna(0)._2,dna(1)._1,dna(1)._2,dna(2)._1,dna(2)._2,dna(3)._2))
-            }
 
-            while(i4 > 1){
-
-                i4 = i4 - 1
-                i3 = i3 - 1
-                i2 = i2 - 1
-                i1 = i1 - 1
-
-                val d4 = data(i4-1)
-                val d3 = data(i3-1)
-                val d2 = data(i2-1)
-                val d1 = data(i1-1)
-
-                //                    print("   %02d %02d %02d %02d".format(d4, d3, d2, d1))
-
-                val chrom = Seq(d4, d3, d2, d1)
-
-                if (positivePattern == chrom){
-                    positives.getAndIncrement
-                    //                        println(" +")
-                }else if (negativePattern == chrom){
-                    negatives.getAndIncrement
-                    //                        println(" -")
-//                }else{
-
-                    //                        println("")
-                }
-
-                chromosomes.incrementAndGet()
-            }
-
-//            (positives.get(), negatives.get())
-        }
-    }
-
-    def breakDown(dnas:FourSeqI, data:IndexedSeq[Int]) = {
+    def breakDown(dnas:DNAS, data:IndexedSeq[Int]) = {
 
         val fs = dnas(0)
         val positivePattern = Seq(fs(0)._1,fs(1)._1,fs(2)._1,1)
@@ -148,7 +122,7 @@ object Manticore extends Slf4jLogger {
 
         dnas.foreach { dna =>
 
-            threads :+= ChromosomeFinder(dna, index.incrementAndGet(), data, positivePattern,
+            threads :+= new NonBlockingChromosomeFinder(dna, index.incrementAndGet(), data, positivePattern,
                 negativePattern, positives, negatives, chromosomes)
 
         }
@@ -166,7 +140,7 @@ object Manticore extends Slf4jLogger {
 
     def main(args:Array[String]){
 
-//        val data = Seq(
+//        val inlineData = Seq(
 //            0,0,1,1,1,1,0,
 //            0,0,1,1,1,0,1,
 //            1,1,0,0,1,1,-1
@@ -192,6 +166,7 @@ object Manticore extends Slf4jLogger {
             case "bin" => BINARY
             case "csv" => CSV
             case _ =>
+//                INLINE
                 println("  [ERROR] Unknown file input format " + fileDataPath)
                 sys.exit(4)
         }
@@ -202,6 +177,8 @@ object Manticore extends Slf4jLogger {
                     new BinaryDataSource(new File(fileDataPath))
                 case CSV =>
                     new CsvDataSource(new File(fileDataPath), depth)
+//                case _ =>
+//                    new InlineDataSource(inlineData)
             }
         }
         println(" + data source: " + source + "\n")
@@ -209,7 +186,7 @@ object Manticore extends Slf4jLogger {
         println(" + padding...\n")
 
 //        val rv = padToFourSeq(new InlineDataSource(data))
-        val rv = padToFourSeq(source)
+        val rv = getDnas(source)
         println("\r")
         prettyPrint(rv)
         println("")
@@ -233,4 +210,5 @@ object Manticore extends Slf4jLogger {
 object DataModes {
     val BINARY = 1
     val CSV = 2
+    val INLINE = 3
 }
