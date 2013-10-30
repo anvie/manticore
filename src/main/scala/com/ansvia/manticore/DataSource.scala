@@ -145,7 +145,7 @@ class BinaryDataSource(file:File) extends DataSource {
         }.toIndexedSeq
     }
 
-    def size = _data.size
+    def size = _data.size + 1
 
     def foreach(func: (Int, Long) => Unit) = {
         func(-1, 0L)

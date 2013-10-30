@@ -5,7 +5,7 @@ import com.ansvia.commons.logging.Slf4jLogger
 import java.io.File
 import org.apache.commons.io.FileUtils
 import scala.actors.threadpool.AtomicInteger
-import com.ansvia.manticore.Manticore.{DNA, DNAS}
+import com.ansvia.manticore.Manticore.DNAS
 
 
 case class CalculationResult(dnas:DNAS, positives:Int, negatives:Int, chromosomes:Int) {
@@ -183,24 +183,28 @@ object Manticore extends Slf4jLogger {
         }
         println(" + data source: " + source + "\n")
 
-        println(" + padding...\n")
+//        println(" + padding...\n")
+//
+////        val rv = padToFourSeq(new InlineDataSource(data))
+//        val rv = getDnas(source)
+//        println("\r")
+//        prettyPrint(rv)
+//        println("")
+//
+//        println(" + breaking down...\n")
+//        val (positives, negatives, chromosomes) = breakDown(rv, source.indexedData)
 
-//        val rv = padToFourSeq(new InlineDataSource(data))
-        val rv = getDnas(source)
-        println("\r")
-        prettyPrint(rv)
-        println("")
+        println(" + calculating...\n")
 
-        println(" + breaking down...\n")
-        val (positives, negatives, chromosomes) = breakDown(rv, source.indexedData)
+        val result = process(source)
 
         println("")
         println(" + result:\n")
-        println("   Processed " + rv.length + " DNA and " + chromosomes + " chromosomes.")
-        println("   Positives: %d, Negatives: %d".format(positives, negatives))
+        println("   Processed " + result.dnas.length + " DNA and " + result.chromosomes + " chromosomes.")
+        println("   Positives: %d, Negatives: %d".format(result.positives, result.negatives))
         println("   Probability:")
-        println("               \u25B2 " +  ((positives * 100) / (positives + negatives)) + "%")
-        println("               \u25BC " +  ((negatives * 100) / (positives + negatives)) + "%")
+        println("               \u25B2 " + result.upPercent + "%")
+        println("               \u25BC " + result.downPercent + "%")
         println("")
 
     }

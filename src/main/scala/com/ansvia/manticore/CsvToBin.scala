@@ -20,6 +20,48 @@ object CsvToBin extends Slf4jLogger {
         sys.exit(2)
     }
 
+    def convert(file:File){
+
+        val lines = Source.fromFile(file).getLines()
+
+        // skip first line (header)
+        lines.next()
+
+        //            var prevClose = 0.0
+        var bytes = Seq.newBuilder[Byte]
+        var prevBin = 0
+
+        while(lines.hasNext){
+            val line = lines.next()
+            val s = line.split(",")
+            val open = s(1).toDouble
+            val close = s(4).toDouble
+            val bin = if (close > open){
+                1
+            } else if (close == open) {
+                prevBin
+            } else {
+                0
+            }
+            prevBin = bin
+
+            //                prevClose = close
+
+            bytes += bin.toByte
+        }
+
+        val fName = org.apache.commons.io.FileUtils.removeExtension(file.getAbsolutePath) + ".bin"
+
+        val fileOut = new File(fName)
+        if (fileOut.exists())
+            fileOut.delete()
+        val fileOutW = new FileOutputStream(fileOut)
+        fileOutW.write(bytes.result().reverse.toArray)
+        fileOutW.close()
+
+        println("  + out: " + fName)
+    }
+
     def main(args: Array[String]) {
 
         if (args.length < 1)
@@ -32,44 +74,7 @@ object CsvToBin extends Slf4jLogger {
             if (!file.exists())
                 throw new FileNotFoundException("File not found " + file.getAbsolutePath)
 
-            val lines = Source.fromFile(file).getLines()
-
-            // skip first line (header)
-            lines.next()
-
-//            var prevClose = 0.0
-            var bytes = Seq.newBuilder[Byte]
-            var prevBin = 0
-
-            while(lines.hasNext){
-                val line = lines.next()
-                val s = line.split(",")
-                val open = s(1).toDouble
-                val close = s(4).toDouble
-                val bin = if (close > open){
-                    1
-                } else if (close == open) {
-                    prevBin
-                } else {
-                    0
-                }
-                prevBin = bin
-
-//                prevClose = close
-
-                bytes += bin.toByte
-            }
-
-            val fName = org.apache.commons.io.FileUtils.removeExtension(file.getAbsolutePath) + ".bin"
-
-            val fileOut = new File(fName)
-            if (fileOut.exists())
-                fileOut.delete()
-            val fileOutW = new FileOutputStream(fileOut)
-            fileOutW.write(bytes.result().reverse.toArray)
-            fileOutW.close()
-
-            println("  + out: " + fName)
+            convert(file)
         }
         catch {
             case e:Exception =>
