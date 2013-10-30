@@ -14,7 +14,8 @@ proguardOptions += keepMain("com.ansvia.manticore.Manticore")
 
 proguardOptions ++= Seq(
     "-keep class ch.qos.logback.*",
-    "-keep class org.slf4j.*"
+    "-keep class org.slf4j.*",
+    "-keepclasseswithmembers class * { public static void main(java.lang.String[]); }"
 )
 
 resolvers ++= Seq(
