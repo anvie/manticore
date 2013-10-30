@@ -61,7 +61,7 @@ class CsvDataSource(file:File,depth:Int) extends DataSource with Slf4jLogger {
         }
     }
 
-    def size = _size
+    def size = _size + 1
 
     private lazy val _data = {
 

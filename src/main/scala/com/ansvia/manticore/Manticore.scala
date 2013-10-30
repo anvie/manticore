@@ -82,8 +82,8 @@ object Manticore extends Slf4jLogger {
     
     case class ChromosomeFinder(dna:DNA, index:Int, data:IndexedSeq[Int],
                                 positivePattern:Seq[Int], negativePattern:Seq[Int],
-                                   positives:AtomicInteger, negatives:AtomicInteger,
-                                   chromosomes:AtomicInteger) extends Thread {
+                                positives:AtomicInteger, negatives:AtomicInteger,
+                                chromosomes:AtomicInteger) extends Thread {
         override def run(){
 
             var i1 = dna(3)._2.toInt
@@ -111,10 +111,11 @@ object Manticore extends Slf4jLogger {
 
                 //                    print("   %02d %02d %02d %02d".format(d4, d3, d2, d1))
 
-                if (positivePattern == Seq(d4, d3, d2, d1)){
+                val chrom = Seq(d4, d3, d2, d1)
+                if (positivePattern == chrom){
                     positives.getAndIncrement
                     //                        println(" +")
-                }else if (negativePattern == Seq(d4, d3, d2, d1)){
+                }else if (negativePattern == chrom){
                     negatives.getAndIncrement
                     //                        println(" -")
                 }else{

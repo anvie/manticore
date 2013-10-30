@@ -37,15 +37,16 @@ object CsvToBin extends Slf4jLogger {
             // skip first line (header)
             lines.next()
 
-            var prevClose = 0.0
+//            var prevClose = 0.0
             var bytes = Seq.newBuilder[Byte]
 
             while(lines.hasNext){
                 val line = lines.next()
                 val s = line.split(",")
+                val open = s(1).toDouble
                 val close = s(4).toDouble
-                val bin = if (close > prevClose) 1 else 0
-                prevClose = close
+                val bin = if (close > open) 1 else 0
+//                prevClose = close
 
                 bytes += bin.toByte
             }
