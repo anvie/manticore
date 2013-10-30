@@ -1,8 +1,9 @@
 package com.ansvia.manticore
 
-import java.io.{BufferedWriter, FileWriter, FileNotFoundException, File}
+import java.io._
 import com.ansvia.commons.logging.Slf4jLogger
 import scala.io.Source
+import sun.misc.IOUtils
 
 /**
  * Author: robin
@@ -31,7 +32,6 @@ object CsvToBin extends Slf4jLogger {
             if (!file.exists())
                 throw new FileNotFoundException("File not found " + file.getAbsolutePath)
 
-
             val lines = Source.fromFile(file).getLines()
 
             // skip first line (header)
@@ -39,13 +39,22 @@ object CsvToBin extends Slf4jLogger {
 
 //            var prevClose = 0.0
             var bytes = Seq.newBuilder[Byte]
+            var prevBin = 0
 
             while(lines.hasNext){
                 val line = lines.next()
                 val s = line.split(",")
                 val open = s(1).toDouble
                 val close = s(4).toDouble
-                val bin = if (close > open) 1 else 0
+                val bin = if (close > open){
+                    1
+                } else if (close == open) {
+                    prevBin
+                } else {
+                    0
+                }
+                prevBin = bin
+
 //                prevClose = close
 
                 bytes += bin.toByte
@@ -53,9 +62,11 @@ object CsvToBin extends Slf4jLogger {
 
             val fName = org.apache.commons.io.FileUtils.removeExtension(file.getAbsolutePath) + ".bin"
 
-            val fileOut = new FileWriter(fName)
-            val fileOutW = new BufferedWriter(fileOut)
-            fileOutW.write(bytes.result().reverse.map(_.toChar).toArray)
+            val fileOut = new File(fName)
+            if (fileOut.exists())
+                fileOut.delete()
+            val fileOutW = new FileOutputStream(fileOut)
+            fileOutW.write(bytes.result().reverse.toArray)
             fileOutW.close()
 
             println("  + out: " + fName)

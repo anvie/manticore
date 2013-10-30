@@ -75,7 +75,7 @@ object Manticore extends Slf4jLogger {
                 "X|%02d".format(f(3)._2)
             else
                 f(3)
-            println("   %d|%02d %d|%02d %d|%02d %s".format(f(0)._1, f(0)._2, f(1)._1, f(1)._2,f(2)._1,f(2)._2, lastF))
+            println("   %d(%02d) %d(%02d) %d(%02d) %s".format(f(0)._1, f(0)._2, f(1)._1, f(1)._2,f(2)._1,f(2)._2, lastF))
         }
         println("")
     }
@@ -92,7 +92,7 @@ object Manticore extends Slf4jLogger {
             var i4 = dna(0)._2.toInt
 
             if (i4 > 1){
-                println("       (thread-%s) processing DNA #%d  %d|%02d %d|%02d %d|%02d X|%02d".format(
+                println("       (thread-%s) processing DNA #%d  %d(%02d) %d(%02d) %d(%02d) X(%02d)".format(
                     Thread.currentThread().getId, index,
                     dna(0)._1,dna(0)._2,dna(1)._1,dna(1)._2,dna(2)._1,dna(2)._2,dna(3)._2))
             }
@@ -112,13 +112,15 @@ object Manticore extends Slf4jLogger {
                 //                    print("   %02d %02d %02d %02d".format(d4, d3, d2, d1))
 
                 val chrom = Seq(d4, d3, d2, d1)
+
                 if (positivePattern == chrom){
                     positives.getAndIncrement
                     //                        println(" +")
                 }else if (negativePattern == chrom){
                     negatives.getAndIncrement
                     //                        println(" -")
-                }else{
+//                }else{
+
                     //                        println("")
                 }
 
