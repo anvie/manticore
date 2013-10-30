@@ -4,15 +4,14 @@ import scala.util.control.Breaks._
 import com.ansvia.commons.logging.Slf4jLogger
 import java.io.File
 import org.apache.commons.io.FileUtils
-import java.util.concurrent.atomic.AtomicLong
-import scala.actors.{Future, Futures}
 import scala.actors.threadpool.AtomicInteger
 
 
 object Manticore extends Slf4jLogger {
 
     type FourSeq = Seq[Seq[Int]]
-    type FourSeqI = Seq[Seq[(Int, Long)]]
+    type DNA = Seq[(Int, Long)]
+    type FourSeqI = Seq[DNA]
 
     def padToFourSeq(ds:DataSource):FourSeqI = {
         var rv = Seq.newBuilder[Seq[(Int, Long)]]
@@ -80,6 +79,54 @@ object Manticore extends Slf4jLogger {
         }
         println("")
     }
+    
+    case class ChromosomeFinder(dna:DNA, index:Int, data:IndexedSeq[Int],
+                                positivePattern:Seq[Int], negativePattern:Seq[Int],
+                                   positives:AtomicInteger, negatives:AtomicInteger,
+                                   chromosomes:AtomicInteger) extends Thread {
+        override def run(){
+
+            var i1 = dna(3)._2.toInt
+            var i2 = dna(2)._2.toInt
+            var i3 = dna(1)._2.toInt
+            var i4 = dna(0)._2.toInt
+
+            if (i4 > 1){
+                println("       (thread-%s) processing DNA #%d  %d|%02d %d|%02d %d|%02d X|%02d".format(
+                    Thread.currentThread().getId, index,
+                    dna(0)._1,dna(0)._2,dna(1)._1,dna(1)._2,dna(2)._1,dna(2)._2,dna(3)._2))
+            }
+
+            while(i4 > 1){
+
+                i4 = i4 - 1
+                i3 = i3 - 1
+                i2 = i2 - 1
+                i1 = i1 - 1
+
+                val d4 = data(i4-1)
+                val d3 = data(i3-1)
+                val d2 = data(i2-1)
+                val d1 = data(i1-1)
+
+                //                    print("   %02d %02d %02d %02d".format(d4, d3, d2, d1))
+
+                if (positivePattern == Seq(d4, d3, d2, d1)){
+                    positives.getAndIncrement
+                    //                        println(" +")
+                }else if (negativePattern == Seq(d4, d3, d2, d1)){
+                    negatives.getAndIncrement
+                    //                        println(" -")
+                }else{
+                    //                        println("")
+                }
+
+                chromosomes.incrementAndGet()
+            }
+
+//            (positives.get(), negatives.get())
+        }
+    }
 
     def breakDown(fss:FourSeqI, data:IndexedSeq[Int]) = {
 
@@ -89,64 +136,25 @@ object Manticore extends Slf4jLogger {
 
         val positives = new AtomicInteger(0)
         val negatives = new AtomicInteger(0)
-        val chromosomes = new AtomicLong(0L)
-        val futures = Seq.newBuilder[Future[(Int, Int)]]
+        val chromosomes = new AtomicInteger(0)
+        var threads = Seq.empty[ChromosomeFinder]
 
         val index = new AtomicInteger(0)
 
+        val tsBefore = System.currentTimeMillis()
+
         fss.foreach { fs =>
 
-            futures +=
-                Futures.future {
-
-                    var i1 = fs(3)._2.toInt
-                    var i2 = fs(2)._2.toInt
-                    var i3 = fs(1)._2.toInt
-                    var i4 = fs(0)._2.toInt
-
-                    if (i4 > 1){
-                        println("       (thread-%s) processing DNA #%d  %d|%02d %d|%02d %d|%02d X|%02d".format(
-                            Thread.currentThread().getId, index.incrementAndGet(),
-                            fs(0)._1,fs(0)._2,fs(1)._1,fs(1)._2,fs(2)._1,fs(2)._2,fs(3)._2))
-                    }
-
-                    while(i4 > 1){
-
-                        i4 = i4 - 1
-                        i3 = i3 - 1
-                        i2 = i2 - 1
-                        i1 = i1 - 1
-
-                        val d4 = data(i4-1)
-                        val d3 = data(i3-1)
-                        val d2 = data(i2-1)
-                        val d1 = data(i1-1)
-
-    //                    print("   %02d %02d %02d %02d".format(d4, d3, d2, d1))
-
-                        if (positivePattern == Seq(d4, d3, d2, d1)){
-                            positives.getAndIncrement
-    //                        println(" +")
-                        }else if (negativePattern == Seq(d4, d3, d2, d1)){
-                            negatives.getAndIncrement
-    //                        println(" -")
-                        }else{
-    //                        println("")
-                        }
-
-                        chromosomes.incrementAndGet()
-                    }
-
-                    (positives.get(), negatives.get())
-                }
-
+            threads :+= ChromosomeFinder(fs, index.incrementAndGet(), data, positivePattern,
+                negativePattern, positives, negatives, chromosomes)
 
         }
 
         // wait until all calculation done
+        threads.foreach(_.start())
         println("    + waiting for %d background distributed calculation...".format(fss.size))
-        futures.result().foreach(_.apply())
-        println("    + calculation completed.")
+        threads.foreach(_.join())
+        println("    + calculation completed, took %sms".format(System.currentTimeMillis() - tsBefore))
 
         (positives.get(), negatives.get(), chromosomes.get())
     }
