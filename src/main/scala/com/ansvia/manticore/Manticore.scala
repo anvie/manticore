@@ -99,8 +99,6 @@ object Manticore extends Slf4jLogger {
             futures +=
                 Futures.future {
 
-                    index.incrementAndGet()
-
                     var i1 = fs(3)._2.toInt
                     var i2 = fs(2)._2.toInt
                     var i3 = fs(1)._2.toInt
@@ -108,7 +106,7 @@ object Manticore extends Slf4jLogger {
 
                     if (i4 > 1){
                         println("       (thread-%s) processing DNA #%d  %d|%02d %d|%02d %d|%02d X|%02d".format(
-                            Thread.currentThread().getId, index.get(),
+                            Thread.currentThread().getId, index.incrementAndGet(),
                             fs(0)._1,fs(0)._2,fs(1)._1,fs(1)._2,fs(2)._1,fs(2)._2,fs(3)._2))
                     }
 
@@ -146,7 +144,7 @@ object Manticore extends Slf4jLogger {
         }
 
         // wait until all calculation done
-        println("    + waiting for %d background distributed calculation...".format(index.get()))
+        println("    + waiting for %d background distributed calculation...".format(fss.size))
         futures.result().foreach(_.apply())
         println("    + calculation completed.")
 
