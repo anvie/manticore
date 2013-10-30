@@ -27,7 +27,8 @@ resolvers ++= Seq(
 libraryDependencies ++= Seq(
     "org.specs2" % "specs2_2.9.2" % "1.12.4.1",
     "ch.qos.logback" % "logback-classic" % "1.0.13",
-    "com.ansvia" % "ansvia-commons" % "0.0.9-20131015-SNAPSHOT"
+    "com.ansvia" % "ansvia-commons" % "0.0.9-20131015-SNAPSHOT",
+    "commons-io" % "commons-io" % "20030203.000550"
 )
 
 EclipseKeys.withSource := true
