@@ -9,20 +9,20 @@ import com.ansvia.manticore.Manticore.DNAS
 
 
 case class CalculationResult(dnas:DNAS, positives:Int, negatives:Int, chromosomes:Int) {
-    def upPercent = {
+    def upPercent:Double = {
         val total = positives + negatives
         if (total == 0)
             0
         else
-            (positives * 100) / total
+            (positives.toDouble * 100) / total.toDouble
     }
 
-    def downPercent = {
+    def downPercent:Double = {
         val total = positives + negatives
         if (total == 0)
             0
         else
-            (negatives * 100) / total
+            (negatives.toDouble * 100) / total.toDouble
     }
 
     override def toString = "Result[+%d,-%d,*:%d]".format(positives, negatives, chromosomes)
@@ -218,8 +218,8 @@ object Manticore extends Slf4jLogger {
         println("   Processed " + result.dnas.length + " DNA and " + result.chromosomes + " Chromosomes.")
         println("   Positives: %d, Negatives: %d".format(result.positives, result.negatives))
         println("   Probability:")
-        println("               \u25B2 " + result.upPercent + "%")
-        println("               \u25BC " + result.downPercent + "%")
+        println("               \u25B2 %.1f%%".format(result.upPercent))
+        println("               \u25BC %.1f%%".format(result.downPercent))
         println("")
 
     }
