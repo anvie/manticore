@@ -34,8 +34,18 @@ object CsvToBin extends Slf4jLogger {
         while(lines.hasNext){
             val line = lines.next()
             val s = line.split(",")
-            val open = s(1).toDouble
-            val close = s(4).toDouble
+            val open = {
+                if (s.length == 7)
+                    s(2).toDouble
+                else
+                    s(1).toDouble
+            }
+            val close = {
+                if (s.length == 7)
+                    s(5).toDouble
+                else
+                    s(4).toDouble
+            }
             val bin = if (close > open){
                 1
             } else if (close == open) {
