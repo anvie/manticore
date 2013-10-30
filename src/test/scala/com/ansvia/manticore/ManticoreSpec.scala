@@ -19,7 +19,7 @@ class ManticoreSpec extends Specification {
         )
 
         val source = new InlineDataSource(data)
-        val result = Manticore.process(source)
+        val result = Manticore.process(source, 4)
         println(result)
     }
 

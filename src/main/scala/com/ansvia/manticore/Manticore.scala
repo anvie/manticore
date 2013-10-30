@@ -11,11 +11,18 @@ import com.ansvia.manticore.Manticore.DNAS
 case class CalculationResult(dnas:DNAS, positives:Int, negatives:Int, chromosomes:Int) {
     def upPercent = {
         val total = positives + negatives
-        (positives * 100) / total
+        if (total == 0)
+            0
+        else
+            (positives * 100) / total
     }
+
     def downPercent = {
         val total = positives + negatives
-        (negatives * 100) / total
+        if (total == 0)
+            0
+        else
+            (negatives * 100) / total
     }
 
     override def toString = "Result[+%d,-%d,*:%d]".format(positives, negatives, chromosomes)
@@ -30,13 +37,12 @@ object Manticore extends Slf4jLogger {
     type DNA = Seq[(Int, Long)]
     type DNAS = Seq[DNA]
 
-    def getDnas(ds:DataSource):DNAS = {
+    def getDnas(ds:DataSource, len:Int):DNAS = {
         var rv = Seq.newBuilder[Seq[(Int, Long)]]
         var buff = Seq.newBuilder[(Int, Long)]
         var buffCount = 0
         var jump = 1
         var count = 0
-//        val reversedData = data.reverse.zipWithIndex
         val dataCount = ds.size
         var done = dataCount < 1
         while(!done){
@@ -44,7 +50,7 @@ object Manticore extends Slf4jLogger {
                 ds.foreach { case (d, i) =>
 
                     if (i % jump == 0){
-                        if (buffCount < 4){
+                        if (buffCount < len){
                             val index = dataCount - i
                             if (index < 1){
                                 done = true
@@ -52,7 +58,7 @@ object Manticore extends Slf4jLogger {
                             }
                             buff ++= Seq((d, index))
                             buffCount = buffCount + 1
-                        }else if (buffCount == 4) {
+                        }else if (buffCount == len) {
 
 //                            debug("buff: " + buff.result())
 
@@ -78,15 +84,15 @@ object Manticore extends Slf4jLogger {
                 }
                 done = true
                 // update last data
-                if (buff.result().length == 4)
+                if (buff.result().length == len)
                     rv += buff.result().reverse
             }
         }
         rv.result()
     }
     
-    def process(ds:DataSource):CalculationResult = {
-        val dnas = getDnas(ds)
+    def process(ds:DataSource, len:Int):CalculationResult = {
+        val dnas = getDnas(ds, len)
         val (post, neg, chrom) = breakDown(dnas, ds.indexedData)
         CalculationResult(dnas, post, neg, chrom)
     }
@@ -107,9 +113,12 @@ object Manticore extends Slf4jLogger {
 
     def breakDown(dnas:DNAS, data:IndexedSeq[Int]) = {
 
-        val fs = dnas(0)
-        val positivePattern = Seq(fs(0)._1,fs(1)._1,fs(2)._1,1)
-        val negativePattern = Seq(fs(0)._1,fs(1)._1,fs(2)._1,0)
+        val dna = dnas.head
+
+//        val positivePattern = Seq(fs(0)._1,fs(1)._1,fs(2)._1,1)
+//        val negativePattern = Seq(fs(0)._1,fs(1)._1,fs(2)._1,0)
+        val positivePattern = dna.slice(0,dna.length-1).map(_._1) ++ Seq(1)
+        val negativePattern = dna.slice(0,dna.length-1).map(_._1) ++ Seq(0)
 
         val positives = new AtomicInteger(0)
         val negatives = new AtomicInteger(0)
@@ -129,7 +138,7 @@ object Manticore extends Slf4jLogger {
 
         // wait until all calculation done
         threads.foreach(_.start())
-        println("    + waiting for %d background distributed calculation...".format(dnas.size))
+        println("    + waiting for %d background(s) calculation...".format(dnas.size))
         threads.foreach(_.join())
         println("    + calculation completed, took %sms".format(System.currentTimeMillis() - tsBefore))
 
@@ -147,7 +156,7 @@ object Manticore extends Slf4jLogger {
 //        )
 
         val fileDataPath = args(0)
-        val depth = try {
+        val len = try {
             args(1).toInt
         }
         catch {
@@ -176,7 +185,7 @@ object Manticore extends Slf4jLogger {
                 case BINARY =>
                     new BinaryDataSource(new File(fileDataPath))
                 case CSV =>
-                    new CsvDataSource(new File(fileDataPath), depth)
+                    new CsvDataSource(new File(fileDataPath), len)
 //                case _ =>
 //                    new InlineDataSource(inlineData)
             }
@@ -196,17 +205,17 @@ object Manticore extends Slf4jLogger {
 
         println(" + calculating...\n")
 
-        val result = process(source)
+        val result = process(source, len)
 
         println("")
         println(" + result:\n")
         val pattern = {
-            val p = result.dnas.head
-            "%d(%d) %d(%d) %d(%d) X(%d)".format(p(0)._1, p(0)._2, p(1)._1, p(1)._2,
-                p(2)._1, p(2)._2, p(3)._2)
+            val dna = result.dnas.head
+            dna.map(x => "%s(%d)".format( (if (x._1 == -1) "X" else x._1) , x._2))
+                .reduceLeftOption(_ + " " + _).getOrElse("")
         }
         println("   Pattern: " + pattern)
-        println("   Processed " + result.dnas.length + " DNA and " + result.chromosomes + " chromosomes.")
+        println("   Processed " + result.dnas.length + " DNA and " + result.chromosomes + " Chromosomes.")
         println("   Positives: %d, Negatives: %d".format(result.positives, result.negatives))
         println("   Probability:")
         println("               \u25B2 " + result.upPercent + "%")
