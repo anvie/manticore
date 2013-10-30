@@ -129,9 +129,9 @@ object Manticore extends Slf4jLogger {
         }
     }
 
-    def breakDown(fss:FourSeqI, data:IndexedSeq[Int]) = {
+    def breakDown(dnas:FourSeqI, data:IndexedSeq[Int]) = {
 
-        val fs = fss(0)
+        val fs = dnas(0)
         val positivePattern = Seq(fs(0)._1,fs(1)._1,fs(2)._1,1)
         val negativePattern = Seq(fs(0)._1,fs(1)._1,fs(2)._1,0)
 
@@ -144,16 +144,16 @@ object Manticore extends Slf4jLogger {
 
         val tsBefore = System.currentTimeMillis()
 
-        fss.foreach { fs =>
+        dnas.foreach { dna =>
 
-            threads :+= ChromosomeFinder(fs, index.incrementAndGet(), data, positivePattern,
+            threads :+= ChromosomeFinder(dna, index.incrementAndGet(), data, positivePattern,
                 negativePattern, positives, negatives, chromosomes)
 
         }
 
         // wait until all calculation done
         threads.foreach(_.start())
-        println("    + waiting for %d background distributed calculation...".format(fss.size))
+        println("    + waiting for %d background distributed calculation...".format(dnas.size))
         threads.foreach(_.join())
         println("    + calculation completed, took %sms".format(System.currentTimeMillis() - tsBefore))
 
