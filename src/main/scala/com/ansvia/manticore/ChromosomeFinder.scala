@@ -40,13 +40,13 @@ trait ChromosomeFinder {
 //        var i4 = dna(0)._2.toInt
         var tail = dna(sLen-1)._2
 
-        if (tail > 1){
-            val pattern = dna.map(x => "%s(%d)".format(if (x._1 == -1) "X" else x._1,x._2)).reduceLeftOption(_ + " " + _).getOrElse("")
-            println("       (thread-%s) processing DNA #%d  %s".format(
-                Thread.currentThread().getId, index,
-                pattern
-            ))
-        }
+//        if (tail > 1){
+//            val pattern = dna.map(x => "%s(%d)".format(if (x._1 == -1) "X" else x._1,x._2)).reduceLeftOption(_ + " " + _).getOrElse("")
+//            println("       (thread-%s) processing DNA #%d  %s".format(
+//                Thread.currentThread().getId, index,
+//                pattern
+//            ))
+//        }
 
         var count = 0
 

@@ -78,6 +78,7 @@ object Manticore extends Slf4jLogger {
                             debug("last 4seq: " + buff.result())
                             buff.clear()
                             debug("no more FourSeq")
+                            done = true
                             break
                         }
                     }
@@ -191,17 +192,6 @@ object Manticore extends Slf4jLogger {
             }
         }
         println(" + data source: " + source + "\n")
-
-//        println(" + padding...\n")
-//
-////        val rv = padToFourSeq(new InlineDataSource(data))
-//        val rv = getDnas(source)
-//        println("\r")
-//        prettyPrint(rv)
-//        println("")
-//
-//        println(" + breaking down...\n")
-//        val (positives, negatives, chromosomes) = breakDown(rv, source.indexedData)
 
         println(" + calculating...\n")
 
