@@ -2,6 +2,7 @@ package com.ansvia.manticore
 
 import java.io.File
 import com.ansvia.commons.logging.Slf4jLogger
+import scala.io.Source
 
 /**
  * Author: robin
@@ -50,10 +51,14 @@ class InlineDataSource(data:Seq[Int]) extends DataSource {
 class CsvDataSource(file:File,depth:Int) extends DataSource with Slf4jLogger {
     private lazy val _size = {
         val n = io.Source.fromFile(file).getLines().size
-        if (n < depth)
+        if (depth == -1){
             n
-        else
-            depth
+        }else{
+            if (n < depth)
+                n
+            else
+                depth
+        }
     }
 
     def size = _size
@@ -122,4 +127,41 @@ class CsvDataSource(file:File,depth:Int) extends DataSource with Slf4jLogger {
     def indexedData = _dataI
 
     override def toString = "CSV: " + file.getAbsolutePath
+}
+
+
+/************************************************
+ * Binary data source
+ ***********************************************/
+class BinaryDataSource(file:File) extends DataSource {
+
+    private lazy val _data = {
+        Source.fromFile(file).buffered.map { c =>
+            if (c == 0x01)
+                1
+            else
+                0
+        }.toIndexedSeq
+    }
+
+    def size = _data.size
+
+    def foreach(func: (Int, Long) => Unit) = {
+        func(-1, 0L)
+        var idx = 1L
+        _data.foreach { bin =>
+            func(bin, idx)
+            idx = idx + 1
+        }
+    }
+
+    def apply(i: Long) = {
+        _data(i.toInt)
+    }
+
+    def indexedData = {
+        _data
+    }
+
+    override def toString = "(binary) " + file.getAbsolutePath
 }

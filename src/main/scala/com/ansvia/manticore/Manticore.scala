@@ -3,7 +3,10 @@ package com.ansvia.manticore
 import scala.util.control.Breaks._
 import com.ansvia.commons.logging.Slf4jLogger
 import java.io.File
-
+import org.apache.commons.io.FileUtils
+import java.util.concurrent.atomic.AtomicLong
+import scala.actors.{Future, Futures}
+import scala.actors.threadpool.AtomicInteger
 
 
 object Manticore extends Slf4jLogger {
@@ -84,52 +87,70 @@ object Manticore extends Slf4jLogger {
         val positivePattern = Seq(fs(0)._1,fs(1)._1,fs(2)._1,1)
         val negativePattern = Seq(fs(0)._1,fs(1)._1,fs(2)._1,0)
 
-        var positives = 0
-        var negatives = 0
+        val positives = new AtomicInteger(0)
+        val negatives = new AtomicInteger(0)
+        val chromosomes = new AtomicLong(0L)
+        val futures = Seq.newBuilder[Future[(Int, Int)]]
 
-        var index = 0
+        val index = new AtomicInteger(0)
+
         fss.foreach { fs =>
 
-            var i1 = fs(3)._2.toInt
-            var i2 = fs(2)._2.toInt
-            var i3 = fs(1)._2.toInt
-            var i4 = fs(0)._2.toInt
+            futures +=
+                Futures.future {
 
-            if (i4 > 1){
-                println("   --------------- %d|%02d %d|%02d %d|%02d X|%02d -----------".format(
-                    fs(0)._1,fs(0)._2,fs(1)._1,fs(1)._2,fs(2)._1,fs(2)._2,fs(3)._2))
-            }
+                    index.incrementAndGet()
 
-            while(i4 > 1){
+                    var i1 = fs(3)._2.toInt
+                    var i2 = fs(2)._2.toInt
+                    var i3 = fs(1)._2.toInt
+                    var i4 = fs(0)._2.toInt
 
-                i4 = i4 - 1
-                i3 = i3 - 1
-                i2 = i2 - 1
-                i1 = i1 - 1
-                
-                val d4 = data(i4-1)
-                val d3 = data(i3-1)
-                val d2 = data(i2-1)
-                val d1 = data(i1-1)
+                    if (i4 > 1){
+                        println("       (thread-%s) processing DNA #%d  %d|%02d %d|%02d %d|%02d X|%02d".format(
+                            Thread.currentThread().getId, index.get(),
+                            fs(0)._1,fs(0)._2,fs(1)._1,fs(1)._2,fs(2)._1,fs(2)._2,fs(3)._2))
+                    }
 
-                print("   %02d %02d %02d %02d".format(d4, d3, d2, d1))
-                
-                if (positivePattern == Seq(d4, d3, d2, d1)){
-                    positives += 1
-                    println(" +")
-                }else if (negativePattern == Seq(d4, d3, d2, d1)){
-                    negatives += 1
-                    println(" -")
-                }else{
-                    println("")
+                    while(i4 > 1){
+
+                        i4 = i4 - 1
+                        i3 = i3 - 1
+                        i2 = i2 - 1
+                        i1 = i1 - 1
+
+                        val d4 = data(i4-1)
+                        val d3 = data(i3-1)
+                        val d2 = data(i2-1)
+                        val d1 = data(i1-1)
+
+    //                    print("   %02d %02d %02d %02d".format(d4, d3, d2, d1))
+
+                        if (positivePattern == Seq(d4, d3, d2, d1)){
+                            positives.getAndIncrement
+    //                        println(" +")
+                        }else if (negativePattern == Seq(d4, d3, d2, d1)){
+                            negatives.getAndIncrement
+    //                        println(" -")
+                        }else{
+    //                        println("")
+                        }
+
+                        chromosomes.incrementAndGet()
+                    }
+
+                    (positives.get(), negatives.get())
                 }
-                
-            }
 
-            index = index + 1
+
         }
 
-        (positives, negatives)
+        // wait until all calculation done
+        println("    + waiting for %d background distributed calculation...".format(index.get()))
+        futures.result().foreach(_.apply())
+        println("    + calculation completed.")
+
+        (positives.get(), negatives.get(), chromosomes.get())
     }
 
 
@@ -142,10 +163,38 @@ object Manticore extends Slf4jLogger {
 //            1,1,0,0,1,1,-1
 //        )
 
-        val csvFile = args(0)
-        val depth = args(1).toInt
+        val fileDataPath = args(0)
+        val depth = try {
+            args(1).toInt
+        }
+        catch {
+            case _ => -1
+        }
+        
+        val fileDataF = new File(fileDataPath)
+        if (!fileDataF.exists()){
+            println(" [ERROR] File not found " + fileDataPath)
+            sys.exit(3)
+        }
+        
+        import DataModes._
+        
+        val mode = FileUtils.getExtension(fileDataPath) match {
+            case "bin" => BINARY
+            case "csv" => CSV
+            case _ =>
+                println("  [ERROR] Unknown file input format " + fileDataPath)
+                sys.exit(4)
+        }
 
-        val source = new CsvDataSource(new File(csvFile), depth)
+        val source:DataSource = {
+            mode match {
+                case BINARY =>
+                    new BinaryDataSource(new File(fileDataPath))
+                case CSV =>
+                    new CsvDataSource(new File(fileDataPath), depth)
+            }
+        }
         println(" + data source: " + source + "\n")
 
         println(" + padding...\n")
@@ -157,10 +206,11 @@ object Manticore extends Slf4jLogger {
         println("")
 
         println(" + breaking down...\n")
-        val (positives, negatives) = breakDown(rv, source.indexedData)
+        val (positives, negatives, chromosomes) = breakDown(rv, source.indexedData)
 
         println("")
         println(" + result:\n")
+        println("   Processed " + rv.length + " DNA and " + chromosomes + " chromosomes.")
         println("   Positives: %d, Negatives: %d".format(positives, negatives))
         println("   Probability:")
         println("               \u25B2 " +  ((positives * 100) / (positives + negatives)) + "%")
@@ -169,4 +219,9 @@ object Manticore extends Slf4jLogger {
 
     }
 
+}
+
+object DataModes {
+    val BINARY = 1
+    val CSV = 2
 }
