@@ -4,6 +4,7 @@ TARGETS = \
 	manticore.zip
 
 manticore.zip:
+	sbt proguard
 	rm -rf manticore
 	mkdir manticore
 	cp etc/manticore.sh manticore/manticore
@@ -19,5 +20,6 @@ manticore.zip:
 
 clean:
 	rm -f $(TARGETS)
+	rm -f target/*.jar
 
 .PHONY: clean

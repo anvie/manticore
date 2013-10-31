@@ -27,8 +27,8 @@ class ManticoreSpec extends Specification {
         "calculate positives negatives correctly" in new Ctx {
             result.positives must_== 8
             result.negatives must_== 4
-            result.upPercent must_== 66
-            result.downPercent must_== 33
+            math.floor(result.upPercent) must_== 66
+            math.floor(result.downPercent) must_== 33
         }
 //        "calculate up percent" in new Ctx {
 //            result.upPercent must_== 66
