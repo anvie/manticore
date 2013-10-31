@@ -6,6 +6,7 @@ import java.io.File
 import org.apache.commons.io.FileUtils
 import scala.actors.threadpool.AtomicInteger
 import com.ansvia.manticore.Manticore.DNAS
+import scala.collection.mutable.ArrayBuffer
 
 
 case class CalculationResult(dnas:DNAS, positives:Int, negatives:Int, chromosomes:Int) {
@@ -24,6 +25,8 @@ case class CalculationResult(dnas:DNAS, positives:Int, negatives:Int, chromosome
         else
             (negatives.toDouble * 100) / total.toDouble
     }
+
+    def binState = if (positives > negatives) 1 else 0
 
     override def toString = "Result[+%d,-%d,*:%d]".format(positives, negatives, chromosomes)
 
@@ -157,11 +160,16 @@ object Manticore extends Slf4jLogger {
 //        )
 
         val fileDataPath = args(0)
-        val len = try {
-            args(1).toInt
+        val step = {
+            if (args.length > 1)
+                args(1)
+            else
+                "4-7"
         }
-        catch {
-            case _ => -1
+
+        if (!step.contains("-")){
+            error("step must contains `-` char for range, ex: 4-14")
+            sys.exit(3)
         }
         
         val fileDataF = new File(fileDataPath)
@@ -186,7 +194,17 @@ object Manticore extends Slf4jLogger {
                 case BINARY =>
                     new BinaryDataSource(new File(fileDataPath))
                 case CSV =>
-                    new CsvDataSource(new File(fileDataPath), len)
+
+                    // convert dulu ke binary
+
+                    info("converting csv to bin...")
+
+                    CsvToBin.convert(new File(fileDataPath))
+
+                    val binFilePath = FileUtils.removeExtension(fileDataPath) + ".bin"
+                    new BinaryDataSource(new File(binFilePath))
+
+//                    new CsvDataSource(new File(fileDataPath), len)
 //                case _ =>
 //                    new InlineDataSource(inlineData)
             }
@@ -195,21 +213,37 @@ object Manticore extends Slf4jLogger {
 
         println(" + calculating...\n")
 
-        val result = process(source, len)
+        val s = step.split("-")
+        val start = s(0).toInt
+        val end = s(1).toInt
 
-        println("")
-        println(" + result:\n")
-        val pattern = {
-            val dna = result.dnas.head
-            dna.map(x => "%s(%d)".format( (if (x._1 == -1) "X" else x._1) , x._2))
-                .reduceLeftOption(_ + " " + _).getOrElse("")
+        val results = for (i <- start to end) yield process(source, i)
+        val probs = new ArrayBuffer[Int]
+
+        for (result <- results){
+            println("")
+            println(" + result:\n")
+            val pattern = {
+                val dna = result.dnas.head
+                dna.map(x => "%s(%d)".format( (if (x._1 == -1) "X" else x._1) , x._2))
+                    .reduceLeftOption(_ + " " + _).getOrElse("")
+            }
+            println("   Pattern: " + pattern)
+            println("   Processed " + result.dnas.length + " DNA and " + result.chromosomes + " Chromosomes.")
+            println("   Positives: %d, Negatives: %d".format(result.positives, result.negatives))
+            println("   Probability:")
+            println("               \u25B2 %.1f%%".format(result.upPercent))
+            println("               \u25BC %.1f%%".format(result.downPercent))
+            println("")
+
+            probs += result.binState
         }
-        println("   Pattern: " + pattern)
-        println("   Processed " + result.dnas.length + " DNA and " + result.chromosomes + " Chromosomes.")
-        println("   Positives: %d, Negatives: %d".format(result.positives, result.negatives))
-        println("   Probability:")
-        println("               \u25B2 %.1f%%".format(result.upPercent))
-        println("               \u25BC %.1f%%".format(result.downPercent))
+
+        println("   Probability binaries: " + probs.result().map(_.toString)
+            .reduceLeftOption(_ + " " + _).getOrElse(""))
+        val (up, down) = probs.partition(_ == 1)
+        val direction = if (up.length > down.length) "UP" else "DOWN"
+        println("   Direction: " + direction)
         println("")
 
     }
