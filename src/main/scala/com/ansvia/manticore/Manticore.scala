@@ -217,12 +217,14 @@ object Manticore extends Slf4jLogger {
         val start = s(0).toInt
         val end = s(1).toInt
 
+        val tsStart = System.currentTimeMillis()
+
         val results = for (i <- start to end) yield process(source, i)
         val probs = new ArrayBuffer[Int]
 
         for (result <- results){
             println("")
-            println(" + result:\n")
+            println(" + result " + result.dnas.head.length +  "-string :\n")
             val pattern = {
                 val dna = result.dnas.head
                 dna.map(x => "%s(%d)".format( (if (x._1 == -1) "X" else x._1) , x._2))
@@ -239,10 +241,13 @@ object Manticore extends Slf4jLogger {
             probs += result.binState
         }
 
+        val tsEnd = System.currentTimeMillis() - tsStart
+
+        println("   Calculation done in " + tsEnd + "ms")
         println("   Probability binaries: " + probs.result().map(_.toString)
             .reduceLeftOption(_ + " " + _).getOrElse(""))
         val (up, down) = probs.partition(_ == 1)
-        val direction = if (up.length > down.length) "UP" else "DOWN"
+        val direction = if (up.length > down.length) "\u25B2 (UP)" else "\u25BC (DOWN)"
         println("   Direction: " + direction)
         println("")
 
