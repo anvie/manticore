@@ -2,6 +2,14 @@ package com.ansvia.manticore
 
 import scala.actors.threadpool.AtomicInteger
 import com.ansvia.manticore.Manticore.DNA
+import akka.actor.{PoisonPill, Props, Actor}
+import com.ansvia.manticore.NonBlockingChromosomeFinder.Worker
+import akka.routing.RoundRobinRouter
+import com.ansvia.commons.logging.Slf4jLogger
+import akka.dispatch.Future
+import akka.util.Timeout
+import scala.concurrent.Lock
+import java.util.concurrent.CountDownLatch
 
 /**
  * Author: robin
@@ -28,7 +36,7 @@ trait ChromosomeFinder {
         calculate()
     }
 
-    protected def calculate(){
+    def calculate(){
 
         val size = data.size
 
@@ -116,18 +124,53 @@ class NonBlockingChromosomeFinder(val dna:DNA, val index:Int, val data:IndexedSe
                                   val chromosomes:AtomicInteger)
     extends ChromosomeFinder {
 
-    private val _thread = new Thread(){
-        override def run() {
-            calculate()
-        }
-    }
+    import NonBlockingChromosomeFinder._
+
+
+//
+//    private val _thread = new Thread(){
+//        override def run() {
+//            calculate()
+//        }
+//    }
+
+    import akka.pattern._
+    import akka.util.duration._
+
+    val lock = new CountDownLatch(1)
+
+    def pattern = dna.toSeq.toString
 
     def start(){
-        _thread.start()
+//        _thread.start()
+        implicit val timeout = Timeout(5.seconds)
+//        println("    + start calculating dna " + pattern + "...")
+        workers ! Calculate(this)
     }
 
     def join(){
-        _thread.join()
+//        workers.foreach(_ ! PoisonPill)
+//        _thread.join()
+//        println("    + waiting for dna " + pattern + " calculation...")
+        lock.await()
     }
 }
 
+object NonBlockingChromosomeFinder {
+    val system = akka.actor.ActorSystem.create("chromosome-finder")
+
+    case class Calculate(cf:NonBlockingChromosomeFinder)
+
+    case class Worker() extends Actor {
+        protected def receive = {
+            case Calculate(cf) => {
+//                println(Thread.currentThread().getName + " calculating...")
+                cf.calculate()
+                cf.lock.countDown()
+            }
+        }
+    }
+
+    val workers = system.actorOf(Props[Worker].withRouter(RoundRobinRouter(nrOfInstances=4)))
+
+}

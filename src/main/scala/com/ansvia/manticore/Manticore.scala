@@ -251,6 +251,8 @@ object Manticore extends Slf4jLogger {
         println("   Direction: " + direction)
         println("")
 
+        NonBlockingChromosomeFinder.system.shutdown()
+
     }
 
 }
