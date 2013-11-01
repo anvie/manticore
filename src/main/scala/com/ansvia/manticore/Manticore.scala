@@ -135,13 +135,17 @@ object Manticore extends Slf4jLogger {
 
         dnas.foreach { dna =>
 
-            threads :+= new NonBlockingChromosomeFinder(dna, index.incrementAndGet(), data, positivePattern,
+            val t = new NonBlockingChromosomeFinder(dna, index.incrementAndGet(), data, positivePattern,
                 negativePattern, positives, negatives, chromosomes)
+
+            t.start()
+
+            threads :+= t
 
         }
 
         // wait until all calculation done
-        threads.foreach(_.start())
+//        threads.foreach(_.start())
         println("    + waiting for %d background(s) calculation...".format(dnas.size))
         threads.foreach(_.join())
         println("    + calculation completed, took %sms".format(System.currentTimeMillis() - tsBefore))
@@ -243,7 +247,18 @@ object Manticore extends Slf4jLogger {
 
         val tsEnd = System.currentTimeMillis() - tsStart
 
-        println("   Calculation done in " + tsEnd + "ms")
+        import akka.util.duration._
+
+        val took = {
+            if (tsEnd.milliseconds.toSeconds == 0)
+                tsEnd + " milliseconds"
+            else if (tsEnd.milliseconds.toMinutes == 0)
+                tsEnd.milliseconds.toSeconds + " seconds"
+            else
+                tsEnd.milliseconds.toMinutes + " minutes"
+        }
+
+        println("   Calculation done in " + took)
         println("   Probability binaries: " + probs.result().map(_.toString)
             .reduceLeftOption(_ + " " + _).getOrElse(""))
         val (up, down) = probs.partition(_ == 1)
