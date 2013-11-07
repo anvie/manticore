@@ -2,6 +2,7 @@ package com.ansvia.manticore
 
 import java.io._
 import java.util.NoSuchElementException
+import java.security.InvalidParameterException
 
 /**
  * Author: robin
@@ -47,7 +48,15 @@ class CsvReader(is:InputStream) {
             throw new NoSuchElementException()
 
         val s = line.split(",")
-        val rv = Record(idx, s(0), s(1).toDouble, s(2).toDouble, s(3).toDouble, s(4).toDouble, s(5).toDouble)
+        val rv = {
+            if (s.length == 6)
+                Record(idx, s(0), s(1).toDouble, s(2).toDouble, s(3).toDouble, s(4).toDouble, s(5).toDouble)
+            else if (s.length == 7)
+                Record(idx, s(0) + " " + s(1), s(2).toDouble, s(3).toDouble,
+                    s(4).toDouble, s(5).toDouble, s(6).toDouble)
+            else
+                throw new InvalidParameterException("Invalid csv format for column " + s.length)
+        }
         idx = idx + 1
         rv
     }
