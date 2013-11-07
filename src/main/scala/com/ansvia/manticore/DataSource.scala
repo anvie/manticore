@@ -10,12 +10,14 @@ import scala.io.Source
  * Time: 10:53 PM
  *
  */
+
 abstract class DataSource {
     def size:Long
     def foreach(func: (Int, Long) => Unit)
     def apply(i:Long):Int
     def indexedData:IndexedSeq[Int]
 }
+
 
 object Ignored extends Exception("ignored")
 
