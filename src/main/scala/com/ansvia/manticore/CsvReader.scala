@@ -17,6 +17,10 @@ case class Record(index:Int, time:String, open:Double, high:Double, low:Double, 
         "%s%s%s%s%s%s%s".format(index,time,open,high,low,close,volumes).hashCode
     }
 
+    def direction = {
+        if (close > open) 1 else 0
+    }
+
 }
 
 
