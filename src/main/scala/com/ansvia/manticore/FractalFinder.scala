@@ -65,13 +65,13 @@ object FractalFinder extends Slf4jLogger {
 
         val timeline = new Array[Bar](size)
         var i = size - 1
-        var foundUp = false
-        var foundDown = false
+        //var foundUp = false
+        //var foundDown = false
         var current:Double = 0.0
 
         while( i >= 2 ){
 
-            foundUp = false
+            var foundUp = false
 
             current = data(i).high
 
@@ -90,14 +90,7 @@ object FractalFinder extends Slf4jLogger {
             }
 
             // find for 6 bars fractals
-            if (!foundUp && size - i - 1 >= 3){
-//                if(dCurrent==High[i+1] && dCurrent>High[i+2] && dCurrent>High[i+3] &&
-//                dCurrent>High[i-1] && dCurrent>High[i-2])
-//                {
-//                    bFound=true;
-//                    ExtUpFractalsBuffer[i]=dCurrent;
-//                }
-
+            if (!foundUp && (size - i - 1) >= 3){
                 if (current == high(dataReversed,i+1) && current>high(dataReversed, i+2) && current>high(dataReversed, i+3) &&
                     current>high(dataReversed,i-1) && current>high(dataReversed, i-2)){
                     foundUp = true
@@ -107,17 +100,7 @@ object FractalFinder extends Slf4jLogger {
 
             // find for 7 bars fractals
 
-            if (!foundUp && size - i - 1 >= 4){
-
-//            if(!bFound && (Bars-i-1)>=4)
-//            {
-//                if(dCurrent>=High[i+1] && dCurrent==High[i+2] && dCurrent>High[i+3] && dCurrent>High[i+4] &&
-//                dCurrent>High[i-1] && dCurrent>High[i-2])
-//                {
-//                    bFound=true;
-//                    ExtUpFractalsBuffer[i]=dCurrent;
-//                }
-//            }
+            if (!foundUp && (size - i - 1) >= 4){
                 if (current >= high(dataReversed, i+1) && current==high(dataReversed, i+2) && current > high(dataReversed, i+3) &&
                     current>high(dataReversed, i+4) && current>high(dataReversed, i-1) && current>high(dataReversed, i-2)){
                     foundUp = true
@@ -127,17 +110,7 @@ object FractalFinder extends Slf4jLogger {
 
             // find for 8 bars fractals
 
-            if (!foundUp && size - i - 1 >= 5){
-//                if(!bFound && (Bars-i-1)>=5)
-//                {
-//                    if(dCurrent>=High[i+1] && dCurrent==High[i+2] && dCurrent==High[i+3] && dCurrent>High[i+4] && dCurrent>High[i+5] &&
-//                    dCurrent>High[i-1] && dCurrent>High[i-2])
-//                    {
-//                        bFound=true;
-//                        ExtUpFractalsBuffer[i]=dCurrent;
-//                    }
-//                }
-
+            if (!foundUp && (size - i - 1) >= 5){
                 if (current>=high(dataReversed,i+1) && current==high(dataReversed,i+2) && current==high(dataReversed,i+3) &&
                     current>high(dataReversed, i+4) && current>high(dataReversed,i+5) &&
                     current>high(dataReversed, i-1) && current>high(dataReversed, i-2)){
@@ -149,17 +122,7 @@ object FractalFinder extends Slf4jLogger {
 
             // find for 9 bars fractals
 
-            if (!foundUp && size - i - 1 >= 6){
-//                if(!bFound && (Bars-i-1)>=6)
-//                {
-//                    if(dCurrent>=High[i+1] && dCurrent==High[i+2] && dCurrent==High[i+3] && dCurrent>High[i+4] && dCurrent>High[i+5] &&
-//                    dCurrent>High[i-1] && dCurrent>High[i-2])
-//                    {
-//                        bFound=true;
-//                        ExtUpFractalsBuffer[i]=dCurrent;
-//                    }
-//                }
-
+            if (!foundUp && (size - i - 1) >= 6){
                 if (current>=high(dataReversed, i+1) && current==high(dataReversed,i+2) && current>=high(dataReversed,i+3) &&
                     current==high(dataReversed, i+4) && current>high(dataReversed,i+5) && current>high(dataReversed,i+6) &&
                     current>high(dataReversed, i-1) && current>high(dataReversed, i-2)){
@@ -172,7 +135,7 @@ object FractalFinder extends Slf4jLogger {
              * PROCESS FRACTAL DOWN
              ***********************************************/
 
-            foundDown = false
+            var foundDown = false
             current = data(i).low
 
 //            if(dCurrent<Low[i+1] && dCurrent<Low[i+2] && dCurrent<Low[i-1] && dCurrent<Low[i-2])
@@ -198,7 +161,7 @@ object FractalFinder extends Slf4jLogger {
             }
 
             // find for 6 bars fractal
-            if (!foundDown && size - i - 1 >= 3){
+            if (!foundDown && (size - i - 1) >= 3){
                 if (current==low(dataReversed,i+1) && current<low(dataReversed,i+2) && current<low(dataReversed,i+3) &&
                     current<low(dataReversed,i-1) && current<low(dataReversed,i-2)){
                     foundDown = true
@@ -207,7 +170,7 @@ object FractalFinder extends Slf4jLogger {
             }
 
             // find for 7 bars fractal
-            if (!foundDown && size - i - 1 >= 4){
+            if (!foundDown && (size - i - 1) >= 4){
                 if (current<=low(dataReversed,i+1) && current==low(dataReversed,i+2) && current<low(dataReversed,i+3) &&
                     current<low(dataReversed,i+4) &&
                     current<low(dataReversed,i-1) && current<low(dataReversed,i-2)){
@@ -217,7 +180,7 @@ object FractalFinder extends Slf4jLogger {
             }
 
             // find for 8 bars fractal
-            if (!foundDown && size - i - 1 >= 5){
+            if (!foundDown && (size - i - 1) >= 5){
                 if (current<=low(dataReversed,i+1) && current==low(dataReversed,i+2) && current==low(dataReversed,i+3) &&
                     current<low(dataReversed,i+4) && current<low(dataReversed,i+5) &&
                     current<low(dataReversed,i-1) && current<low(dataReversed,i-2)){
@@ -227,7 +190,7 @@ object FractalFinder extends Slf4jLogger {
             }
 
             // find for 9 bars fractal
-            if (!foundDown && size - i - 1 >= 6){
+            if (!foundDown && (size - i - 1) >= 6){
                 if (current<=low(dataReversed,i+1) && current==low(dataReversed,i+2) && current<=low(dataReversed,i+3) &&
                     current==low(dataReversed,i+4) && current<low(dataReversed,i+5) && current<low(dataReversed,i+6) &&
                     current<low(dataReversed,i-1) && current<low(dataReversed,i-2)){
@@ -251,7 +214,7 @@ object FractalFinder extends Slf4jLogger {
 
     def high(indexedData:IndexedSeq[Record], idx:Int) = {
         try {
-            indexedData(idx-1).high
+            indexedData(idx).high
         }
         catch {
             case e:IndexOutOfBoundsException => 0.0
@@ -260,7 +223,7 @@ object FractalFinder extends Slf4jLogger {
 
     def low(indexedData:IndexedSeq[Record], idx:Int) = {
         try {
-            indexedData(idx-1).low
+            indexedData(idx).low
         }
         catch {
             case e:IndexOutOfBoundsException => 0.0
