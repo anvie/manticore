@@ -17,8 +17,9 @@ class GigiSpec extends Specification {
 
      class Ctx extends Scope {
 
-         val fileDataPath = "data/EURUSD1.csv"
-         
+//         val fileDataPath = "data/EURUSD1.csv"
+         val fileDataPath = "/home/robin/EURUSD240.csv"
+
          val csvReader = new CsvReader(fileDataPath)
 
          println(" + data source: " + fileDataPath)
@@ -104,6 +105,7 @@ class GigiSpec extends Specification {
                  var filtered = 0
                  var matched = 0
                  val rv = z.filter { dna =>
+//                     println("is set2(i).contains : [" + dna.map(_._1).map(_.toString).mkString(",") + "] ?")
                      val rv = set2(i).contains(dna.map(_._1))
                      if (!rv){
                          filtered = filtered + 1
@@ -112,7 +114,7 @@ class GigiSpec extends Specification {
                      }
                      rv
                  }
-                 println(", match: " + matched + ", filtered: " + filtered)
+                 println(", filtered: " + filtered + ", match: " + matched)
                  rv
              }
 
