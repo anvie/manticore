@@ -89,7 +89,6 @@ class GigiSpec extends Specification {
                     yield Manticore.getDnas(new InlineDataSource(data2), i)
                     .map(d => d.map(_._1))
 
-//             println("set2: " + set2)
              println("SET2 created which is %d step %d strings".format(set2.length,set2.map(_.length).sum))
              println("SET2 details:")
 
@@ -111,7 +110,7 @@ class GigiSpec extends Specification {
                      }
                      rv
                  }
-                 println(", filtered: " + filtered + ", match: " + matched)
+                 println(", match: " + matched + ", filtered: " + filtered)
                  rv
              }
 
