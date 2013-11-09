@@ -38,7 +38,7 @@ case class NonFractal(idx:Int, time:String) extends Bar(idx) {
 object FractalFinder extends Slf4jLogger {
 
 
-    def extract(data:IndexedSeq[Record],size:Int) = {
+    def find(data:IndexedSeq[Record],size:Int) = {
 
         // index mulai dari belakang mundur
 
@@ -220,7 +220,7 @@ object FractalFinder extends Slf4jLogger {
         println(" + total %d record loaded.".format(size))
         println(" + processing...")
 
-        val timeline = extract(data, size)
+        val timeline = find(data, size)
 
         timeline.foreach(println)
 

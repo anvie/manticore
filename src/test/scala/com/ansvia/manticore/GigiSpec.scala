@@ -59,7 +59,7 @@ class GigiSpec extends Specification {
 
              val set1 = for(i <- 4 to 13)
                 yield Manticore.getDnas(new InlineDataSource(data1), i)
-                .map(d => d.map(_._1))
+                .map(d => d)
 
 
              println("SET1 created which is %d step contains %d strings".format(set1.length,set1.map(_.length).sum))
@@ -71,7 +71,7 @@ class GigiSpec extends Specification {
 
              println("creating SET2...")
 
-             val data2: Array[Int] = FractalFinder.extract(data, size)
+             val data2: Array[Int] = FractalFinder.find(data, size)
                  .filter(_.isInstanceOf[Fractal])
                  .map(_.asInstanceOf[Fractal])
                  .map { f =>
@@ -98,11 +98,11 @@ class GigiSpec extends Specification {
 
              println("creating SET3...")
              val set3 = set1.zipWithIndex.map { case (z, i) =>
-                 print("set1(" + i + ").length: " + z.length + ", set2(" + i + ").length: " + set2(i).length)
+                 print("set1(" + (i+4) + ").length: " + z.length + ", set2(" + (i+4) + ").length: " + set2(i).length)
                  var filtered = 0
                  var matched = 0
-                 val rv = z.filter { x =>
-                     val rv = set2(i).contains(x)
+                 val rv = z.filter { dna =>
+                     val rv = set2(i).contains(dna.map(_._1))
                      if (!rv){
                          filtered = filtered + 1
                      }else{
@@ -121,6 +121,26 @@ class GigiSpec extends Specification {
                  println("   %d-string = %d patterns".format(i + 4, d.length))
              }
 
+             println("Calculating probabilities...")
+             var up = 0
+             var down = 0
+             set3.zipWithIndex.foreach { case (dna, i) =>
+                 val (positives, negatives, chromosomes) = Manticore.breakDown(dna, data1)
+                 val probability = if (positives > negatives) {
+                     up = up + 1
+                     "UP"
+                 } else {
+                     down = down + 1
+                     "DOWN"
+                 }
+                 println("  + %d-strings %d chromosomes -->\t 1 = %d, 0 = %d, probabilitiy: %s".format(
+                     (i+4),chromosomes, positives, negatives, probability))
+             }
+             println("Summary:")
+             println("   + up: " + up)
+             println("   + down: " + down)
+
+//             println("positive: %d, negatives: %d, chromosomes: %d".format(positive, negatives, chromosomes))
              
          }
      }

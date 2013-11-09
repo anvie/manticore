@@ -36,12 +36,12 @@ case class CalculationResult(dnas:DNAS, positives:Int, negatives:Int, chromosome
 
 object Manticore extends Slf4jLogger {
 
-    type FourSeq = Seq[Seq[Int]]
+//    type FourSeq = Seq[Seq[Int]]
     type DNA = Seq[(Int, Long)]
     type DNAS = Seq[DNA]
 
     def getDnas(ds:DataSource, len:Int):DNAS = {
-        var rv = Seq.newBuilder[Seq[(Int, Long)]]
+        var rv = Seq.newBuilder[DNA]
         var buff = Seq.newBuilder[(Int, Long)]
         var buffCount = 0
         var jump = 1

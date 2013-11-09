@@ -46,7 +46,7 @@ class FractalFinderSpec extends Specification {
 
     "Fractal finder" should {
         "extract fractals from tr" in new Ctx {
-            val fractals = FractalFinder.extract(data, size)
+            val fractals = FractalFinder.find(data, size)
                 .filter(_.isInstanceOf[Fractal])
                 .map(_.asInstanceOf[Fractal])
             val fractalSize = fractals.size
