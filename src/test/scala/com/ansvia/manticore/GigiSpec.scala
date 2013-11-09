@@ -17,8 +17,8 @@ class GigiSpec extends Specification {
 
      class Ctx extends Scope {
 
-//         val fileDataPath = "data/EURUSD1.csv"
-         val fileDataPath = "/home/robin/EURUSD240.csv"
+         val fileDataPath = "data/EURUSD1.csv"
+//         val fileDataPath = "/home/aoeu/EURUSD240.csv"
 
          val csvReader = new CsvReader(fileDataPath)
 
@@ -120,7 +120,7 @@ class GigiSpec extends Specification {
 
 
 //             println("set3: " + set3)
-             println("SET3 created details: ")
+             println("SET3 created. Details: ")
              set3.zipWithIndex.foreach { case (d, i) =>
                  println("   %d-string = %d patterns".format(i + 4, d.length))
              }
