@@ -50,7 +50,7 @@ object Manticore extends Slf4jLogger {
         var done = dataCount < 1
         while(!done){
             breakable {
-                ds.foreach { case (d, i) =>
+                ds.foreach { case (ts, d, i) =>
 
                     if (i % jump == 0){
                         if (buffCount < len){
@@ -97,7 +97,7 @@ object Manticore extends Slf4jLogger {
     
     def process(ds:DataSource, len:Int):CalculationResult = {
         val dnas = getDnas(ds, len)
-        val (post, neg, chrom) = breakDown(dnas, ds.indexedData)
+        val (post, neg, chrom) = breakDown(dnas, ds.indexedData.map(_._2))
         CalculationResult(dnas, post, neg, chrom)
     }
 

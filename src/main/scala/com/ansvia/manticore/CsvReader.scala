@@ -65,5 +65,9 @@ class CsvReader(is:InputStream) {
         rv
     }
 
+    def close(){
+        bfr.close()
+    }
+
 
 }
