@@ -48,7 +48,8 @@ trait ChromosomeFinder {
             count = count + 1
 
 
-            //                print("   %02d %02d %02d %02d".format(d4, d3, d2, d1))
+//             print("   %02d %02d %02d %02d".format(dna))
+//            println(dna)
 
 //            val chrom = Seq(d4, d3, d2, d1)
             val chrom = dna.map { case (x, i) =>

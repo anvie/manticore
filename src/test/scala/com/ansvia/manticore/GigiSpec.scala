@@ -52,6 +52,8 @@ class GigiSpec extends Specification {
      "Gigi algo" should {
          "filtering set-1 by set-2" in new Ctx {
 
+             val start = System.currentTimeMillis()
+
              println("creating SET1...")
              val data1 = data.map(_.direction)
 
@@ -133,12 +135,15 @@ class GigiSpec extends Specification {
                      down = down + 1
                      "DOWN"
                  }
-                 println("  + %d-strings %d chromosomes -->\t 1 = %d, 0 = %d, probabilitiy: %s".format(
-                     (i+4),chromosomes, positives, negatives, probability))
+                 println("  + %d-strings %d chromosomes \t-->\t 1 = %d, 0 = %d, probabilitiy: %s".format(
+                     dna.head.length,chromosomes, positives, negatives, probability))
              }
-             println("Summary:")
+             println("Done in " + (System.currentTimeMillis() - start) + "ms")
+             println("\n")
+             println("==[ SUMMARY ]==============================================")
              println("   + up: " + up)
              println("   + down: " + down)
+             println("\n")
 
 //             println("positive: %d, negatives: %d, chromosomes: %d".format(positive, negatives, chromosomes))
              
