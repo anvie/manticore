@@ -1,7 +1,5 @@
 package com.ansvia.manticore
 
-import org.apache.commons.io.FileUtils
-import java.io.File
 import com.ansvia.commons.logging.Slf4jLogger
 import scala.collection.mutable.ArrayBuffer
 import java.util.NoSuchElementException
@@ -190,8 +188,6 @@ object FractalFinder extends Slf4jLogger {
 
     def main(args:Array[String]){
 
-
-        import DataModes._
 
         val fileDataPath = args(0)
 
