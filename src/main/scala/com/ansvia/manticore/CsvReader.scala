@@ -3,6 +3,7 @@ package com.ansvia.manticore
 import java.io._
 import java.util.NoSuchElementException
 import java.security.InvalidParameterException
+import scala.collection.mutable.ArrayBuffer
 
 /**
  * Author: robin
@@ -63,6 +64,21 @@ class CsvReader(is:InputStream) {
         }
         idx = idx + 1
         rv
+    }
+
+    def toArray = {
+        var buff = new ArrayBuffer[Record]
+
+        try {
+            while (true) {
+                buff :+= nextRecord()
+            }
+        }
+        catch {
+            case e:NoSuchElementException =>
+
+        }
+        buff.toArray
     }
 
     def close(){

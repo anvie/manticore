@@ -128,8 +128,8 @@ class GigiSpec extends Specification {
              println("Calculating probabilities...")
              var up = 0
              var down = 0
-             set3.zipWithIndex.foreach { case (dna, i) =>
-                 val (positives, negatives, chromosomes) = Manticore.breakDown(dna, data1)
+             set3.zipWithIndex.foreach { case (dnas, i) =>
+                 val (positives, negatives, chromosomes) = Manticore.breakDown(dnas, data1)
                  val probability = if (positives > negatives) {
                      up = up + 1
                      "UP"
@@ -138,7 +138,7 @@ class GigiSpec extends Specification {
                      "DOWN"
                  }
                  println("  + %d-strings %d chromosomes \t-->\t 1 = %d, 0 = %d, probabilitiy: %s".format(
-                     dna.head.length,chromosomes, positives, negatives, probability))
+                     dnas.head.length,chromosomes, positives, negatives, probability))
              }
              println("Done in " + (System.currentTimeMillis() - start) + "ms")
              println("\n")
