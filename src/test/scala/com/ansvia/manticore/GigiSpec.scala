@@ -80,13 +80,37 @@ class GigiSpec extends Specification {
 //                 println("%d. %s => %s".format(i, data(i).time, z))
 //             }
 
-             val legs = zz.getLegs //.filter(leg => leg.fractalCount > 3 && leg.fractalCount < 14)
+             val legs = zz.getLegs.filter(leg => leg.fractalCount > 3 && leg.fractalCount < 14)
+
+             var set2: immutable.IndexedSeq[Seq[Seq[Int]]] = immutable.IndexedSeq[Seq[Seq[Int]]]()
 
              legs.zipWithIndex.foreach { case (d, i) =>
                  println("%d. %s".format(i, d))
+
+                 set2 ++=
+                     (for(n <- 4 to 13)
+                        yield Manticore.getDnas(new InlineDataSource(d.fractalPattern.map(_.toInt).toSeq), n)
+                        .map(dd => dd.map(_._1))).toSeq
+
+//                 val result = dnas.map( dna => Manticore.breakDown(dna, data) )
+
              }
 
 
+             val set3 =
+                 set1.zipWithIndex.map { case (x, ii) =>
+                     x.filter { dna =>
+                         val zz = set2(ii)
+                         val zz2 = dna.map(_._1)
+                         val rv = zz.contains(zz2)
+                         rv
+                     }
+                 }
+
+             set3.zipWithIndex.foreach { case (d, i) =>
+                 println(" %d-strings => %s substrings".format(i+4, d.length))
+             }
+             println("set3.length: " + set3.length)
 
 //
 //             val data2: Array[Int] = FractalFinder.find(data, size)
