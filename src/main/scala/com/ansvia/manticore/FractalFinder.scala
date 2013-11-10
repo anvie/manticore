@@ -117,8 +117,12 @@ object FractalFinder extends Slf4jLogger {
             var foundDown = false
             current = data(i).low
 
+//            if (data(i).time == "2013.11.08 20:48"){
+//                println("break")
+//            }
+
             if (current<low(data,i+1) && current<low(data,i+2) &&
-                current<low(data,i-1) && current<low(data,i-2)){
+                current<low(data,i-1) && current<=low(data,i-2)){
                 foundDown = true
 //                update(0)
             }

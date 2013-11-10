@@ -2,7 +2,7 @@ package com.ansvia.manticore
 
 import org.specs2.mutable.Specification
 import scala.collection.mutable.ArrayBuffer
-import java.util.NoSuchElementException
+import java.util.{Date, NoSuchElementException}
 import scala.collection.immutable
 import org.specs2.specification.Scope
 
@@ -17,7 +17,7 @@ class GigiSpec extends Specification {
 
      class Ctx extends Scope {
 
-         val fileDataPath = "/home/robin/EURUSD1.csv"
+         val fileDataPath = "/home/robin/EURUSD1b.csv"
 //         val fileDataPath = "/home/aoeu/EURUSD240.csv"
 
          val csvReader = new CsvReader(fileDataPath)
@@ -75,9 +75,17 @@ class GigiSpec extends Specification {
              println("creating SET2...")
 
              val zz = new ZigzagFinder(data)
-             val legs = zz.getLegs
 
-             legs.foreach(println)
+             zz.process().getZigZagBuffer.zipWithIndex.foreach { case (z, i) =>
+                 println("%d. %s => %s".format(i, data(i).time, z))
+             }
+
+//             val legs = zz.getLegs.filter(leg => leg.fractalCount > 3 && leg.fractalCount < 14)
+//
+//             legs.zipWithIndex.foreach { case (d, i) =>
+//                 println("%d. %s".format(i, d))
+//             }
+
 
 
 //

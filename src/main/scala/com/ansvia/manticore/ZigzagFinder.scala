@@ -10,8 +10,9 @@ import scala.collection.mutable.ArrayBuffer
  *
  */
 
-case class Leg(time:String, fractalCount:Int, barCount:Int){
-    override def toString = "leg[%s] = fractal: %d, bar: %d".format(time, fractalCount, barCount)
+case class Leg(time:String, fractalCount:Int, barCount:Int, fractalPattern:Array[Byte]){
+    override def toString = "leg[%s] = fractal: %d, bar: %d, fractal-pattern: {%s}".format(time,
+        fractalCount, barCount, fractalPattern.map(_.toString).mkString(","))
 }
 
 class ZigzagFinder(data:IndexedSeq[Record], depth:Int=12, deviation:Int=5, backstep:Int=8) {
@@ -319,15 +320,15 @@ class ZigzagFinder(data:IndexedSeq[Record], depth:Int=12, deviation:Int=5, backs
                     }
                 }
 
-                //                if (!foundUp && !foundDown){
-                //                    timeline(i) = NonFractal(i, data(i).time)
-                //                }else if (foundUp && !foundDown){
-                //                    timeline(i) = Fractal(i, data(i).time, FractalPos.TOP)
-                //                }else if (foundDown && !foundUp){
-                //                    timeline(i) = Fractal(i, data(i).time, FractalPos.BOTTOM)
-                //                }else if (foundUp && foundDown){
-                //                    timeline(i) = Fractal(i, data(i).time, FractalPos.TOP_AND_BOTTOM)
-                //                }
+//                if (!foundUp && !foundDown){
+//                    timeline(i) = NonFractal(i, data(i).time)
+//                }else if (foundUp && !foundDown){
+//                    timeline(i) = Fractal(i, data(i).time, FractalPos.TOP)
+//                }else if (foundDown && !foundUp){
+//                    timeline(i) = Fractal(i, data(i).time, FractalPos.BOTTOM)
+//                }else if (foundUp && foundDown){
+//                    timeline(i) = Fractal(i, data(i).time, FractalPos.TOP_AND_BOTTOM)
+//                }
             }
 
             shift = shift + 1
@@ -426,6 +427,7 @@ class ZigzagFinder(data:IndexedSeq[Record], depth:Int=12, deviation:Int=5, backs
         }
 
         var rv = new ArrayBuffer[Leg]
+        var fractalPattern = new ArrayBuffer[Byte]
 
         var begin = false
         var fractalCount = 0
@@ -436,17 +438,24 @@ class ZigzagFinder(data:IndexedSeq[Record], depth:Int=12, deviation:Int=5, backs
             if (!begin){
                 if (isZzPoint(zz)){
                     begin = true
+                    fractalPattern.clear()
                     fractalCount = 1
                     barCount = 1
                 }
             }else if (begin && isZzPoint(zz)){
 //                begin = false
-                rv :+= Leg(data(i).time, fractalCount, barCount)
+//                fractalPattern :+= zz.toByte
+//                fractalCount += 1
+//                barCount += 1
+                rv :+= Leg(data(i).time, fractalCount, barCount, fractalPattern.toArray)
                 fractalCount = 0
                 barCount = 0
+                fractalPattern.clear()
             }else if (begin){
-                if (isFractal(zz))
+                if (isFractal(zz)){
                     fractalCount += 1
+                    fractalPattern :+= zz.toByte
+                }
                 barCount += 1
             }
             i = i + 1
