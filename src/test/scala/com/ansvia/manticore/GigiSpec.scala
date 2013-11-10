@@ -3,7 +3,7 @@ package com.ansvia.manticore
 import org.specs2.mutable.Specification
 import scala.collection.mutable.ArrayBuffer
 import java.util.{Date, NoSuchElementException}
-import scala.collection.immutable
+import scala.collection.{mutable, immutable}
 import org.specs2.specification.Scope
 
 /**
@@ -17,7 +17,7 @@ class GigiSpec extends Specification {
 
      class Ctx extends Scope {
 
-         val fileDataPath = "/home/robin/EURUSD1b.csv"
+         val fileDataPath = "/home/robin/EURUSD1c.csv"
 //         val fileDataPath = "/home/aoeu/EURUSD240.csv"
 
          val csvReader = new CsvReader(fileDataPath)
@@ -82,15 +82,24 @@ class GigiSpec extends Specification {
 
              val legs = zz.getLegs.filter(leg => leg.fractalCount > 3 && leg.fractalCount < 14)
 
-             var set2: immutable.IndexedSeq[Seq[Seq[Int]]] = immutable.IndexedSeq[Seq[Seq[Int]]]()
+//             var set2: immutable.IndexedSeq[Seq[Seq[Int]]] = immutable.IndexedSeq[Seq[Seq[Int]]]()
+             var set2a = new mutable.HashMap[Int,Seq[Seq[Int]]]
 
              legs.zipWithIndex.foreach { case (d, i) =>
                  println("%d. %s".format(i, d))
 
-                 set2 ++=
-                     (for(n <- 4 to 13)
-                        yield Manticore.getDnas(new InlineDataSource(d.fractalPattern.map(_.toInt).toSeq), n)
-                        .map(dd => dd.map(_._1))).toSeq
+//                 set2 ++=
+                     for(n <- 4 to 13){
+                         val aoeu = Manticore.getDnas(new InlineDataSource(d.fractalPattern.map(_.toInt).toSeq), n)
+                             .map(dd => dd.map(_._1))
+                         if (set2a.contains(n)){
+                             val aoeu2 = set2a.get(n).get ++ aoeu
+                             set2a.update(n, aoeu2)
+                         }else{
+                             set2a += n -> aoeu
+                         }
+                     }
+
 
 //                 val result = dnas.map( dna => Manticore.breakDown(dna, data) )
 
@@ -100,7 +109,7 @@ class GigiSpec extends Specification {
              val set3 =
                  set1.zipWithIndex.map { case (x, ii) =>
                      x.filter { dna =>
-                         val zz = set2(ii)
+                         val zz = set2a(ii+4)
                          val zz2 = dna.map(_._1)
                          val rv = zz.contains(zz2)
                          rv
@@ -109,8 +118,10 @@ class GigiSpec extends Specification {
 
              set3.zipWithIndex.foreach { case (d, i) =>
                  println(" %d-strings => %s substrings".format(i+4, d.length))
+
+                 d.foreach(dd => "{" + println(dd.map( xx => xx._1.toString /*"%s(%s)".format(xx._1,xx._2)*/ ).mkString(",")) + "}")
              }
-             println("set3.length: " + set3.length)
+//             println("set3.length: " + set3.length)
 
 //
 //             val data2: Array[Int] = FractalFinder.find(data, size)

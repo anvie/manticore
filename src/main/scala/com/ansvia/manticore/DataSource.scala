@@ -24,10 +24,10 @@ object Ignored extends Exception("ignored")
 class InlineDataSource(data:Seq[Int]) extends DataSource {
     private val dataI = data.reverse.toIndexedSeq
 
-    def size = dataI.length + 1
+    def size = dataI.length // + 1
 
     def foreach(func: (Int, Long) => Unit) = {
-        func(-1, 0)
+//        func(-1, 0)
         var i = 1L
         dataI.foreach { s =>
             func(s, i)
