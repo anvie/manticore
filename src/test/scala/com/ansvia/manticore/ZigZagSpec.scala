@@ -15,9 +15,14 @@ class ZigZagSpec extends Specification {
 
             val csvr = new CsvReader("data/EURUSD1.csv")
             val data = csvr.toArray
+//            val reversedData = data.reverse
+//            val size = reversedData.size
             val zzf = new ZigzagFinder(data)
-            zzf.process().getZigZagBuffer.foreach { d =>
-                println(d)
+            zzf.process().getZigZagBuffer.zipWithIndex.foreach { case (d, i) =>
+                if (d > 0.0){
+                    val time = data(i).time
+                    println(" %d. %s => %s".format(i, time, d))
+                }
             }
 
         }
