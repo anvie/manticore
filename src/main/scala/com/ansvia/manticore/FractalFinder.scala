@@ -179,6 +179,25 @@ object FractalFinder extends Slf4jLogger {
 
     }
 
+
+    def high(indexedData:IndexedSeq[Record], idx:Int) = {
+        try {
+            indexedData(idx).high
+        }
+        catch {
+            case e:IndexOutOfBoundsException => 0.0
+        }
+    }
+
+    def low(indexedData:IndexedSeq[Record], idx:Int) = {
+        try {
+            indexedData(idx).low
+        }
+        catch {
+            case e:IndexOutOfBoundsException => 0.0
+        }
+    }
+
     def usage(){
         println("Usage:\n")
         println("      ./ffind [CSV-FILE]")
@@ -229,22 +248,5 @@ object FractalFinder extends Slf4jLogger {
 
     }
 
-    def high(indexedData:IndexedSeq[Record], idx:Int) = {
-        try {
-            indexedData(idx).high
-        }
-        catch {
-            case e:IndexOutOfBoundsException => 0.0
-        }
-    }
-
-    def low(indexedData:IndexedSeq[Record], idx:Int) = {
-        try {
-            indexedData(idx).low
-        }
-        catch {
-            case e:IndexOutOfBoundsException => 0.0
-        }
-    }
 
 }
