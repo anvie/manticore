@@ -17,7 +17,7 @@ class GigiSpec extends Specification {
 
      class Ctx extends Scope {
 
-         val fileDataPath = "data/EURUSD1.csv"
+         val fileDataPath = "/home/robin/EURUSD1.csv"
 //         val fileDataPath = "/home/aoeu/EURUSD240.csv"
 
          val csvReader = new CsvReader(fileDataPath)
@@ -74,78 +74,85 @@ class GigiSpec extends Specification {
 
              println("creating SET2...")
 
-             val data2: Array[Int] = FractalFinder.find(data, size)
-                 .filter(_.isInstanceOf[Fractal])
-                 .map(_.asInstanceOf[Fractal])
-                 .map { f =>
+             val zz = new ZigzagFinder(data)
+             val legs = zz.getLegs
 
-                 if (f.pos == FractalPos.TOP_AND_BOTTOM)
-                     FractalPos.TOP
-                 else
-                     f.pos
-             }
-
-             println("data2 length: " + data2.length)
-
-             val set2 =
-                 for(i <- 4 to 13)
-                    yield Manticore.getDnas(new InlineDataSource(data2), i)
-                    .map(d => d.map(_._1))
-
-             println("SET2 created which is %d step %d strings".format(set2.length,set2.map(_.length).sum))
-             println("SET2 details:")
-
-             set2.zipWithIndex.foreach { case (d, i) =>
-                 println("  + %d-string = %d patterns".format(i+4, d.length))
-             }
-
-             println("creating SET3...")
-             val set3 = set1.zipWithIndex.map { case (z, i) =>
-                 print("set1(" + (i+4) + ").length: " + z.length + ", set2(" + (i+4) + ").length: " + set2(i).length)
-                 var filtered = 0
-                 var matched = 0
-                 val rv = z.filter { dna =>
-//                     println("is set2(i).contains : [" + dna.map(_._1).map(_.toString).mkString(",") + "] ?")
-                     val rv = set2(i).contains(dna.map(_._1))
-                     if (!rv){
-                         filtered = filtered + 1
-                     }else{
-                         matched = matched + 1
-                     }
-                     rv
-                 }
-                 println(", filtered: " + filtered + ", match: " + matched)
-                 rv
-             }
+             legs.foreach(println)
 
 
-//             println("set3: " + set3)
-             println("SET3 created. Details: ")
-             set3.zipWithIndex.foreach { case (d, i) =>
-                 println("   %d-string = %d patterns".format(i + 4, d.length))
-             }
-
-             println("Calculating probabilities...")
-             var up = 0
-             var down = 0
-             set3.zipWithIndex.foreach { case (dnas, i) =>
-                 val (positives, negatives, chromosomes) = Manticore.breakDown(dnas, data1)
-                 val probability = if (positives > negatives) {
-                     up = up + 1
-                     "UP"
-                 } else {
-                     down = down + 1
-                     "DOWN"
-                 }
-                 println("  + %d-strings %d chromosomes \t-->\t 1 = %d, 0 = %d, probabilitiy: %s".format(
-                     dnas.head.length,chromosomes, positives, negatives, probability))
-             }
-             println("Done in " + (System.currentTimeMillis() - start) + "ms")
-             println("\n")
-             println("==[ SUMMARY ]==============================================")
-             println("   + up: " + up)
-             println("   + down: " + down)
-             println("\n")
+//
+//             val data2: Array[Int] = FractalFinder.find(data, size)
+//                 .filter(_.isInstanceOf[Fractal])
+//                 .map(_.asInstanceOf[Fractal])
+//                 .map { f =>
+//
+//                 if (f.pos == FractalPos.TOP_AND_BOTTOM)
+//                     FractalPos.TOP
+//                 else
+//                     f.pos
+//             }
+//
+//             println("data2 length: " + data2.length)
+//
+//             val set2 =
+//                 for(i <- 4 to 13)
+//                    yield Manticore.getDnas(new InlineDataSource(data2), i)
+//                    .map(d => d.map(_._1))
+//
+//             println("SET2 created which is %d step %d strings".format(set2.length,set2.map(_.length).sum))
+//             println("SET2 details:")
+//
+//             set2.zipWithIndex.foreach { case (d, i) =>
+//                 println("  + %d-string = %d patterns".format(i+4, d.length))
+//             }
+//
+//             println("creating SET3...")
+//             val set3 = set1.zipWithIndex.map { case (z, i) =>
+//                 print("set1(" + (i+4) + ").length: " + z.length + ", set2(" + (i+4) + ").length: " + set2(i).length)
+//                 var filtered = 0
+//                 var matched = 0
+//                 val rv = z.filter { dna =>
+////                     println("is set2(i).contains : [" + dna.map(_._1).map(_.toString).mkString(",") + "] ?")
+//                     val rv = set2(i).contains(dna.map(_._1))
+//                     if (!rv){
+//                         filtered = filtered + 1
+//                     }else{
+//                         matched = matched + 1
+//                     }
+//                     rv
+//                 }
+//                 println(", filtered: " + filtered + ", match: " + matched)
+//                 rv
+//             }
+//
+//
+////             println("set3: " + set3)
+//             println("SET3 created. Details: ")
+//             set3.zipWithIndex.foreach { case (d, i) =>
+//                 println("   %d-string = %d patterns".format(i + 4, d.length))
+//             }
+//
+//             println("Calculating probabilities...")
+//             var up = 0
+//             var down = 0
+//             set3.zipWithIndex.foreach { case (dnas, i) =>
+//                 val (positives, negatives, chromosomes) = Manticore.breakDown(dnas, data1)
+//                 val probability = if (positives > negatives) {
+//                     up = up + 1
+//                     "UP"
+//                 } else {
+//                     down = down + 1
+//                     "DOWN"
+//                 }
+//                 println("  + %d-strings %d chromosomes \t-->\t 1 = %d, 0 = %d, probabilitiy: %s".format(
+//                     dnas.head.length,chromosomes, positives, negatives, probability))
+//             }
+//             println("Done in " + (System.currentTimeMillis() - start) + "ms")
+//             println("\n")
+//             println("==[ SUMMARY ]==============================================")
+//             println("   + up: " + up)
+//             println("   + down: " + down)
+//             println("\n")
 
 //             println("positive: %d, negatives: %d, chromosomes: %d".format(positive, negatives, chromosomes))
              

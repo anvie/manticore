@@ -1,6 +1,7 @@
 package com.ansvia.manticore
 
 import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 
 /**
  * Author: robin
@@ -9,14 +10,18 @@ import scala.collection.mutable
  *
  */
 
-case class Leg(fractalCount:Int, barCount:Int)
+case class Leg(time:String, fractalCount:Int, barCount:Int){
+    override def toString = "leg[%s] = fractal: %d, bar: %d".format(time, fractalCount, barCount)
+}
 
-class ZigzagFinder(data:Array[Record], depth:Int=12, deviation:Int=5, backstep:Int=8) {
+class ZigzagFinder(data:IndexedSeq[Record], depth:Int=12, deviation:Int=5, backstep:Int=8) {
 
     val size = data.length
     private var lowMapBuffer = new Array[Double](size + 1)
     private var highMapBuffer = new Array[Double](size + 1)
     private var zigzagMapBuffer = new Array[Double](size + 1)
+
+    private var calculated = false
 
     def instrPips = 0
 
@@ -62,14 +67,14 @@ class ZigzagFinder(data:Array[Record], depth:Int=12, deviation:Int=5, backstep:I
 
             if (data(shift).low==v){
 
-//                var foundRedundant = false
-//                for (back <- 1 to backstep; if !foundRedundant){
-//                    if (shift - back > 0){
-//                        foundRedundant = data(shift).low >= data(shift - back).low
-//                    }
-//                }
-//                if (!foundRedundant)
-                    lowMapBuffer(shift) = v
+                //                var foundRedundant = false
+                //                for (back <- 1 to backstep; if !foundRedundant){
+                //                    if (shift - back > 0){
+                //                        foundRedundant = data(shift).low >= data(shift - back).low
+                //                    }
+                //                }
+                //                if (!foundRedundant)
+                lowMapBuffer(shift) = v
             }else{
                 lowMapBuffer(shift) = 0.0
             }
@@ -84,7 +89,7 @@ class ZigzagFinder(data:Array[Record], depth:Int=12, deviation:Int=5, backstep:I
                     v = 0.0
                 else {
                     for (back <- 1 to backstep){
-//                        println("back: " + back)
+                        //                        println("back: " + back)
                         if (shift - back > 0){
                             val res = highMapBuffer(shift-back)
                             if (res != 0.0 && res < v){
@@ -97,14 +102,14 @@ class ZigzagFinder(data:Array[Record], depth:Int=12, deviation:Int=5, backstep:I
 
             if (data(shift).high==v){
 
-//                var foundRedundant = false
-//                for (back <- 1 to backstep; if !foundRedundant){
-//                    if (shift - back > 0){
-//                        foundRedundant = data(shift).high <= data(shift - back).high
-//                    }
-//                }
-//                if (!foundRedundant)
-                    highMapBuffer(shift) = v
+                //                var foundRedundant = false
+                //                for (back <- 1 to backstep; if !foundRedundant){
+                //                    if (shift - back > 0){
+                //                        foundRedundant = data(shift).high <= data(shift - back).high
+                //                    }
+                //                }
+                //                if (!foundRedundant)
+                highMapBuffer(shift) = v
             }else{
                 highMapBuffer(shift) = 0.0
             }
@@ -125,11 +130,11 @@ class ZigzagFinder(data:Array[Record], depth:Int=12, deviation:Int=5, backstep:I
 
         shift = 0 //size - 1
         idx = 0
-        
+
         var current = 0.0
-        var fractalCount = 0
+        //        var fractalCount = 0
         var barCount = 0
-        val zzlegs = new mutable.HashMap[Int, Leg]
+        //        val zzlegs = new mutable.HashMap[Int, Leg]
 
         while(shift < size - 1){
             var res = 0.0
@@ -314,20 +319,21 @@ class ZigzagFinder(data:Array[Record], depth:Int=12, deviation:Int=5, backstep:I
                     }
                 }
 
-//                if (!foundUp && !foundDown){
-//                    timeline(i) = NonFractal(i, data(i).time)
-//                }else if (foundUp && !foundDown){
-//                    timeline(i) = Fractal(i, data(i).time, FractalPos.TOP)
-//                }else if (foundDown && !foundUp){
-//                    timeline(i) = Fractal(i, data(i).time, FractalPos.BOTTOM)
-//                }else if (foundUp && foundDown){
-//                    timeline(i) = Fractal(i, data(i).time, FractalPos.TOP_AND_BOTTOM)
-//                }
+                //                if (!foundUp && !foundDown){
+                //                    timeline(i) = NonFractal(i, data(i).time)
+                //                }else if (foundUp && !foundDown){
+                //                    timeline(i) = Fractal(i, data(i).time, FractalPos.TOP)
+                //                }else if (foundDown && !foundUp){
+                //                    timeline(i) = Fractal(i, data(i).time, FractalPos.BOTTOM)
+                //                }else if (foundUp && foundDown){
+                //                    timeline(i) = Fractal(i, data(i).time, FractalPos.TOP_AND_BOTTOM)
+                //                }
             }
 
             shift = shift + 1
         }
 
+        calculated = true
 
         this
 
@@ -345,7 +351,8 @@ class ZigzagFinder(data:Array[Record], depth:Int=12, deviation:Int=5, backstep:I
             }
             catch {
                 case e:ArrayIndexOutOfBoundsException =>
-//                    v = 0.0
+                case e:IndexOutOfBoundsException =>
+                //                    v = 0.0
             }
         }
         v
@@ -363,19 +370,20 @@ class ZigzagFinder(data:Array[Record], depth:Int=12, deviation:Int=5, backstep:I
             }
             catch {
                 case e:ArrayIndexOutOfBoundsException =>
-//                    v = 0.0
+                case e:IndexOutOfBoundsException =>
+                //                    v = 0.0
             }
-//            i = shift + 1
-//            try {
-//                while (i < shift + depth) {
-//                    v = math.min(v, data(i).low)
-//                    i = i + 1
-//                }
-//            }
-//            catch {
-//                case e:ArrayIndexOutOfBoundsException =>
-////                    v = 0.0
-//            }
+            //            i = shift + 1
+            //            try {
+            //                while (i < shift + depth) {
+            //                    v = math.min(v, data(i).low)
+            //                    i = i + 1
+            //                }
+            //            }
+            //            catch {
+            //                case e:ArrayIndexOutOfBoundsException =>
+            ////                    v = 0.0
+            //            }
         }
         v
     }
@@ -400,5 +408,51 @@ class ZigzagFinder(data:Array[Record], depth:Int=12, deviation:Int=5, backstep:I
     }
 
     def getZigZagBuffer = zigzagMapBuffer
+
+    private def isZzPoint(zz:Double) = {
+        zz != 0.0 && zz != 1.0 && zz != -1.0
+    }
+
+    private def isFractal(d:Double) = {
+        d == 0.0 || d == 1.0
+    }
+
+
+
+    def getLegs = {
+
+        if (!calculated){
+            process()
+        }
+
+        var rv = new ArrayBuffer[Leg]
+
+        var begin = false
+        var fractalCount = 0
+        var barCount = 0
+        var i = 0
+
+        for (zz <- zigzagMapBuffer){
+            if (!begin){
+                if (isZzPoint(zz)){
+                    begin = true
+                    fractalCount = 1
+                    barCount = 1
+                }
+            }else if (begin && isZzPoint(zz)){
+//                begin = false
+                rv :+= Leg(data(i).time, fractalCount, barCount)
+                fractalCount = 0
+                barCount = 0
+            }else if (begin){
+                if (isFractal(zz))
+                    fractalCount += 1
+                barCount += 1
+            }
+            i = i + 1
+        }
+
+        rv.toArray
+    }
 
 }
