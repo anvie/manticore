@@ -7,8 +7,9 @@ import scala.collection.immutable
 
 
 object FractalPos {
-    val TOP = 1
+    val NONE = -1
     val BOTTOM = 0
+    val TOP = 1
     val TOP_AND_BOTTOM = 2
 
     def toStr(code:Int) = {
@@ -16,6 +17,7 @@ object FractalPos {
             case TOP => "TOP"
             case BOTTOM => "BOTTOM"
             case TOP_AND_BOTTOM => "TOP & BOTTOM"
+            case NONE => "-"
         }
     }
 }
@@ -122,7 +124,7 @@ object FractalFinder extends Slf4jLogger {
 //            }
 
             if (current<low(data,i+1) && current<low(data,i+2) &&
-                current<low(data,i-1) && current<=low(data,i-2)){
+                current<low(data,i-1) && current<low(data,i-2)){
                 foundDown = true
 //                update(0)
             }

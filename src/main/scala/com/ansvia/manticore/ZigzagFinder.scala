@@ -14,13 +14,14 @@ case class Leg(time:String, fractalCount:Int, barCount:Int, fractalPattern:Array
     override def toString = "leg[%s] = fractal: %d, bar: %d, fractal-pattern: {%s}".format(time,
         fractalCount, barCount, fractalPattern.map(_.toString).mkString(","))
 }
+case class Point(value:Double, fractalPos:Int)
 
 class ZigzagFinder(data:IndexedSeq[Record], depth:Int=12, deviation:Int=5, backstep:Int=8) {
 
     val size = data.length
     private var lowMapBuffer = new Array[Double](size + 1)
     private var highMapBuffer = new Array[Double](size + 1)
-    private var zigzagMapBuffer = new Array[Double](size + 1)
+    private var zigzagMapBuffer = new Array[Point](size + 1)
 
     private var calculated = false
 
@@ -150,45 +151,45 @@ class ZigzagFinder(data:IndexedSeq[Record], depth:Int=12, deviation:Int=5, backs
                             lastHigh = data(shift).high
                             lastHighPos = shift
                             lookFor = -1
-                            zigzagMapBuffer(shift) = lastHigh
+                            zigzagMapBuffer(shift) = Point(lastHigh, FractalPos.TOP)
                             res = 1
                         }
                         if (lowMapBuffer(shift) != 0.0){
                             lastLow = data(shift).low
                             lastLowPos = shift
                             lookFor = 1
-                            zigzagMapBuffer(shift) = lastLow
+                            zigzagMapBuffer(shift) = Point(lastLow, FractalPos.BOTTOM)
                             res = 1
                         }
                     }
                 }
                 case 1 => { // look for peak
                     if (lowMapBuffer(shift) != 0.0 && lowMapBuffer(shift)<lastLow && highMapBuffer(shift)==0.0){
-                        zigzagMapBuffer(lastLowPos) = 0.0
+                        zigzagMapBuffer(lastLowPos) = Point(0.0, FractalPos.NONE)
                         lastLowPos = shift
                         lastLow = lowMapBuffer(shift)
-                        zigzagMapBuffer(shift) = lastLow
+                        zigzagMapBuffer(shift) = Point(lastLow, FractalPos.BOTTOM)
                         res = 1
                     }
                     if (highMapBuffer(shift)!=0.0 && lowMapBuffer(shift)==0.0){
                         lastHigh = highMapBuffer(shift)
                         lastHighPos = shift
-                        zigzagMapBuffer(shift) = lastHigh
+                        zigzagMapBuffer(shift) = Point(lastHigh, FractalPos.TOP)
                         lookFor = -1
                         res = 1
                     }
                 }
                 case -1 => { // look for lawn
                     if (highMapBuffer(shift)!=0.0 && highMapBuffer(shift)>lastHigh && lowMapBuffer(shift)==0.0){
-                        zigzagMapBuffer(lastHighPos) = 0.0
+                        zigzagMapBuffer(lastHighPos) = Point(0.0, FractalPos.NONE)
                         lastHighPos = shift
                         lastHigh = highMapBuffer(shift)
-                        zigzagMapBuffer(shift) = lastHigh
+                        zigzagMapBuffer(shift) = Point(lastHigh, FractalPos.TOP)
                     }
                     if (lowMapBuffer(shift)!=0.0 && highMapBuffer(shift)==0.0){
                         lastLow = lowMapBuffer(shift)
                         lastLowPos = shift
-                        zigzagMapBuffer(shift) = lastLow
+                        zigzagMapBuffer(shift) = Point(lastLow, FractalPos.BOTTOM)
                         lookFor = 1
                     }
                 }
@@ -308,15 +309,15 @@ class ZigzagFinder(data:IndexedSeq[Record], depth:Int=12, deviation:Int=5, backs
                     }
                 }
 
-                if (zigzagMapBuffer(fShift) == 0.0){
+                if (zigzagMapBuffer(fShift) == null || zigzagMapBuffer(fShift).value == 0.0){
                     if (foundUp){
-                        zigzagMapBuffer(fShift) = 1
+                        zigzagMapBuffer(fShift) = Point(0.0, FractalPos.TOP)
                     }
                     if (foundDown){
-                        zigzagMapBuffer(fShift) = 0
+                        zigzagMapBuffer(fShift) = Point(0.0, FractalPos.BOTTOM)
                     }
                     if (!foundUp && !foundDown){
-                        zigzagMapBuffer(fShift) = -1
+                        zigzagMapBuffer(fShift) = Point(-1, FractalPos.NONE)
                     }
                 }
 
@@ -410,14 +411,14 @@ class ZigzagFinder(data:IndexedSeq[Record], depth:Int=12, deviation:Int=5, backs
 
     def getZigZagBuffer = zigzagMapBuffer
 
-    private def isZzPoint(zz:Double) = {
-        zz != 0.0 && zz != 1.0 && zz != -1.0
+    private def isZzPoint(zz:Point) = {
+        zz != null && zz.value != 0.0 && zz.value != 1.0 && zz.value != -1.0
     }
 
-    private def isFractal(d:Double) = {
-        d == 0.0 || d == 1.0
+    private def isFractal(p:Point) = {
+        p != null &&
+        p.fractalPos != FractalPos.NONE
     }
-
 
 
     def getLegs = {
@@ -444,17 +445,20 @@ class ZigzagFinder(data:IndexedSeq[Record], depth:Int=12, deviation:Int=5, backs
                 }
             }else if (begin && isZzPoint(zz)){
 //                begin = false
-//                fractalPattern :+= zz.toByte
+                fractalPattern :+= zz.fractalPos.toByte
 //                fractalCount += 1
 //                barCount += 1
-                rv :+= Leg(data(i).time, fractalCount, barCount, fractalPattern.toArray)
+//                if (data(i).time == "2013.11.08 21:24"){
+//                    println("break")
+//                }
+                rv :+= Leg(data(i).time, fractalCount + 1, barCount + 1, fractalPattern.toArray)
                 fractalCount = 0
                 barCount = 0
                 fractalPattern.clear()
             }else if (begin){
                 if (isFractal(zz)){
                     fractalCount += 1
-                    fractalPattern :+= zz.toByte
+                    fractalPattern :+= zz.fractalPos.toByte
                 }
                 barCount += 1
             }

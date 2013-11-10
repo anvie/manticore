@@ -76,15 +76,15 @@ class GigiSpec extends Specification {
 
              val zz = new ZigzagFinder(data)
 
-             zz.process().getZigZagBuffer.zipWithIndex.foreach { case (z, i) =>
-                 println("%d. %s => %s".format(i, data(i).time, z))
-             }
-
-//             val legs = zz.getLegs.filter(leg => leg.fractalCount > 3 && leg.fractalCount < 14)
-//
-//             legs.zipWithIndex.foreach { case (d, i) =>
-//                 println("%d. %s".format(i, d))
+//             zz.process().getZigZagBuffer.zipWithIndex.foreach { case (z, i) =>
+//                 println("%d. %s => %s".format(i, data(i).time, z))
 //             }
+
+             val legs = zz.getLegs //.filter(leg => leg.fractalCount > 3 && leg.fractalCount < 14)
+
+             legs.zipWithIndex.foreach { case (d, i) =>
+                 println("%d. %s".format(i, d))
+             }
 
 
 
