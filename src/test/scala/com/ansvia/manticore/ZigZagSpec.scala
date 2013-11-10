@@ -13,7 +13,7 @@ class ZigZagSpec extends Specification {
     "Zigzag finder" should {
         "find zigzag basic" in {
 
-            val csvr = new CsvReader("data/EURUSD1.csv")
+            val csvr = new CsvReader("/home/robin/EURUSD1.csv")
             val data = csvr.toArray
 //            val reversedData = data.reverse
 //            val size = reversedData.size

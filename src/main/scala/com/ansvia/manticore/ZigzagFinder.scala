@@ -13,7 +13,7 @@ class ZigzagFinder(data:Array[Record], depth:Int=12, deviation:Int=5, backstep:I
     private var highMapBuffer = new Array[Double](size + 1)
     private var zigzagMapBuffer = new Array[Double](size + 1)
 
-    def instrPips = 0.0
+    def instrPips = 0
 
     def process() = {
 
@@ -24,75 +24,87 @@ class ZigzagFinder(data:Array[Record], depth:Int=12, deviation:Int=5, backstep:I
         var lookFor = 0
         var idx = 0
 
-        var shift = size - 1
+        var shift = 0
 
 
         var lastHighPos = 0
         var lastLowPos = 0
 
-        while(shift > 0){
+        while(shift < size - 1){
 
             idx = idx + 1
 
             // cari lowest value
             var v = lowest(shift)
-//
-//            if (v == lastLow)
-//                v = 0.0
-//            else {
-//                lastLow = v
-//                if ((data(shift).low - v) > (deviation * instrPips)){
-//                    v = 0.0
-//                }else{
-//                    for (back <- 1 to backstep){
-//                        if (shift - back > 0){
-//                            val res = lowMapBuffer(shift-back)
-//                            if (res != 0.0 && res > v){
-//                                lowMapBuffer(shift-back)=0.0
-//                            }
-//                        }
-//                    }
-//                }
-//            }
+
+            if (v == lastLow)
+                v = 0.0
+            else {
+                lastLow = v
+                if ((data(shift).low - v) > (deviation.toDouble * instrPips.toDouble)){
+                    v = 0.0
+                }else{
+                    for (back <- 1 to backstep){
+                        if (shift - back > 0){
+                            val res = lowMapBuffer(shift-back)
+                            if (res != 0.0 && res > v){
+                                lowMapBuffer(shift-back)=0.0
+                            }
+                        }
+                    }
+                }
+            }
 
             if (data(shift).low==v){
-                lastLow = v
-                lowMapBuffer(shift) = v
+
+//                var foundRedundant = false
+//                for (back <- 1 to backstep; if !foundRedundant){
+//                    if (shift - back > 0){
+//                        foundRedundant = data(shift).low >= data(shift - back).low
+//                    }
+//                }
+//                if (!foundRedundant)
+                    lowMapBuffer(shift) = v
             }else{
                 lowMapBuffer(shift) = 0.0
             }
 
             // cari highest value
             v = highest(shift)
-//            if (v == lastHigh)
-//                v = 0.0
-//            else {
-//                lastHigh = v
-//                if ((v - data(shift).high) > (deviation * instrPips))
-//                    v = 0.0
-//                else {
-//                    for (back <- 1 to backstep){
-////                        println("back: " + back)
-//                        if (shift - back > 0){
-//                            val res = highMapBuffer(shift-back)
-//                            if (res != 0.0 && res < v){
-//                                highMapBuffer(shift-back)=0.0
-//                            }
-//                        }
-//                    }
-//                }
-//            }
+            if (v == lastHigh)
+                v = 0.0
+            else {
+                lastHigh = v
+                if ((v - data(shift).high) > (deviation * instrPips))
+                    v = 0.0
+                else {
+                    for (back <- 1 to backstep){
+//                        println("back: " + back)
+                        if (shift - back > 0){
+                            val res = highMapBuffer(shift-back)
+                            if (res != 0.0 && res < v){
+                                highMapBuffer(shift-back)=0.0
+                            }
+                        }
+                    }
+                }
+            }
 
             if (data(shift).high==v){
-                if (data(shift).high == data(shift-1).high)
-                    highMapBuffer(shift) = 0.0
-                else
+
+//                var foundRedundant = false
+//                for (back <- 1 to backstep; if !foundRedundant){
+//                    if (shift - back > 0){
+//                        foundRedundant = data(shift).high <= data(shift - back).high
+//                    }
+//                }
+//                if (!foundRedundant)
                     highMapBuffer(shift) = v
             }else{
                 highMapBuffer(shift) = 0.0
             }
 
-            shift = shift - 1
+            shift = shift + 1
 
         }
 
@@ -106,10 +118,10 @@ class ZigzagFinder(data:Array[Record], depth:Int=12, deviation:Int=5, backstep:I
             lastHigh = curHigh
         }
 
-        shift = size - 1
+        shift = 0 //size - 1
         idx = 0
 
-        while(shift >= 0){
+        while(shift < size - 1){
             var res = 0.0
             idx = idx + 1
             lookFor match {
@@ -163,7 +175,7 @@ class ZigzagFinder(data:Array[Record], depth:Int=12, deviation:Int=5, backstep:I
                 }
             }
 
-            shift = shift - 1
+            shift = shift + 1
         }
 
 
