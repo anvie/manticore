@@ -17,7 +17,7 @@ class GigiSpec extends Specification {
 
      class Ctx extends Scope {
 
-         val fileDataPath = "/home/robin/EURUSD1c.csv"
+         val fileDataPath = "/home/robin/EURUSD5b.csv"
 //         val fileDataPath = "/home/aoeu/EURUSD240.csv"
 
          val csvReader = new CsvReader(fileDataPath)
@@ -116,11 +116,32 @@ class GigiSpec extends Specification {
                      }
                  }
 
-             set3.zipWithIndex.foreach { case (d, i) =>
-                 println(" %d-strings => %s substrings".format(i+4, d.length))
+             var up = 0
+             var down = 0
+             val patternPositive = data.slice(data.length-5, data.length-1).map(_.direction) ++ Seq(1)
+             val patternNegative = data.slice(data.length-5, data.length-1).map(_.direction) ++ Seq(0)
 
-                 d.foreach(dd => "{" + println(dd.map( xx => xx._1.toString /*"%s(%s)".format(xx._1,xx._2)*/ ).mkString(",")) + "}")
+             println("looking for pattern: +{" + patternPositive.mkString(",") + "} -{" + patternNegative.mkString(",") + "}")
+
+
+             set3.zipWithIndex.foreach { case (d, i) =>
+//                 println(" %d-strings => %s substrings".format(i+4, d.length))
+
+                 d.foreach {
+                     dd =>
+//                         println("{" + dd.map( xx => xx._1.toString /*"%s(%s)".format(xx._1,xx._2)*/ ).mkString(",") + "}")
+
+                         if (dd.map(_._1) == patternPositive)
+                             up += 1
+
+                         if (dd.map(_._1) == patternNegative)
+                             down += 1
+                 }
              }
+
+             println("result: ====")
+             println("  up: " + up)
+             println("  down: " + down)
 //             println("set3.length: " + set3.length)
 
 //

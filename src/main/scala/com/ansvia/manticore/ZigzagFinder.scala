@@ -16,7 +16,7 @@ case class Leg(time:String, fractalCount:Int, barCount:Int, fractalPattern:Array
 }
 case class Point(value:Double, fractalPos:Int)
 
-class ZigzagFinder(data:IndexedSeq[Record], depth:Int=12, deviation:Int=5, backstep:Int=8) {
+class ZigzagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backstep:Int=5) {
 
     val size = data.length
     private var lowMapBuffer = new Array[Double](size + 1)
