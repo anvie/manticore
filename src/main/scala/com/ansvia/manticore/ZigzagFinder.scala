@@ -2,6 +2,7 @@ package com.ansvia.manticore
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+import java.io.File
 
 /**
  * Author: robin
@@ -14,7 +15,15 @@ case class Leg(time:String, fractalCount:Int, barCount:Int, fractalPattern:Array
     override def toString = "leg[%s] = fractal: %d, bar: %d, fractal-pattern: {%s}".format(time,
         fractalCount, barCount, fractalPattern.map(_.toString).mkString(","))
 }
-case class Point(value:Double, fractalPos:Int)
+case class Point(value:Double, fractalPos:Int){
+    override def toString = {
+        if (value == 0.0 || fractalPos==FractalPos.NONE){
+            "-"
+        }else{
+            "Point(" + value + "," + FractalPos.toStr(fractalPos) + ")"
+        }
+    }
+}
 
 class ZigzagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backstep:Int=5) {
 
@@ -25,7 +34,7 @@ class ZigzagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backs
 
     private var calculated = false
 
-    def instrPips = 0
+    def instrPips = 0.0
 
     def process() = {
 
@@ -53,7 +62,7 @@ class ZigzagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backs
                 v = 0.0
             else {
                 lastLow = v
-                if ((data(shift).low - v) > (deviation.toDouble * instrPips.toDouble)){
+                if ((data(shift).low - v) > (deviation.toDouble * instrPips)){
                     v = 0.0
                 }else{
                     for (back <- 1 to backstep){
@@ -68,14 +77,6 @@ class ZigzagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backs
             }
 
             if (data(shift).low==v){
-
-                //                var foundRedundant = false
-                //                for (back <- 1 to backstep; if !foundRedundant){
-                //                    if (shift - back > 0){
-                //                        foundRedundant = data(shift).low >= data(shift - back).low
-                //                    }
-                //                }
-                //                if (!foundRedundant)
                 lowMapBuffer(shift) = v
             }else{
                 lowMapBuffer(shift) = 0.0
@@ -83,15 +84,16 @@ class ZigzagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backs
 
             // cari highest value
             v = highest(shift)
+
             if (v == lastHigh)
                 v = 0.0
             else {
                 lastHigh = v
-                if ((v - data(shift).high) > (deviation * instrPips))
+                if ((v - data(shift).high) > (deviation.toDouble * instrPips))
                     v = 0.0
                 else {
                     for (back <- 1 to backstep){
-                        //                        println("back: " + back)
+//                        println("back: " + back)
                         if (shift - back > 0){
                             val res = highMapBuffer(shift-back)
                             if (res != 0.0 && res < v){
@@ -103,14 +105,6 @@ class ZigzagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backs
             }
 
             if (data(shift).high==v){
-
-                //                var foundRedundant = false
-                //                for (back <- 1 to backstep; if !foundRedundant){
-                //                    if (shift - back > 0){
-                //                        foundRedundant = data(shift).high <= data(shift - back).high
-                //                    }
-                //                }
-                //                if (!foundRedundant)
                 highMapBuffer(shift) = v
             }else{
                 highMapBuffer(shift) = 0.0
@@ -455,6 +449,7 @@ class ZigzagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backs
                 fractalCount = 0
                 barCount = 0
                 fractalPattern.clear()
+                begin = false
             }else if (begin){
                 if (isFractal(zz)){
                     fractalCount += 1
@@ -468,4 +463,31 @@ class ZigzagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backs
         rv.toArray
     }
 
+}
+
+object ZigZagFinder {
+    def main(args: Array[String]) {
+
+        val filePath = args(0)
+
+        val csvr = new CsvReader(filePath)
+        val data = csvr.toArray.toIndexedSeq
+        val zzf = new ZigzagFinder(data)
+
+        readLine("find for what? 1=zz, 2=legs : ").trim match {
+            case "1" =>
+                zzf.process().getZigZagBuffer.zipWithIndex.foreach { case (d, i) =>
+                    if (i < data.length - 1){
+                        println("%d. %s - %s".format(i, data(i).time, d))
+                    }
+                }
+
+            case "2" =>
+                zzf.getLegs.foreach(println)
+
+        }
+
+
+
+    }
 }

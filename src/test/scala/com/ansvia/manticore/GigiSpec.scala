@@ -17,7 +17,7 @@ class GigiSpec extends Specification {
 
      class Ctx extends Scope {
 
-         val fileDataPath = "/home/robin/EURUSD5b.csv"
+         val fileDataPath = "/home/robin/EURUSD15.csv"
 //         val fileDataPath = "/home/aoeu/EURUSD240.csv"
 
          val csvReader = new CsvReader(fileDataPath)
@@ -55,22 +55,22 @@ class GigiSpec extends Specification {
 
              val start = System.currentTimeMillis()
 
-             println("creating SET1...")
-             val data1 = data.map(_.direction)
-
-             println("data1 length: " + data1.length)
-
-             val set1 = for(i <- 4 to 13)
-                yield Manticore.getDnas(new InlineDataSource(data1), i)
-                .map(d => d)
-
-
-             println("SET1 created which is %d step contains %d strings".format(set1.length,set1.map(_.length).sum))
-             println("SET1 details:")
-
-             set1.zipWithIndex.foreach { case (d, i) =>
-                 println("  + %d-string = %d patterns".format(i+4, d.length))
-             }
+//             println("creating SET1...")
+//             val data1 = data.map(_.direction)
+//
+//             println("data1 length: " + data1.length)
+//
+//             val set1 = for(i <- 4 to 13)
+//                yield Manticore.getDnas(new InlineDataSource(data1), i)
+//                .map(d => d)
+//
+//
+//             println("SET1 created which is %d step contains %d strings".format(set1.length,set1.map(_.length).sum))
+//             println("SET1 details:")
+//
+//             set1.zipWithIndex.foreach { case (d, i) =>
+//                 println("  + %d-string = %d patterns".format(i+4, d.length))
+//             }
 
              println("creating SET2...")
 
@@ -80,12 +80,14 @@ class GigiSpec extends Specification {
 //                 println("%d. %s => %s".format(i, data(i).time, z))
 //             }
 
-             val legs = zz.getLegs.filter(leg => leg.fractalCount > 3 && leg.fractalCount < 14)
+             val legs = zz.getLegs
 
 //             var set2: immutable.IndexedSeq[Seq[Seq[Int]]] = immutable.IndexedSeq[Seq[Seq[Int]]]()
              var set2a = new mutable.HashMap[Int,Seq[Seq[Int]]]
 
-             legs.zipWithIndex.foreach { case (d, i) =>
+             legs.filter(leg => leg.fractalCount > 3 && leg.fractalCount < 14)
+                 .zipWithIndex.foreach { case (d, i) =>
+
                  println("%d. %s".format(i, d))
 
 //                 set2 ++=
@@ -105,43 +107,57 @@ class GigiSpec extends Specification {
 
              }
 
+//
+//             val set3 =
+//                 set1.zipWithIndex.map { case (x, ii) =>
+//                     x.filter { dna =>
+//                         val zz = set2a(ii+4)
+//                         val zz2 = dna.map(_._1)
+//                         val rv = zz.contains(zz2)
+//                         rv
+//                     }
+//                 }
+//
+//             var up = 0
+//             var down = 0
+//             val patternPositive = data.slice(data.length-5, data.length-1).map(_.direction) ++ Seq(1)
+//             val patternNegative = data.slice(data.length-5, data.length-1).map(_.direction) ++ Seq(0)
+//
+//             println("looking for pattern: +{" + patternPositive.mkString(",") + "} -{" + patternNegative.mkString(",") + "}")
+//
+//
+//             set3.zipWithIndex.foreach { case (d, i) =>
+////                 println(" %d-strings => %s substrings".format(i+4, d.length))
+//
+//                 d.foreach {
+//                     dd =>
+////                         println("{" + dd.map( xx => xx._1.toString /*"%s(%s)".format(xx._1,xx._2)*/ ).mkString(",") + "}")
+//
+//                         if (dd.map(_._1) == patternPositive)
+//                             up += 1
+//
+//                         if (dd.map(_._1) == patternNegative)
+//                             down += 1
+//                 }
+//             }
+//
+//             println("result: ====")
+//             println("  up: " + up)
+//             println("  down: " + down)
 
-             val set3 =
-                 set1.zipWithIndex.map { case (x, ii) =>
-                     x.filter { dna =>
-                         val zz = set2a(ii+4)
-                         val zz2 = dna.map(_._1)
-                         val rv = zz.contains(zz2)
-                         rv
-                     }
-                 }
-
-             var up = 0
-             var down = 0
-             val patternPositive = data.slice(data.length-5, data.length-1).map(_.direction) ++ Seq(1)
-             val patternNegative = data.slice(data.length-5, data.length-1).map(_.direction) ++ Seq(0)
-
-             println("looking for pattern: +{" + patternPositive.mkString(",") + "} -{" + patternNegative.mkString(",") + "}")
 
 
-             set3.zipWithIndex.foreach { case (d, i) =>
-//                 println(" %d-strings => %s substrings".format(i+4, d.length))
 
-                 d.foreach {
-                     dd =>
-//                         println("{" + dd.map( xx => xx._1.toString /*"%s(%s)".format(xx._1,xx._2)*/ ).mkString(",") + "}")
 
-                         if (dd.map(_._1) == patternPositive)
-                             up += 1
 
-                         if (dd.map(_._1) == patternNegative)
-                             down += 1
-                 }
-             }
 
-             println("result: ====")
-             println("  up: " + up)
-             println("  down: " + down)
+
+
+
+
+
+
+
 //             println("set3.length: " + set3.length)
 
 //
