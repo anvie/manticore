@@ -71,8 +71,8 @@ class GigiSpec extends Specification {
 //             set1.zipWithIndex.foreach { case (d, i) =>
 //                 println("  + %d-string = %d patterns".format(i+4, d.length))
 //             }
-
-             println("creating SET2...")
+//
+//             println("creating SET2...")
 
              val zz = new ZigzagFinder(data)
 
@@ -107,6 +107,59 @@ class GigiSpec extends Specification {
 
              }
 
+             println("")
+
+             var back = 1
+             val leg = legs(legs.length - back)
+             println("leg used to be pattern: " + leg)
+
+             var finalPattern = leg.fractalPattern
+             back = back + 1
+             var legCount = 1
+             while(finalPattern.length < 4){
+                 legCount = legCount + 1
+                 val leg2 = legs(legs.length - back)
+                 finalPattern = leg2.fractalPattern ++ finalPattern
+             }
+             
+             println("using %d leg(s) as pattern".format(legCount))
+             
+             val pattBase = finalPattern.map(_.toInt)
+             val pattUp = finalPattern.map(_.toInt).toSeq ++ Seq(1)
+             val pattDown = finalPattern.map(_.toInt).toSeq ++ Seq(0)
+
+             println("\n")
+             println("base pattern: {"+ pattBase.mkString(",") + "}\n")
+             println("up pattern: {" + pattUp.mkString(",") + "}")
+             println("down pattern: {" + pattDown.mkString(",") + "}")
+
+             var stats = new mutable.HashMap[String, Int]()
+
+             println("Searching for pattern...")
+             var patternCount = 0
+             for ( patterns <- set2a.values ){
+
+                 patterns.foreach { patt =>
+                     if (patt/*.map(_._1)*/.startsWith(pattBase)){
+                         val pattStr = patt/*.map(_._1)*/.mkString(",")
+                         if (patternCount < 20){
+                             println("   + found: {" + pattStr + "}")
+                             if (patternCount == 19)
+                                 println("   + and more...")
+                         }
+                         patternCount = patternCount + 1
+                         val st = stats.getOrElse(pattStr, 0) + 1
+                         stats += pattStr ->  st
+                     }
+                 }
+             }
+
+             println("Statistics: ===")
+             for ( (patt, count) <- stats.toSeq.sortBy(_._2).reverse.slice(0,10) ){
+                 println(" %d \t- %s".format(count, patt))
+             }
+
+             println("\n")
 //
 //             val set3 =
 //                 set1.zipWithIndex.map { case (x, ii) =>
