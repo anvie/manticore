@@ -17,7 +17,7 @@ class GigiSpec extends Specification {
 
      class Ctx extends Scope {
 
-         val fileDataPath = "/home/robin/EURUSD15.csv"
+         val fileDataPath = "/home/robin/EURUSD5.csv"
 //         val fileDataPath = "/home/aoeu/EURUSD240.csv"
 
          val csvReader = new CsvReader(fileDataPath)
@@ -120,6 +120,7 @@ class GigiSpec extends Specification {
                  legCount = legCount + 1
                  val leg2 = legs(legs.length - back)
                  finalPattern = leg2.fractalPattern ++ finalPattern
+                 back = back + 1
              }
              
              println("using %d leg(s) as pattern".format(legCount))
@@ -137,9 +138,10 @@ class GigiSpec extends Specification {
 
              println("Searching for pattern...")
              var patternCount = 0
-             for ( patterns <- set2a.values ){
+//             for ( patterns <- set2a.values ){
 
-                 patterns.foreach { patt =>
+//                 patterns.foreach { patt =>
+                 legs.map(_.fractalPattern.map(_.toInt)).foreach { patt =>
                      if (patt/*.map(_._1)*/.startsWith(pattBase)){
                          val pattStr = patt/*.map(_._1)*/.mkString(",")
                          if (patternCount < 20){
@@ -152,11 +154,14 @@ class GigiSpec extends Specification {
                          stats += pattStr ->  st
                      }
                  }
-             }
+
+//             }
 
              println("Statistics: ===")
              for ( (patt, count) <- stats.toSeq.sortBy(_._2).reverse.slice(0,10) ){
-                 println(" %d \t- %s".format(count, patt))
+                 if (patt != pattBase.mkString(",")){
+                     println(" %d \t- %s".format(count, patt))
+                 }
              }
 
              println("\n")
