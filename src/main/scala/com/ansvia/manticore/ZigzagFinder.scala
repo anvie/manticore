@@ -1,8 +1,6 @@
 package com.ansvia.manticore
 
-import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
-import java.io.File
 
 /**
  * Author: robin
@@ -12,8 +10,18 @@ import java.io.File
  */
 
 case class Leg(time:String, fractalCount:Int, barCount:Int, fractalPattern:Array[Byte]){
-    override def toString = "leg[%s] = fractal: %d, bar: %d, fractal-pattern: {%s}".format(time,
-        fractalCount, barCount, fractalPattern.map(_.toString).mkString(","))
+    override def toString = "leg[%s] = f: %d, bar: %d, patt: {%s}, pos: %s".format(time,
+        fractalCount, barCount, fractalPattern.map(_.toString).mkString(","), position)
+    def position = {
+        if (fractalPattern.length > 1){
+            if (fractalPattern(fractalPattern.length-1) == 0x01)
+                "up"
+            else
+                "down"
+        }else
+            "-"
+    }
+
 }
 case class Point(value:Double, fractalPos:Int){
     override def toString = {

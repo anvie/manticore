@@ -17,7 +17,7 @@ class GigiSpec extends Specification {
 
      class Ctx extends Scope {
 
-         val fileDataPath = "/home/robin/EURUSD5.csv"
+         val fileDataPath = "/home/robin/EURUSD1.csv"
 //         val fileDataPath = "/home/aoeu/EURUSD240.csv"
 
          val csvReader = new CsvReader(fileDataPath)
@@ -85,7 +85,7 @@ class GigiSpec extends Specification {
 //             var set2: immutable.IndexedSeq[Seq[Seq[Int]]] = immutable.IndexedSeq[Seq[Seq[Int]]]()
              var set2a = new mutable.HashMap[Int,Seq[Seq[Int]]]
 
-             legs.filter(leg => leg.fractalCount > 3 && leg.fractalCount < 14)
+             legs //.filter(leg => leg.fractalCount > 3 && leg.fractalCount < 14)
                  .zipWithIndex.foreach { case (d, i) =>
 
                  println("%d. %s".format(i, d))
@@ -110,13 +110,13 @@ class GigiSpec extends Specification {
              println("")
 
              var back = 1
-             val leg = legs(legs.length - back)
-             println("leg used to be pattern: " + leg)
+             val legUsed = legs(legs.length - back)
+             println("leg used to be pattern: " + legUsed)
 
-             var finalPattern = leg.fractalPattern
+             var finalPattern = legUsed.fractalPattern
              back = back + 1
              var legCount = 1
-             while(finalPattern.length < 4){
+             while(finalPattern.length < 3){
                  legCount = legCount + 1
                  val leg2 = legs(legs.length - back)
                  finalPattern = leg2.fractalPattern ++ finalPattern
@@ -125,7 +125,7 @@ class GigiSpec extends Specification {
              
              println("using %d leg(s) as pattern".format(legCount))
              
-             val pattBase = finalPattern.map(_.toInt)
+             val pattBase: Seq[Int] = finalPattern.map(_.toInt).toSeq
              val pattUp = finalPattern.map(_.toInt).toSeq ++ Seq(1)
              val pattDown = finalPattern.map(_.toInt).toSeq ++ Seq(0)
 
@@ -134,34 +134,56 @@ class GigiSpec extends Specification {
              println("up pattern: {" + pattUp.mkString(",") + "}")
              println("down pattern: {" + pattDown.mkString(",") + "}")
 
-             var stats = new mutable.HashMap[String, Int]()
+             var stats = new mutable.HashMap[String, (Int, Leg)]()
 
              println("Searching for pattern...")
              var patternCount = 0
 //             for ( patterns <- set2a.values ){
 
+             val legsCount = legs.length
+
 //                 patterns.foreach { patt =>
-                 legs.map(_.fractalPattern.map(_.toInt)).foreach { patt =>
+                 legs.zipWithIndex.foreach { case (leg, i) =>
+                     val patt = leg.fractalPattern.toSeq.map(_.toInt)
                      if (patt/*.map(_._1)*/.startsWith(pattBase)){
-                         val pattStr = patt/*.map(_._1)*/.mkString(",")
+                         val pattStr = patt.mkString(",")
                          if (patternCount < 20){
                              println("   + found: {" + pattStr + "}")
                              if (patternCount == 19)
                                  println("   + and more...")
                          }
                          patternCount = patternCount + 1
-                         val st = stats.getOrElse(pattStr, 0) + 1
-                         stats += pattStr ->  st
+                         val hleg = stats.get(pattStr)
+                         if (hleg.isDefined){
+                             val vv = hleg.get
+                             val count = vv._1 + 1
+                             if (i < legsCount-1){
+                                 stats += pattStr ->  (count, legs(i+1))
+                             }else{
+                                 stats += pattStr -> (count, null)
+                             }
+                         }else{
+                             if (i < legsCount-1){
+                                 stats += pattStr ->  (1, legs(i+1))
+                             }else{
+                                 stats += pattStr -> (1, null)
+                             }
+                         }
                      }
                  }
 
 //             }
 
              println("Statistics: ===")
-             for ( (patt, count) <- stats.toSeq.sortBy(_._2).reverse.slice(0,10) ){
-                 if (patt != pattBase.mkString(",")){
+             for ( (patt, leg) <- stats.toSeq.sortBy(_._2._1).reverse.slice(0,10) ){
+//                 if (patt != pattBase.mkString(",")){
+                     val count = leg._1
+                     val nextLeg = leg._2
                      println(" %d \t- %s".format(count, patt))
-                 }
+                    if (nextLeg != null){
+                        println("   \t   next-leg: " + nextLeg)
+                    }
+//                 }
              }
 
              println("\n")
