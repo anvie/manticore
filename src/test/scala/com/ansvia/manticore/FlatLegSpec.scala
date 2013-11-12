@@ -12,7 +12,7 @@ import org.specs2.specification.Scope
   * Time: 11:28 AM
   *
   */
-class GigiSpec extends Specification {
+class FlatLegSpec extends Specification {
 
 
      class Ctx extends Scope {
@@ -50,8 +50,8 @@ class GigiSpec extends Specification {
 //         val csvSrc = new CsvDataSource(fileDataPath, -1)
      }
 
-     "Gigi algo" should {
-         "filtering set-1 by set-2" in new Ctx {
+     "Flatleg algo" should {
+         "calculated correctly" in new Ctx {
 
              val start = System.currentTimeMillis()
 
