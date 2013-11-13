@@ -15,6 +15,7 @@ import org.specs2.specification.Scope
 class FlatLegXSpec extends Specification {
 
 
+
     class Ctx extends Scope {
 
         val fileDataPath = "/home/robin/Downloads/EURUSD5.csv"
@@ -135,7 +136,7 @@ class FlatLegXSpec extends Specification {
             println("down pattern: {" + pattDown.mkString(",") + "}")
 
             // (Occurences Count, Current history leg?, Next leg?)
-            var stats = new mutable.HashMap[String, (Int, Leg, Leg)]()
+            var stats = new mutable.HashMap[String, (Int, Leg, Seq[Leg])]()
 
             println("Searching for pattern...")
             var patternCount = 0
@@ -147,7 +148,8 @@ class FlatLegXSpec extends Specification {
             legs.zipWithIndex.foreach { case (leg, i) =>
                 val patt = leg.fractalPattern.toSeq.map(_.toInt)
 
-                if (patt/*.map(_._1)*/.startsWith(pattBase) && leg.barCount >= legUsed.barCount){
+//                val threshold = (leg.barCount - legUsed.barCount)
+                if (patt/*.map(_._1)*/.startsWith(pattBase) && leg.barCount >= legUsed.barCount && (leg.barCount - legUsed.barCount) < 10){
                     val pattStr = patt.mkString(",")
                     if (patternCount < 20){
                         println("   + found: {" + pattStr + "}")
@@ -160,13 +162,14 @@ class FlatLegXSpec extends Specification {
                         val vv = hleg.get
                         val count = vv._1 + 1
                         if (i < legsCount-1){
-                            stats += pattStr ->  (count, leg, legs(i+1))
+                            val nextLegs = vv._3 ++ Seq(legs(i+1))
+                            stats += pattStr ->  (count, leg, nextLegs)
                         }else{
                             stats += pattStr -> (count, leg, null)
                         }
                     }else{
                         if (i < legsCount-1){
-                            stats += pattStr ->  (1, leg, legs(i+1))
+                            stats += pattStr -> (1, leg, Seq(legs(i+1)))
                         }else{
                             stats += pattStr -> (1, leg, null)
                         }
@@ -177,15 +180,61 @@ class FlatLegXSpec extends Specification {
             //             }
 
             println("Statistics: ===")
+            var i = 0
             for ( (patt, leg) <- stats.toSeq.sortBy(_._2._1).reverse.slice(0,10) ){
                 //                 if (patt != pattBase.mkString(",")){
                 val count = leg._1
-                val nextLeg = leg._3
+                val nextLegs = leg._3
                 println(" %d \t- %s".format(count, patt))
-                if (nextLeg != null){
-                    println("   \t   ch-leg: " + leg._2)
-                    println("   \t   next-leg: " + nextLeg)
-                }
+
+//                if (i == 0){
+                    if (nextLegs != null){
+                        println("   \t   ch-leg: " + leg._2)
+                        println("   \t   next-legs (" + nextLegs.length + "): ")
+                        val probLegs =
+                        nextLegs.map { hm =>
+                        //                        val x = hm.barPattern.mkString
+                            var hmm = 0
+                            nextLegs.foreach { hm2 =>
+                            //                            val x2 = hm2.barPattern.mkString
+                                hmm += hammingDistance(hm.barPattern, hm2.barPattern)
+                            }
+                            (hm, hmm)
+                        }
+//                            .sortBy(_._2)
+//                            .reverse
+//                            .slice(0, 10)
+
+
+                        probLegs.slice(0,5).foreach { case (l, power) =>
+                            println("   \t   - " + l + ". power: " + power)
+                        }
+
+                        var goodProbLegs:Seq[(Leg, Int)] = Seq.empty[(Leg, Int)]
+
+                        if (probLegs.length > 5){
+                            val probI = math.round(probLegs.length / 1.56).toInt
+//                            println("probI: " + probI + ", probI/2: " + (probI/2))
+                            println("")
+                            println("   \t   -> good candidate: ")
+                            goodProbLegs = probLegs.sortBy(_._2).slice(probI-2,probI+2)
+                            goodProbLegs.zipWithIndex.foreach { case( goodLeg, ii ) =>
+                                println("   \t    -> (" + (probI-2+ii) + "): " + goodLeg)
+                            }
+                        }
+                        val upBin = goodProbLegs.flatMap(_._1.barPattern.filter(_ == 0x01)).length
+//                        println(probLegs.flatMap(_._1.barPattern.filter(_ == 0x01)))
+                        val downBin = goodProbLegs.flatMap(_._1.barPattern.filter(_ == 0x00)).length
+                        println("   \t Power:")
+                        println("   \t      - UP power: " + upBin + " (" + ( (upBin * 100) / (upBin + downBin) ) + "%)")
+                        println("   \t      - DOWN power: " + downBin + " (" + ( (downBin * 100) / (upBin + downBin) ) + "%)")
+                        println("--------------------------------------------------------------------------------------")
+
+                    }
+
+//                }
+                i += 1
+
                 //                 }
             }
 
@@ -322,4 +371,11 @@ class FlatLegXSpec extends Specification {
         }
     }
 
+    // Calculate a sum of set bits of XOR'ed bytes
+    def hammingDistance(b1: Array[Byte], b2: Array[Byte]) = {
+        (b1.zip(b2).map((x: (Byte, Byte)) => numberOfBitsSet((x._1 ^ x._2).toByte))).sum
+    }
+
+    // 1 iteration for each bit, 8 total. Shift right and AND 1 to get i-th bit
+    def numberOfBitsSet(b: Byte) : Int = (0 to 7).map((i : Int) => (b >>> i) & 1).sum
 }

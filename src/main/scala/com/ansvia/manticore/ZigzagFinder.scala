@@ -18,7 +18,9 @@ case class Leg(time:String, fractalCount:Int, barCount:Int, fractalPattern:Array
                 "up"
             else
                 "down"
-        }else
+        }else if (fractalPattern.length == 1)
+            if (fractalPattern(0) == 0x01) "up" else "down"
+        else
             "-"
     }
 
