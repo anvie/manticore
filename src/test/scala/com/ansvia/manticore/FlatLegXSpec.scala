@@ -230,10 +230,12 @@ class FlatLegXSpec extends Specification {
                         val upBin = goodProbLegs.flatMap(_._1.barPattern.filter(_ == 0x01)).length
 //                        println(probLegs.flatMap(_._1.barPattern.filter(_ == 0x01)))
                         val downBin = goodProbLegs.flatMap(_._1.barPattern.filter(_ == 0x00)).length
-                        println("   \t Power:")
-                        println("   \t      - UP power: " + upBin + " (" + ( (upBin * 100) / (upBin + downBin) ) + "%)")
-                        println("   \t      - DOWN power: " + downBin + " (" + ( (downBin * 100) / (upBin + downBin) ) + "%)")
-                        println("--------------------------------------------------------------------------------------")
+                        if (upBin > 0 && downBin > 0){
+                            println("   \t Power:")
+                            println("   \t      - UP power: " + upBin + " (" + ( (upBin * 100) / (upBin + downBin) ) + "%)")
+                            println("   \t      - DOWN power: " + downBin + " (" + ( (downBin * 100) / (upBin + downBin) ) + "%)")
+                            println("--------------------------------------------------------------------------------------")
+                        }
 
                     }
 
