@@ -145,11 +145,16 @@ class FlatLegXSpec extends Specification {
             val legsCount = legs.length
 
             //                 patterns.foreach { patt =>
-            legs.zipWithIndex.foreach { case (leg, i) =>
+            legs.zipWithIndex.foreach { case (leg, ii) =>
                 val patt = leg.fractalPattern.toSeq.map(_.toInt)
 
 //                val threshold = (leg.barCount - legUsed.barCount)
-                if (patt/*.map(_._1)*/.startsWith(pattBase) && leg.barCount >= legUsed.barCount && (leg.barCount - legUsed.barCount) < 10){
+                if (patt/*.map(_._1)*/.startsWith(pattBase) &&
+                    (leg.barCount >= legUsed.barCount) &&
+                    ((leg.barCount - legUsed.barCount) < 10) &&
+                    (leg.fractalCount < (legUsed.fractalCount + 5)) &&
+                    (leg.fractalCount > legUsed.fractalCount) ){
+
                     val pattStr = patt.mkString(",")
                     if (patternCount < 20){
                         println("   + found: {" + pattStr + "}")
@@ -161,15 +166,15 @@ class FlatLegXSpec extends Specification {
                     if (hleg.isDefined){
                         val vv = hleg.get
                         val count = vv._1 + 1
-                        if (i < legsCount-1){
-                            val nextLegs = vv._3 ++ Seq(legs(i+1))
+                        if (ii < legsCount-1){
+                            val nextLegs = vv._3 ++ Seq(legs(ii+1))
                             stats += pattStr ->  (count, leg, nextLegs)
                         }else{
                             stats += pattStr -> (count, leg, null)
                         }
                     }else{
-                        if (i < legsCount-1){
-                            stats += pattStr -> (1, leg, Seq(legs(i+1)))
+                        if (ii < legsCount-1){
+                            stats += pattStr -> (1, leg, Seq(legs(ii+1)))
                         }else{
                             stats += pattStr -> (1, leg, null)
                         }
