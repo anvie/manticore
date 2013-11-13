@@ -9,9 +9,9 @@ import scala.collection.mutable.ArrayBuffer
  *
  */
 
-case class Leg(time:String, fractalCount:Int, barCount:Int, fractalPattern:Array[Byte]){
-    override def toString = "leg[%s] = f: %d, bar: %d, patt: {%s}, pos: %s".format(time,
-        fractalCount, barCount, fractalPattern.map(_.toString).mkString(","), position)
+case class Leg(time:String, fractalCount:Int, barCount:Int, fractalPattern:Array[Byte], barPattern:Array[Byte]){
+    override def toString = "leg[%s] = f: %d, bar: %d, pos: %s, fpatt: {%s}, bpatt: {%s}".format(time,
+        fractalCount, barCount, position, fractalPattern.map(_.toString).mkString(","), barPattern.mkString(","))
     def position = {
         if (fractalPattern.length > 1){
             if (fractalPattern(fractalPattern.length-1) == 0x01)
@@ -141,7 +141,7 @@ class ZigzagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backs
         //        val zzlegs = new mutable.HashMap[Int, Leg]
 
         while(shift < size - 1){
-            var res = 0.0
+//            var res = 0.0
             idx = idx + 1
 
             barCount += 1
@@ -154,14 +154,14 @@ class ZigzagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backs
                             lastHighPos = shift
                             lookFor = -1
                             zigzagMapBuffer(shift) = Point(lastHigh, FractalPos.TOP)
-                            res = 1
+//                            res = 1
                         }
                         if (lowMapBuffer(shift) != 0.0){
                             lastLow = data(shift).low
                             lastLowPos = shift
                             lookFor = 1
                             zigzagMapBuffer(shift) = Point(lastLow, FractalPos.BOTTOM)
-                            res = 1
+//                            res = 1
                         }
                     }
                 }
@@ -171,14 +171,14 @@ class ZigzagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backs
                         lastLowPos = shift
                         lastLow = lowMapBuffer(shift)
                         zigzagMapBuffer(shift) = Point(lastLow, FractalPos.BOTTOM)
-                        res = 1
+//                        res = 1
                     }
                     if (highMapBuffer(shift)!=0.0 && lowMapBuffer(shift)==0.0){
                         lastHigh = highMapBuffer(shift)
                         lastHighPos = shift
                         zigzagMapBuffer(shift) = Point(lastHigh, FractalPos.TOP)
                         lookFor = -1
-                        res = 1
+//                        res = 1
                     }
                 }
                 case -1 => { // look for lawn
@@ -423,6 +423,13 @@ class ZigzagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backs
     }
 
 
+//    private def getBarDirection(idx:Int) = {
+//
+//        data(idx).direction
+//    }
+
+
+
     def getLegs = {
 
         if (!calculated){
@@ -431,11 +438,14 @@ class ZigzagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backs
 
         var rv = new ArrayBuffer[Leg]
         var fractalPattern = new ArrayBuffer[Byte]
+        var barPattern = new ArrayBuffer[Byte]
 
         var begin = false
         var fractalCount = 0
         var barCount = 0
         var i = 0
+
+//        println("data.size: " + data.size)
 
         for (zz <- zigzagMapBuffer){
             if (!begin){
@@ -444,23 +454,29 @@ class ZigzagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backs
                     fractalPattern.clear()
                     fractalCount = 1
                     barCount = 1
+                    barPattern :+= data(i).direction.toByte
                 }
             }else if (begin && isZzPoint(zz)){
 //                begin = false
                 fractalPattern :+= zz.fractalPos.toByte
+                barPattern :+= data(i).direction.toByte
 //                fractalCount += 1
 //                barCount += 1
 //                if (data(i).time == "2013.11.08 13:15"){
 //                    println("break")
 //                }
-                rv :+= Leg(data(i).time, fractalCount + 1, barCount + 1, fractalPattern.toArray)
+                rv :+= Leg(data(i).time, fractalCount + 1, barCount + 1, fractalPattern.toArray, barPattern.toArray)
                 fractalCount = 0
                 barCount = 0
                 fractalPattern.clear()
+                barPattern.clear()
             }else if (begin){
                 if (isFractal(zz)){
                     fractalCount += 1
                     fractalPattern :+= zz.fractalPos.toByte
+                }
+                if (i < data.size){
+                    barPattern :+= data(i).direction.toByte
                 }
                 barCount += 1
             }
