@@ -42,6 +42,7 @@ class FlatLegXSpec extends Specification {
         }
 
         val data:immutable.IndexedSeq[Record] = buff.result().toIndexedSeq
+        val dataSize = data.size
         //        val data = data.reverse
         //        val data = data
         val size:Int = data.size
@@ -114,6 +115,25 @@ class FlatLegXSpec extends Specification {
             val legUsed = legs(legs.length - back)
             println("leg used to be pattern: " + legUsed)
 
+            
+            val trailingBars =
+            {
+                import scala.util.control.Breaks._
+                var rv = Seq.newBuilder[Record]
+                breakable {
+                    for (i <- 1 to dataSize - 1){
+                        // searching for last zigzag end point
+                        if (data(dataSize - i).time == legUsed.time){
+                            break
+                        }else{
+                            rv += data(dataSize - i)
+                        }
+                    }
+                }
+                rv.result().reverse
+            }
+            val trailingBarPattern = trailingBars.map(_.direction.toByte).toArray
+
             var finalPattern = legUsed.fractalPattern
             back = back + 1
             var legCount = 1
@@ -125,6 +145,7 @@ class FlatLegXSpec extends Specification {
 //            }
 
             println("using %d leg(s) as pattern".format(legCount))
+            println("trailing bars pattern: {" + trailingBarPattern.map(_.toInt).mkString(",") + "}")
 
             val pattBase: Seq[Int] = finalPattern.map(_.toInt).toSeq
             val pattUp = finalPattern.map(_.toInt).toSeq ++ Seq(1)
@@ -199,11 +220,12 @@ class FlatLegXSpec extends Specification {
                         val probLegs =
                         nextLegs.map { hm =>
                         //                        val x = hm.barPattern.mkString
-                            var hmm = 0
-                            nextLegs.foreach { hm2 =>
-                            //                            val x2 = hm2.barPattern.mkString
-                                hmm += hammingDistance(hm.barPattern, hm2.barPattern)
-                            }
+//                            var hmm = 0
+//                            nextLegs.foreach { hm2 =>
+//                            //                            val x2 = hm2.barPattern.mkString
+//                                hmm += hammingDistance(hm.barPattern, hm2.barPattern)
+//                            }
+                            val hmm = hammingDistance(trailingBarPattern, hm.barPattern)
                             (hm, hmm)
                         }
 //                            .sortBy(_._2)
@@ -211,8 +233,13 @@ class FlatLegXSpec extends Specification {
 //                            .slice(0, 10)
 
 
-                        probLegs.slice(0,5).foreach { case (l, power) =>
-                            println("   \t   - " + l + ". power: " + power)
+                        if (i==0) {
+                            var ii = 0
+                            probLegs.foreach {
+                                case (l, power) =>
+                                    ii = ii + 1
+                                    println("   \t    " + ii + " - " + l + ". power: " + power)
+                            }
                         }
 
                         var goodProbLegs:Seq[(Leg, Int)] = Seq.empty[(Leg, Int)]
