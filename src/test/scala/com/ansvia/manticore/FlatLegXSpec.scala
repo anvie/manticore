@@ -52,12 +52,14 @@ class FlatLegXSpec extends Specification {
         //         val csvSrc = new CsvDataSource(fileDataPath, -1)
     }
 
-    def getStrongLegBarPattern(legs:Seq[Leg]) = {
+    def getProbLeg(legs:Seq[Leg]) = {
 
         var buff = new ArrayBuffer[Byte]
+        val numFracAvg = legs.map(_.fractalCount).sum / legs.length
+        val numBarAvg = legs.map(_.barCount).sum / legs.length
 
         var i = 0
-        while(i < 13){
+        while(i < numBarAvg){
             val bp = legs.map { x =>
                 if (i < x.barPattern.length) {
                     x.barPattern(i)
@@ -73,7 +75,8 @@ class FlatLegXSpec extends Specification {
             i = i + 1
         }
 
-        buff.result().toSeq
+        Leg("xxx", numFracAvg, numBarAvg, Array.empty[Byte], buff.result().toArray)
+
     }
 
 
@@ -252,7 +255,8 @@ class FlatLegXSpec extends Specification {
                         }
                     }
 
-                    println("   \t   -> cur bpatt prob: {" + getStrongLegBarPattern(nextLegs).map(_.toInt).mkString(",") + "}")
+//                    println("   \t   -> cur bpatt prob: {" + getStrongLegBarPattern(nextLegs).map(_.toInt).mkString(",") + "}")
+                    println("   \t   -> next leg prob: {" + getProbLeg(nextLegs) + "}")
 
                     val upBin = goodProbLegs.flatMap(_._1.barPattern.filter(_ == 0x01)).length
                     val downBin = goodProbLegs.flatMap(_._1.barPattern.filter(_ == 0x00)).length
