@@ -52,39 +52,40 @@ class FlatLegXSpec extends Specification {
         //         val csvSrc = new CsvDataSource(fileDataPath, -1)
     }
 
+    def getStrongLegBarPattern(legs:Seq[Leg]) = {
+
+        var buff = new ArrayBuffer[Byte]
+
+        var i = 0
+        while(i < 13){
+            val bp = legs.map { x =>
+                if (i < x.barPattern.length) {
+                    x.barPattern(i)
+                } else {
+                    0xFF
+                }
+            }
+            if (bp.filter(_ == 0x01).length > bp.filter(_ == 0x00).length){
+                buff += 0x01
+            }else{
+                buff += 0x00
+            }
+            i = i + 1
+        }
+
+        buff.result().toSeq
+    }
+
+
     "Gigi algo" should {
         "filtering set-1 by set-2" in new Ctx {
 
             val start = System.currentTimeMillis()
 
-            //             println("creating SET1...")
-            //             val data1 = data.map(_.direction)
-            //
-            //             println("data1 length: " + data1.length)
-            //
-            //             val set1 = for(i <- 4 to 13)
-            //                yield Manticore.getDnas(new InlineDataSource(data1), i)
-            //                .map(d => d)
-            //
-            //
-            //             println("SET1 created which is %d step contains %d strings".format(set1.length,set1.map(_.length).sum))
-            //             println("SET1 details:")
-            //
-            //             set1.zipWithIndex.foreach { case (d, i) =>
-            //                 println("  + %d-string = %d patterns".format(i+4, d.length))
-            //             }
-            //
-            //             println("creating SET2...")
-
             val zz = new ZigzagFinder(data)
-
-            //             zz.process().getZigZagBuffer.zipWithIndex.foreach { case (z, i) =>
-            //                 println("%d. %s => %s".format(i, data(i).time, z))
-            //             }
 
             val legs = zz.getLegs
 
-            //             var set2: immutable.IndexedSeq[Seq[Seq[Int]]] = immutable.IndexedSeq[Seq[Seq[Int]]]()
             var set2a = new mutable.HashMap[Int,Seq[Seq[Int]]]
 
             legs //.filter(leg => leg.fractalCount > 3 && leg.fractalCount < 14)
@@ -103,9 +104,6 @@ class FlatLegXSpec extends Specification {
                         set2a += n -> aoeu
                     }
                 }
-
-
-                //                 val result = dnas.map( dna => Manticore.breakDown(dna, data) )
 
             }
 
@@ -207,201 +205,71 @@ class FlatLegXSpec extends Specification {
 
             println("Statistics: ===")
             var i = 0
-            for ( (patt, leg) <- stats.toSeq.sortBy(_._2._1).reverse.slice(0,10) ){
-                //                 if (patt != pattBase.mkString(",")){
+            for ( (patt, leg) <- stats.toSeq.sortBy(_._2._1).reverse.slice(0,5) ){
                 val count = leg._1
                 val nextLegs = leg._3
                 println(" %d \t- %s".format(count, patt))
 
-//                if (i == 0){
-                    if (nextLegs != null){
-                        println("   \t   ch-leg: " + leg._2)
-                        println("   \t   next-legs (" + nextLegs.length + "): ")
-                        val probLegs =
-                        nextLegs.filter(hm => trailingBarPattern.length - hm.barPattern.length <= (trailingBarPattern.length/2)).map { hm =>
-                        //                        val x = hm.barPattern.mkString
+                if (nextLegs != null){
+                    println("   \t   ch-leg: " + leg._2)
+                    println("   \t   next-legs (" + nextLegs.length + "): ")
+                    val probLegs =
+                    nextLegs.filter(hm => trailingBarPattern.length - hm.barPattern.length <= (trailingBarPattern.length/2)).map { hm =>
+                    //                        val x = hm.barPattern.mkString
 //                            var hmm = 0
 //                            nextLegs.foreach { hm2 =>
 //                            //                            val x2 = hm2.barPattern.mkString
 //                                hmm += hammingDistance(hm.barPattern, hm2.barPattern)
 //                            }
 
-                            val hmm = hammingDistance(trailingBarPattern, hm.barPattern)
-                            (hm, hmm)
-                        }
+                        val hmm = hammingDistance(trailingBarPattern, hm.barPattern)
+                        (hm, hmm)
+                    }
 //                            .sortBy(_._2)
 //                            .reverse
 //                            .slice(0, 10)
 
 
 //                        if (i==0) {
-                            var ii = 0
-                            probLegs.sortBy(_._2).slice(0,5).foreach {
-                                case (l, power) =>
-                                    ii = ii + 1
-                                    println("   \t    " + ii + " - " + l + ". power: " + power)
-                            }
+                        var ii = 0
+                        probLegs.sortBy(_._2).slice(0,5).foreach {
+                            case (l, power) =>
+                                ii = ii + 1
+                                println("   \t    " + ii + " - " + l + ". power: " + power)
+                        }
 //                        }
 
-                        var goodProbLegs:Seq[(Leg, Int)] = Seq.empty[(Leg, Int)]
+                    var goodProbLegs:Seq[(Leg, Int)] = Seq.empty[(Leg, Int)]
 
-                        if (probLegs.length > 5){
-                            val probI = math.round(probLegs.length / 1.56).toInt
+                    if (probLegs.length > 5){
+                        val probI = math.round(probLegs.length / 1.56).toInt
 //                            println("probI: " + probI + ", probI/2: " + (probI/2))
-                            println("")
-                            println("   \t   -> good candidate: ")
-                            goodProbLegs = probLegs.sortBy(_._2).slice(probI-2,probI+2)
-                            goodProbLegs.zipWithIndex.foreach { case( goodLeg, ii ) =>
-                                println("   \t    -> (" + (probI-2+ii) + "): " + goodLeg)
-                            }
+                        println("")
+                        println("   \t   -> good candidate: ")
+                        goodProbLegs = probLegs.sortBy(_._2).slice(probI-2,probI+2)
+                        goodProbLegs.zipWithIndex.foreach { case( goodLeg, ii ) =>
+                            println("   \t    -> (" + (probI-2+ii) + "): " + goodLeg)
                         }
-                        val upBin = goodProbLegs.flatMap(_._1.barPattern.filter(_ == 0x01)).length
-//                        println(probLegs.flatMap(_._1.barPattern.filter(_ == 0x01)))
-                        val downBin = goodProbLegs.flatMap(_._1.barPattern.filter(_ == 0x00)).length
-                        if (upBin > 0 && downBin > 0){
-                            println("   \t Power:")
-                            println("   \t      - UP power: " + upBin + " (" + ( (upBin * 100) / (upBin + downBin) ) + "%)")
-                            println("   \t      - DOWN power: " + downBin + " (" + ( (downBin * 100) / (upBin + downBin) ) + "%)")
-                            println("--------------------------------------------------------------------------------------")
-                        }
-
                     }
 
-//                }
-                i += 1
+                    println("   \t   -> cur bpatt prob: {" + getStrongLegBarPattern(nextLegs).map(_.toInt).mkString(",") + "}")
 
-                //                 }
+                    val upBin = goodProbLegs.flatMap(_._1.barPattern.filter(_ == 0x01)).length
+                    val downBin = goodProbLegs.flatMap(_._1.barPattern.filter(_ == 0x00)).length
+                    if (upBin > 0 && downBin > 0){
+                        println("   \t Power:")
+                        println("   \t      - UP power: " + upBin + " (" + ( (upBin * 100) / (upBin + downBin) ) + "%)")
+                        println("   \t      - DOWN power: " + downBin + " (" + ( (downBin * 100) / (upBin + downBin) ) + "%)")
+                        println("--------------------------------------------------------------------------------------")
+                    }
+
+                }
+
+                i += 1
             }
 
             println("\n")
-            //
-            //             val set3 =
-            //                 set1.zipWithIndex.map { case (x, ii) =>
-            //                     x.filter { dna =>
-            //                         val zz = set2a(ii+4)
-            //                         val zz2 = dna.map(_._1)
-            //                         val rv = zz.contains(zz2)
-            //                         rv
-            //                     }
-            //                 }
-            //
-            //             var up = 0
-            //             var down = 0
-            //             val patternPositive = data.slice(data.length-5, data.length-1).map(_.direction) ++ Seq(1)
-            //             val patternNegative = data.slice(data.length-5, data.length-1).map(_.direction) ++ Seq(0)
-            //
-            //             println("looking for pattern: +{" + patternPositive.mkString(",") + "} -{" + patternNegative.mkString(",") + "}")
-            //
-            //
-            //             set3.zipWithIndex.foreach { case (d, i) =>
-            ////                 println(" %d-strings => %s substrings".format(i+4, d.length))
-            //
-            //                 d.foreach {
-            //                     dd =>
-            ////                         println("{" + dd.map( xx => xx._1.toString /*"%s(%s)".format(xx._1,xx._2)*/ ).mkString(",") + "}")
-            //
-            //                         if (dd.map(_._1) == patternPositive)
-            //                             up += 1
-            //
-            //                         if (dd.map(_._1) == patternNegative)
-            //                             down += 1
-            //                 }
-            //             }
-            //
-            //             println("result: ====")
-            //             println("  up: " + up)
-            //             println("  down: " + down)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-            //             println("set3.length: " + set3.length)
-
-            //
-            //             val data2: Array[Int] = FractalFinder.find(data, size)
-            //                 .filter(_.isInstanceOf[Fractal])
-            //                 .map(_.asInstanceOf[Fractal])
-            //                 .map { f =>
-            //
-            //                 if (f.pos == FractalPos.TOP_AND_BOTTOM)
-            //                     FractalPos.TOP
-            //                 else
-            //                     f.pos
-            //             }
-            //
-            //             println("data2 length: " + data2.length)
-            //
-            //             val set2 =
-            //                 for(i <- 4 to 13)
-            //                    yield Manticore.getDnas(new InlineDataSource(data2), i)
-            //                    .map(d => d.map(_._1))
-            //
-            //             println("SET2 created which is %d step %d strings".format(set2.length,set2.map(_.length).sum))
-            //             println("SET2 details:")
-            //
-            //             set2.zipWithIndex.foreach { case (d, i) =>
-            //                 println("  + %d-string = %d patterns".format(i+4, d.length))
-            //             }
-            //
-            //             println("creating SET3...")
-            //             val set3 = set1.zipWithIndex.map { case (z, i) =>
-            //                 print("set1(" + (i+4) + ").length: " + z.length + ", set2(" + (i+4) + ").length: " + set2(i).length)
-            //                 var filtered = 0
-            //                 var matched = 0
-            //                 val rv = z.filter { dna =>
-            ////                     println("is set2(i).contains : [" + dna.map(_._1).map(_.toString).mkString(",") + "] ?")
-            //                     val rv = set2(i).contains(dna.map(_._1))
-            //                     if (!rv){
-            //                         filtered = filtered + 1
-            //                     }else{
-            //                         matched = matched + 1
-            //                     }
-            //                     rv
-            //                 }
-            //                 println(", filtered: " + filtered + ", match: " + matched)
-            //                 rv
-            //             }
-            //
-            //
-            ////             println("set3: " + set3)
-            //             println("SET3 created. Details: ")
-            //             set3.zipWithIndex.foreach { case (d, i) =>
-            //                 println("   %d-string = %d patterns".format(i + 4, d.length))
-            //             }
-            //
-            //             println("Calculating probabilities...")
-            //             var up = 0
-            //             var down = 0
-            //             set3.zipWithIndex.foreach { case (dnas, i) =>
-            //                 val (positives, negatives, chromosomes) = Manticore.breakDown(dnas, data1)
-            //                 val probability = if (positives > negatives) {
-            //                     up = up + 1
-            //                     "UP"
-            //                 } else {
-            //                     down = down + 1
-            //                     "DOWN"
-            //                 }
-            //                 println("  + %d-strings %d chromosomes \t-->\t 1 = %d, 0 = %d, probabilitiy: %s".format(
-            //                     dnas.head.length,chromosomes, positives, negatives, probability))
-            //             }
-            //             println("Done in " + (System.currentTimeMillis() - start) + "ms")
-            //             println("\n")
-            //             println("==[ SUMMARY ]==============================================")
-            //             println("   + up: " + up)
-            //             println("   + down: " + down)
-            //             println("\n")
-
-            //             println("positive: %d, negatives: %d, chromosomes: %d".format(positive, negatives, chromosomes))
 
         }
     }
