@@ -218,13 +218,14 @@ class FlatLegXSpec extends Specification {
                         println("   \t   ch-leg: " + leg._2)
                         println("   \t   next-legs (" + nextLegs.length + "): ")
                         val probLegs =
-                        nextLegs.map { hm =>
+                        nextLegs.filter(hm => trailingBarPattern.length - hm.barPattern.length <= (trailingBarPattern.length/2)).map { hm =>
                         //                        val x = hm.barPattern.mkString
 //                            var hmm = 0
 //                            nextLegs.foreach { hm2 =>
 //                            //                            val x2 = hm2.barPattern.mkString
 //                                hmm += hammingDistance(hm.barPattern, hm2.barPattern)
 //                            }
+
                             val hmm = hammingDistance(trailingBarPattern, hm.barPattern)
                             (hm, hmm)
                         }
@@ -233,14 +234,14 @@ class FlatLegXSpec extends Specification {
 //                            .slice(0, 10)
 
 
-                        if (i==0) {
+//                        if (i==0) {
                             var ii = 0
-                            probLegs.foreach {
+                            probLegs.sortBy(_._2).slice(0,5).foreach {
                                 case (l, power) =>
                                     ii = ii + 1
                                     println("   \t    " + ii + " - " + l + ". power: " + power)
                             }
-                        }
+//                        }
 
                         var goodProbLegs:Seq[(Leg, Int)] = Seq.empty[(Leg, Int)]
 
