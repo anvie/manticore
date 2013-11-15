@@ -19,6 +19,7 @@ class FlatLegXSpec extends Specification {
     class Ctx extends Scope {
 
         val fileDataPath = "/home/robin/Downloads/EURUSD5.csv"
+//        val fileDataPath = "/home/robin/Downloads/EURUSD_Candlestick_1_D_BID_01.01.2007-09.11.2013.csv"
         //         val fileDataPath = "/home/aoeu/EURUSD240.csv"
 
         val csvReader = new CsvReader(fileDataPath)
@@ -67,7 +68,7 @@ class FlatLegXSpec extends Specification {
                     0xFF
                 }
             }
-            if (bp.filter(_ == 0x01).length > bp.filter(_ == 0x00).length){
+            if (bp.count(_ == 0x01) > bp.count(_ == 0x00)){
                 buff += 0x01
             }else{
                 buff += 0x00
@@ -158,7 +159,7 @@ class FlatLegXSpec extends Specification {
             println("down pattern: {" + pattDown.mkString(",") + "}")
 
             // (Occurences Count, Current history leg?, Next leg?)
-            var stats = new mutable.HashMap[String, (Int, Leg, Seq[Leg])]()
+            var stats = new mutable.HashMap[String, (Int, Seq[Leg], Seq[Leg])]()
 
             println("Searching for pattern...")
             var patternCount = 0
@@ -172,8 +173,8 @@ class FlatLegXSpec extends Specification {
 
 //                val threshold = (leg.barCount - legUsed.barCount)
                 if (patt/*.map(_._1)*/.startsWith(pattBase) &&
-                    (leg.barCount >= legUsed.barCount) &&
-                    ((leg.barCount - legUsed.barCount) < 10) &&
+                    (leg.barCount < (legUsed.barCount + 3)) &&
+//                    ((leg.barCount - legUsed.barCount) < 10) &&
                     (leg.fractalCount < (legUsed.fractalCount + 5)) &&
                     (leg.fractalCount > legUsed.fractalCount) ){
 
@@ -188,17 +189,18 @@ class FlatLegXSpec extends Specification {
                     if (hleg.isDefined){
                         val vv = hleg.get
                         val count = vv._1 + 1
+                        val curLegs = vv._2 ++ Seq(leg)
                         if (ii < legsCount-1){
                             val nextLegs = vv._3 ++ Seq(legs(ii+1))
-                            stats += pattStr ->  (count, leg, nextLegs)
+                            stats += pattStr ->  (count, curLegs, nextLegs)
                         }else{
-                            stats += pattStr -> (count, leg, null)
+                            stats += pattStr -> (count, curLegs, null)
                         }
                     }else{
                         if (ii < legsCount-1){
-                            stats += pattStr -> (1, leg, Seq(legs(ii+1)))
+                            stats += pattStr -> (1, Seq(leg), Seq(legs(ii+1)))
                         }else{
-                            stats += pattStr -> (1, leg, null)
+                            stats += pattStr -> (1, Seq(leg), null)
                         }
                     }
                 }
@@ -214,7 +216,8 @@ class FlatLegXSpec extends Specification {
                 println(" %d \t- %s".format(count, patt))
 
                 if (nextLegs != null){
-                    println("   \t   ch-leg: " + leg._2)
+                    val chLegProb = getProbLeg(leg._2)
+                    println("   \t   ch-leg-prob: " + chLegProb)
                     println("   \t   next-legs (" + nextLegs.length + "): ")
                     val probLegs =
                     nextLegs.filter(hm => trailingBarPattern.length - hm.barPattern.length <= (trailingBarPattern.length/2)).map { hm =>
@@ -256,7 +259,10 @@ class FlatLegXSpec extends Specification {
                     }
 
 //                    println("   \t   -> cur bpatt prob: {" + getStrongLegBarPattern(nextLegs).map(_.toInt).mkString(",") + "}")
-                    println("   \t   -> next leg prob: {" + getProbLeg(nextLegs) + "}")
+                    val ll = goodProbLegs.map(_._1)
+                    if (ll.length > 1){
+                        println("   \t   -> next leg prob: {" + getProbLeg(ll) + "}")
+                    }
 
                     val upBin = goodProbLegs.flatMap(_._1.barPattern.filter(_ == 0x01)).length
                     val downBin = goodProbLegs.flatMap(_._1.barPattern.filter(_ == 0x00)).length
