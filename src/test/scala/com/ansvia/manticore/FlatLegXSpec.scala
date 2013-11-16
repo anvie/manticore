@@ -80,8 +80,8 @@ class FlatLegXSpec extends Specification {
     }
 
 
-    "Gigi algo" should {
-        "filtering set-1 by set-2" in new Ctx {
+    "FLX algo" should {
+        "process" in new Ctx {
 
             val start = System.currentTimeMillis()
 
@@ -176,6 +176,11 @@ class FlatLegXSpec extends Specification {
             println("up pattern: {" + pattUp.mkString(",") + "}")
             println("down pattern: {" + pattDown.mkString(",") + "}")
 
+
+            if (pattBase.length < 3){
+                throw new Exception("insufficient pattern for search.")
+            }
+
             // (Occurences Count, Current history leg?, Next leg?)
             var stats = new mutable.HashMap[String, (Int, Leg, Seq[Leg])]()
 
@@ -191,10 +196,12 @@ class FlatLegXSpec extends Specification {
 
                 //                val threshold = (leg.barCount - legUsed.barCount)
                 if (patt == pattBase &&
-                    (leg.barCount >= legUsed.barCount) &&
-                    ((leg.barCount - legUsed.barCount) < 10) /*&&
-                    (leg.fractalCount < (legUsed.fractalCount + 5)) &&
-                    (leg.fractalCount > legUsed.fractalCount)*/ ){
+                    (leg.barCount == legUsed.barCount) &&
+                    (leg.fractalCount == legUsed.fractalCount) &&
+                    (leg.time != legUsed.time)
+                /*((leg.barCount - legUsed.barCount) < 10) &&
+                (leg.fractalCount < (legUsed.fractalCount + 5)) &&
+                (leg.fractalCount > legUsed.fractalCount)*/ ){
 
                     val pattStr = patt.mkString(",")
                     if (patternCount < 20){
@@ -203,6 +210,9 @@ class FlatLegXSpec extends Specification {
                             println("   + and more...")
                     }
                     patternCount = patternCount + 1
+                    if (ii < legsCount-1){
+                        println(Console.YELLOW + "   + next-leg: " + legs(ii+1) + Console.RESET)
+                    }
                     val hleg = stats.get(pattStr)
                     if (hleg.isDefined){
                         val vv = hleg.get
@@ -223,7 +233,18 @@ class FlatLegXSpec extends Specification {
                 }
             }
 
-            //             }
+            if (stats.size == 0)
+                throw new Exception("No pattern match")
+
+            var upCount = 0
+            var downCount = 0
+
+            set2a.foreach { case (l, ps) =>
+                upCount += ps.count(_ == pattUp)
+                downCount += ps.count(_ == pattDown)
+            }
+
+            println("up: " + upCount + ", down: " + downCount)
 
             println("Statistics: ===")
             var i = 0

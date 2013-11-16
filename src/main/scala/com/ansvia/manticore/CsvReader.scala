@@ -26,17 +26,17 @@ case class Record(index:Int, time:String, open:Double, high:Double, low:Double, 
 
 
 
-class CsvReader(is:InputStream) {
+class CsvReader(is:InputStream, untilDate:String) {
 
     private var idx = 0
     lazy val bfr = new BufferedReader(new InputStreamReader(is))
 
-    def this(file:File){
-        this(new FileInputStream(file))
+    def this(file:File, untilDate:String){
+        this(new FileInputStream(file), untilDate)
     }
 
-    def this(file:String){
-        this(new File(file))
+    def this(file:String, untilDate:String="-"){
+        this(new File(file), untilDate)
     }
 
 
@@ -53,6 +53,10 @@ class CsvReader(is:InputStream) {
             throw new NoSuchElementException()
 
         val s = line.split(",")
+
+        if (s(0) + " " + s(1) == untilDate)
+            throw new NoSuchElementException()
+
         val rv = {
             if (s.length == 6)
                 Record(idx, s(0), s(1).toDouble, s(2).toDouble, s(3).toDouble, s(4).toDouble, s(5).toDouble)
