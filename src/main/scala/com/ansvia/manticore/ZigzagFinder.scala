@@ -27,7 +27,7 @@ case class Leg(time:String, fractalCount:Int, barCount:Int, fractalPattern:Array
 }
 case class Point(value:Double, fractalPos:Int){
     override def toString = {
-        if (value == 0.0 || fractalPos==FractalPos.NONE){
+        if (fractalPos==FractalPos.NONE){
             "-"
         }else{
             "Point(" + value + "," + FractalPos.toStr(fractalPos) + ")"
@@ -60,6 +60,8 @@ class ZigzagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backs
 
         var lastHighPos = 0
         var lastLowPos = 0
+
+        println("data size: " + size)
 
         while(shift < size - 1){
 
@@ -199,144 +201,151 @@ class ZigzagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backs
                 }
             }
 
-
-            {
-
-                var foundUp = false
-
-                val fShift = size - shift - 1
-
-                current = data(fShift).high
+            shift = shift + 1
+        }
 
 
-                /************************************************
-                  * PROCESS FRACTAL UP
-                  ***********************************************/
 
-                if (current > high(data, fShift + 1) && current > high(data, fShift + 2) &&
-                    current > high(data, fShift - 1) && current > high(data, fShift - 2)){
-                    foundUp = true
-                    //                update(1)
-                }
+        for(i <- 0 to size - 1){
 
-                // find for 6 bars fractals
-                if (!foundUp && (size - fShift - 1) >= 3){
-                    if (current == high(data,fShift+1) && current>high(data, fShift+2) && current>high(data, fShift+3) &&
-                        current>high(data,fShift-1) && current>high(data, fShift-2)){
-                        foundUp = true
-                        //                    update(1)
-                    }
-                }
+            var foundUp = false
 
-                // find for 7 bars fractals
+            //                val fShift = size - shift - 1
+//            val i = size - shift - 1
 
-                if (!foundUp && (size - fShift - 1) >= 4){
-                    if (current >= high(data, fShift+1) && current==high(data, fShift+2) && current > high(data, fShift+3) &&
-                        current>high(data, fShift+4) && current>high(data, fShift-1) && current>high(data, fShift-2)){
-                        foundUp = true
-                        //                    update(1)
-                    }
-                }
-
-                // find for 8 bars fractals
-
-                if (!foundUp && (size - fShift - 1) >= 5){
-                    if (current>=high(data,fShift+1) && current==high(data,fShift+2) && current==high(data,fShift+3) &&
-                        current>high(data, fShift+4) && current>high(data,fShift+5) &&
-                        current>high(data, fShift-1) && current>high(data, fShift-2)){
-                        foundUp = true
-                        //                    update(1)
-                    }
-                }
+            current = data(i).high
 
 
-                // find for 9 bars fractals
+            /************************************************
+              * PROCESS FRACTAL UP
+              ***********************************************/
 
-                if (!foundUp && (size - fShift - 1) >= 6){
-                    if (current>=high(data, fShift+1) && current==high(data,fShift+2) && current>=high(data,fShift+3) &&
-                        current==high(data, fShift+4) && current>high(data,fShift+5) && current>high(data,fShift+6) &&
-                        current>high(data, fShift-1) && current>high(data, fShift-2)){
-                        foundUp = true
-                        //                    update(1)
-                    }
-                }
-
-                /************************************************
-                  * PROCESS FRACTAL DOWN
-                  ***********************************************/
-
-                var foundDown = false
-                current = data(fShift).low
-
-                if (current<low(data,fShift+1) && current<low(data,fShift+2) &&
-                    current<low(data,fShift-1) && current<low(data,fShift-2)){
-                    foundDown = true
-                    //                update(0)
-                }
-
-                // find for 6 bars fractal
-                if (!foundDown && (size - fShift - 1) >= 3){
-                    if (current==low(data,fShift+1) && current<low(data,fShift+2) && current<low(data,fShift+3) &&
-                        current<low(data,fShift-1) && current<low(data,fShift-2)){
-                        foundDown = true
-                        //                    update(0)
-                    }
-                }
-
-                // find for 7 bars fractal
-                if (!foundDown && (size - fShift - 1) >= 4){
-                    if (current<=low(data,fShift+1) && current==low(data,fShift+2) && current<low(data,fShift+3) &&
-                        current<low(data,fShift+4) &&
-                        current<low(data,fShift-1) && current<low(data,fShift-2)){
-                        foundDown = true
-                        //                    update(0)
-                    }
-                }
-
-                // find for 8 bars fractal
-                if (!foundDown && (size - fShift - 1) >= 5){
-                    if (current<=low(data,fShift+1) && current==low(data,fShift+2) && current==low(data,fShift+3) &&
-                        current<low(data,fShift+4) && current<low(data,fShift+5) &&
-                        current<low(data,fShift-1) && current<low(data,fShift-2)){
-                        foundDown = true
-                        //                    update(0)
-                    }
-                }
-
-                // find for 9 bars fractal
-                if (!foundDown && (size - fShift - 1) >= 6){
-                    if (current<=low(data,fShift+1) && current==low(data,fShift+2) && current<=low(data,fShift+3) &&
-                        current==low(data,fShift+4) && current<low(data,fShift+5) && current<low(data,fShift+6) &&
-                        current<low(data,fShift-1) && current<low(data,fShift-2)){
-                        foundDown = true
-                        //                    update(0)
-                    }
-                }
-
-                if (zigzagMapBuffer(fShift) == null || zigzagMapBuffer(fShift).value == 0.0){
-                    if (foundUp){
-                        zigzagMapBuffer(fShift) = Point(0.0, FractalPos.TOP)
-                    }
-                    if (foundDown){
-                        zigzagMapBuffer(fShift) = Point(0.0, FractalPos.BOTTOM)
-                    }
-                    if (!foundUp && !foundDown){
-                        zigzagMapBuffer(fShift) = Point(-1, FractalPos.NONE)
-                    }
-                }
-
-//                if (!foundUp && !foundDown){
-//                    timeline(i) = NonFractal(i, data(i).time)
-//                }else if (foundUp && !foundDown){
-//                    timeline(i) = Fractal(i, data(i).time, FractalPos.TOP)
-//                }else if (foundDown && !foundUp){
-//                    timeline(i) = Fractal(i, data(i).time, FractalPos.BOTTOM)
-//                }else if (foundUp && foundDown){
-//                    timeline(i) = Fractal(i, data(i).time, FractalPos.TOP_AND_BOTTOM)
-//                }
+            if (data(i).time == "2013.11.15 22:05"){
+                println("break")
             }
 
-            shift = shift + 1
+            if (current > high(data, i - 1) && current > high(data, i - 2) &&
+                current > high(data, i + 1) && current > high(data, i + 2)){
+                foundUp = true
+                //                update(1)
+            }
+
+            // find for 6 bars fractals
+            if (!foundUp && (size - i - 1) >= 3){
+                if (current == high(data,i-1) && current>high(data, i-2) && current>high(data, i-3) &&
+                    current>high(data,i+1) && current>high(data, i+2)){
+                    foundUp = true
+                    //                    update(1)
+                }
+            }
+
+            // find for 7 bars fractals
+
+            if (!foundUp && (size - i - 1) >= 4){
+                if (current >= high(data, i-1) && current==high(data, i-2) && current > high(data, i-3) &&
+                    current>high(data, i-4) && current>high(data, i+1) && current>high(data, i+2)){
+                    foundUp = true
+                    //                    update(1)
+                }
+            }
+
+            // find for 8 bars fractals
+
+            if (!foundUp && (size - i - 1) >= 5){
+                if (current>=high(data,i-1) && current==high(data,i-2) && current==high(data,i-3) &&
+                    current>high(data, i-4) && current>high(data, i-5) &&
+                    current>high(data, i+1) && current>high(data, i+2)){
+                    foundUp = true
+                    //                    update(1)
+                }
+            }
+
+
+            // find for 9 bars fractals
+
+            if (!foundUp && (size - i - 1) >= 6){
+                if (current>=high(data, i-1) && current==high(data,i-2) && current>=high(data,i-3) &&
+                    current==high(data, i-4) && current>high(data,i-5) && current>high(data,i-6) &&
+                    current>high(data, i+1) && current>high(data, i+2)){
+                    foundUp = true
+                    //                    update(1)
+                }
+            }
+
+            /************************************************
+              * PROCESS FRACTAL DOWN
+              ***********************************************/
+
+            var foundDown = false
+            current = data(i).low
+
+
+            if (current<low(data,i+1) && current<low(data,i+2) &&
+                current<low(data,i-1) && current<low(data,i-2)){
+                foundDown = true
+                //                update(0)
+            }
+
+            // find for 6 bars fractal
+            if (!foundDown && (size - i - 1) >= 3){
+                if (current==low(data,i-1) && current<low(data,i-2) && current<low(data,i-3) &&
+                    current<low(data,i+1) && current<low(data,i+2)){
+                    foundDown = true
+                    //                    update(0)
+                }
+            }
+
+            // find for 7 bars fractal
+            if (!foundDown && (size - i - 1) >= 4){
+                if (current<=low(data,i-1) && current==low(data,i-2) && current<low(data,i-3) &&
+                    current<low(data,i-4) &&
+                    current<low(data,i+1) && current<low(data,i+2)){
+                    foundDown = true
+                    //                    update(0)
+                }
+            }
+
+            // find for 8 bars fractal
+            if (!foundDown && (size - i - 1) >= 5){
+                if (current<=low(data,i-1) && current==low(data,i-2) && current==low(data,i-3) &&
+                    current<low(data,i-4) && current<low(data,i-5) &&
+                    current<low(data,i+1) && current<low(data,i+2)){
+                    foundDown = true
+                    //                    update(0)
+                }
+            }
+
+            // find for 9 bars fractal
+            if (!foundDown && (size - i - 1) >= 6){
+                if (current<=low(data,i-1) && current==low(data,i-2) && current<=low(data,i-3) &&
+                    current==low(data,i-4) && current<low(data,i-5) && current<low(data,i-6) &&
+                    current<low(data,i+1) && current<low(data,i+2)){
+                    foundDown = true
+                    //                    update(0)
+                }
+            }
+
+            if (zigzagMapBuffer(i) == null || zigzagMapBuffer(i).value == 0.0){
+                if (foundUp){
+                    zigzagMapBuffer(i) = Point(0.0, FractalPos.TOP)
+                }
+                if (foundDown){
+                    zigzagMapBuffer(i) = Point(0.0, FractalPos.BOTTOM)
+                }
+                if (!foundUp && !foundDown){
+                    zigzagMapBuffer(i) = Point(-1, FractalPos.NONE)
+                }
+            }
+
+            //                if (!foundUp && !foundDown){
+            //                    timeline(i) = NonFractal(i, data(i).time)
+            //                }else if (foundUp && !foundDown){
+            //                    timeline(i) = Fractal(i, data(i).time, FractalPos.TOP)
+            //                }else if (foundDown && !foundUp){
+            //                    timeline(i) = Fractal(i, data(i).time, FractalPos.BOTTOM)
+            //                }else if (foundUp && foundDown){
+            //                    timeline(i) = Fractal(i, data(i).time, FractalPos.TOP_AND_BOTTOM)
+            //                }
         }
 
         calculated = true
@@ -449,33 +458,33 @@ class ZigzagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backs
 
 //        println("data.size: " + data.size)
 
-        for (zz <- zigzagMapBuffer){
+        for (zzPoint <- zigzagMapBuffer){
             if (!begin){
-                if (isZzPoint(zz)){
+                if (isZzPoint(zzPoint)){
                     begin = true
                     fractalPattern.clear()
                     fractalCount = 1
                     barCount = 1
                     barPattern :+= data(i).direction.toByte
                 }
-            }else if (begin && isZzPoint(zz)){
+            }else if (begin && isZzPoint(zzPoint)){
 //                begin = false
-                fractalPattern :+= zz.fractalPos.toByte
+                fractalPattern :+= zzPoint.fractalPos.toByte
                 barPattern :+= data(i).direction.toByte
 //                fractalCount += 1
 //                barCount += 1
-//                if (data(i).time == "2013.11.08 13:15"){
-//                    println("break")
-//                }
+                if (data(i).time == "2013.11.15 19:50"){
+                    println("break")
+                }
                 rv :+= Leg(data(i).time, fractalCount + 1, barCount + 1, fractalPattern.toArray, barPattern.toArray)
                 fractalCount = 0
                 barCount = 0
                 fractalPattern.clear()
                 barPattern.clear()
             }else if (begin){
-                if (isFractal(zz)){
+                if (isFractal(zzPoint)){
                     fractalCount += 1
-                    fractalPattern :+= zz.fractalPos.toByte
+                    fractalPattern :+= zzPoint.fractalPos.toByte
                 }
                 if (i < data.size){
                     barPattern :+= data(i).direction.toByte

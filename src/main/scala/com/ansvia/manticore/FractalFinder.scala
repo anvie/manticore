@@ -64,16 +64,16 @@ object FractalFinder extends Slf4jLogger {
               * PROCESS FRACTAL UP
               ***********************************************/
 
-            if (current > high(data, i + 1) && current > high(data, i + 2) &&
-                current > high(data, i - 1) && current > high(data, i - 2)){
+            if (current > high(data, i - 1) && current > high(data, i - 2) &&
+                current > high(data, i + 1) && current > high(data, i + 2)){
                 foundUp = true
 //                update(1)
             }
 
             // find for 6 bars fractals
             if (!foundUp && (size - i - 1) >= 3){
-                if (current == high(data,i+1) && current>high(data, i+2) && current>high(data, i+3) &&
-                    current>high(data,i-1) && current>high(data, i-2)){
+                if (current == high(data,i-1) && current>high(data, i-2) && current>high(data, i-3) &&
+                    current>high(data,i+1) && current>high(data, i+2)){
                     foundUp = true
 //                    update(1)
                 }
@@ -82,8 +82,8 @@ object FractalFinder extends Slf4jLogger {
             // find for 7 bars fractals
 
             if (!foundUp && (size - i - 1) >= 4){
-                if (current >= high(data, i+1) && current==high(data, i+2) && current > high(data, i+3) &&
-                    current>high(data, i+4) && current>high(data, i-1) && current>high(data, i-2)){
+                if (current >= high(data, i-1) && current==high(data, i-2) && current > high(data, i-3) &&
+                    current>high(data, i-4) && current>high(data, i+1) && current>high(data, i+2)){
                     foundUp = true
 //                    update(1)
                 }
@@ -92,9 +92,9 @@ object FractalFinder extends Slf4jLogger {
             // find for 8 bars fractals
 
             if (!foundUp && (size - i - 1) >= 5){
-                if (current>=high(data,i+1) && current==high(data,i+2) && current==high(data,i+3) &&
-                    current>high(data, i+4) && current>high(data,i+5) &&
-                    current>high(data, i-1) && current>high(data, i-2)){
+                if (current>=high(data,i-1) && current==high(data,i-2) && current==high(data,i-3) &&
+                    current>high(data, i-4) && current>high(data, i-5) &&
+                    current>high(data, i+1) && current>high(data, i+2)){
                     foundUp = true
 //                    update(1)
                 }
@@ -104,9 +104,9 @@ object FractalFinder extends Slf4jLogger {
             // find for 9 bars fractals
 
             if (!foundUp && (size - i - 1) >= 6){
-                if (current>=high(data, i+1) && current==high(data,i+2) && current>=high(data,i+3) &&
-                    current==high(data, i+4) && current>high(data,i+5) && current>high(data,i+6) &&
-                    current>high(data, i-1) && current>high(data, i-2)){
+                if (current>=high(data, i-1) && current==high(data,i-2) && current>=high(data,i-3) &&
+                    current==high(data, i-4) && current>high(data,i-5) && current>high(data,i-6) &&
+                    current>high(data, i+1) && current>high(data, i+2)){
                     foundUp = true
 //                    update(1)
                 }
@@ -119,9 +119,9 @@ object FractalFinder extends Slf4jLogger {
             var foundDown = false
             current = data(i).low
 
-//            if (data(i).time == "2013.11.08 20:48"){
-//                println("break")
-//            }
+            if (data(i).time == "2013.11.15 23:00"){
+                println("break")
+            }
 
             if (current<low(data,i+1) && current<low(data,i+2) &&
                 current<low(data,i-1) && current<low(data,i-2)){
@@ -131,8 +131,8 @@ object FractalFinder extends Slf4jLogger {
 
             // find for 6 bars fractal
             if (!foundDown && (size - i - 1) >= 3){
-                if (current==low(data,i+1) && current<low(data,i+2) && current<low(data,i+3) &&
-                    current<low(data,i-1) && current<low(data,i-2)){
+                if (current==low(data,i-1) && current<low(data,i-2) && current<low(data,i-3) &&
+                    current<low(data,i+1) && current<low(data,i+2)){
                     foundDown = true
 //                    update(0)
                 }
@@ -140,9 +140,9 @@ object FractalFinder extends Slf4jLogger {
 
             // find for 7 bars fractal
             if (!foundDown && (size - i - 1) >= 4){
-                if (current<=low(data,i+1) && current==low(data,i+2) && current<low(data,i+3) &&
-                    current<low(data,i+4) &&
-                    current<low(data,i-1) && current<low(data,i-2)){
+                if (current<=low(data,i-1) && current==low(data,i-2) && current<low(data,i-3) &&
+                    current<low(data,i-4) &&
+                    current<low(data,i+1) && current<low(data,i+2)){
                     foundDown = true
 //                    update(0)
                 }
@@ -150,9 +150,9 @@ object FractalFinder extends Slf4jLogger {
 
             // find for 8 bars fractal
             if (!foundDown && (size - i - 1) >= 5){
-                if (current<=low(data,i+1) && current==low(data,i+2) && current==low(data,i+3) &&
-                    current<low(data,i+4) && current<low(data,i+5) &&
-                    current<low(data,i-1) && current<low(data,i-2)){
+                if (current<=low(data,i-1) && current==low(data,i-2) && current==low(data,i-3) &&
+                    current<low(data,i-4) && current<low(data,i-5) &&
+                    current<low(data,i+1) && current<low(data,i+2)){
                     foundDown = true
 //                    update(0)
                 }
@@ -160,9 +160,9 @@ object FractalFinder extends Slf4jLogger {
 
             // find for 9 bars fractal
             if (!foundDown && (size - i - 1) >= 6){
-                if (current<=low(data,i+1) && current==low(data,i+2) && current<=low(data,i+3) &&
-                    current==low(data,i+4) && current<low(data,i+5) && current<low(data,i+6) &&
-                    current<low(data,i-1) && current<low(data,i-2)){
+                if (current<=low(data,i-1) && current==low(data,i-2) && current<=low(data,i-3) &&
+                    current==low(data,i-4) && current<low(data,i-5) && current<low(data,i-6) &&
+                    current<low(data,i+1) && current<low(data,i+2)){
                     foundDown = true
 //                    update(0)
                 }
