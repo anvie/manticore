@@ -17,7 +17,7 @@ class FlatLeg2Spec extends Specification {
 
      class Ctx extends Scope {
 
-         val fileDataPath = "/home/robin/EURUSD5.csv"
+         val fileDataPath = "/home/robin/Downloads/EURUSD5.csv"
 //         val fileDataPath = "/home/aoeu/EURUSD240.csv"
 
          val csvReader = new CsvReader(fileDataPath)

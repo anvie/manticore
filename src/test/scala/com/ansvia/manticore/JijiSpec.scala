@@ -12,7 +12,7 @@ import org.specs2.specification.Scope
  * Time: 11:28 AM
  *
  */
-class FlatLegXSpec extends Specification {
+class JijiSpec extends Specification {
 
 
 
@@ -80,29 +80,29 @@ class FlatLegXSpec extends Specification {
     }
 
 
-    "Gigi algo" should {
-        "filtering set-1 by set-2" in new Ctx {
+    "Jiji algo" should {
+        "process" in new Ctx {
 
             val start = System.currentTimeMillis()
 
-//
-//
-//            println("creating SET1...")
-//            val data1 = data.map(_.direction)
-//
-//            println("data1 length: " + data1.length)
-//
-//            val set1 = for(i <- 4 to 13)
-//            yield Manticore.getDnas(new InlineDataSource(data1), i)
-//                    .map(d => d)
-//
-//
-//            println("SET1 created which is %d step contains %d strings".format(set1.length,set1.map(_.length).sum))
-//            println("SET1 details:")
-//
-//            set1.zipWithIndex.foreach { case (d, i) =>
-//                println("  + %d-string = %d patterns".format(i+4, d.length))
-//            }
+
+
+            println("creating SET1...")
+            val data1 = data.map(_.direction)
+
+            println("data1 length: " + data1.length)
+
+            val set1 = for(i <- 4 to 13)
+                yield Manticore.getDnas(new InlineDataSource(data1), i)
+                        .map(d => d)
+
+
+            println("SET1 created which is %d step contains %d strings".format(set1.length,set1.map(_.length).sum))
+            println("SET1 details:")
+
+            set1.zipWithIndex.foreach { case (d, i) =>
+                println("  + %d-string = %d patterns".format(i+4, d.length))
+            }
 
             val zz = new ZigzagFinder(data)
 
