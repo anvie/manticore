@@ -2,7 +2,7 @@ organization := "com.ansvia.manticore"
 
 name := "manticore"
 
-version := "0.2"
+version := "0.3"
 
 description := ""
 
