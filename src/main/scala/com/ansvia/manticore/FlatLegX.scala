@@ -2,6 +2,10 @@ package com.ansvia.manticore
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+import akka.actor.{Props, ActorSystem, Actor}
+import akka.routing.RoundRobinRouter
+import com.ansvia.manticore.Manticore.{DNAS, DNA}
+import java.util.concurrent.CountDownLatch
 
 /**
  * Author: robin
@@ -11,53 +15,71 @@ import scala.collection.mutable.ArrayBuffer
  */
 object FlatLegX {
 
-    def main(args: Array[String]) {
+    lazy val actorSystem = ActorSystem.create()
+    val latch = new CountDownLatch(10)
 
+    case class Calculate(data:IndexedSeq[Int], size:Int, out:ArrayBuffer[DNA])
+    case class DnaBarWorker() extends Actor {
+        protected def receive = {
+            case Calculate(data, size, out) => {
+                println("   * [th-%s] %d-strings calculating...".format(Thread.currentThread().getId, size))
+                out ++= Manticore.getDnas(new InlineDataSource(data), size)
+                latch.countDown()
+                println("   * [th-%s] %d-strings done."format(Thread.currentThread().getId, size))
+            }
+        }
+    }
+    lazy val workers = actorSystem.actorOf(Props[DnaBarWorker]
+        .withRouter(RoundRobinRouter(nrOfInstances=Runtime.getRuntime.availableProcessors())))
 
-        val data = new CsvReader(args(0), args(1)).toArray.toIndexedSeq
+    def process(data:IndexedSeq[Record]){
+
         val dataSize = data.size
 
-        val start = System.currentTimeMillis()
+//        println("creating SET1...")
+//        val data1 = data.map(_.bit)
+//
+//        println("generating dna bar 4-13 using %d workers...".format(Runtime.getRuntime.availableProcessors()))
+//
+//        val out = new ArrayBuffer[DNA]
+//
+//        for(i <- 4 to 13){
+//            workers ! Calculate(data1, i, out)
+//        }
+//
+//        println("waiting for workers finished.")
+//        latch.await()
+
+//        val set1 = out.result().toSeq
 
 
-
-        println("creating SET1...")
-        val data1 = data.map(_.direction)
-
-        println("data1 length: " + data1.length)
-
-        val set1 = for(i <- 4 to 13)
-            yield Manticore.getDnas(new InlineDataSource(data1), i)
-                    .map(d => d)
-
-
-        println("SET1 created which is %d step contains %d strings".format(set1.length,set1.map(_.length).sum))
-        println("SET1 details:")
-
-        set1.zipWithIndex.foreach { case (d, i) =>
-            println("  + %d-string = %d patterns".format(i+4, d.length))
-        }
+//        println("SET1 created which is %d step contains %d strings".format(set1.length,set1.map(_.length).sum))
+//        println("SET1 details:")
+//
+//        set1.zipWithIndex.foreach { case (d, i) =>
+//            println("  + %d-string = %d patterns".format(i+4, d.length))
+//        }
 
 
         /************************************************
-         * Process Zigzag
-         ***********************************************/
+          * Process Zigzag
+          ***********************************************/
 
-        val zz = new ZigzagFinder(data)
+        val zz = new ZigzagFinder(data, 13, 8, 5)
 
         val legs = zz.getLegs
 
-        var set2a = new mutable.HashMap[Int,Seq[Seq[Int]]]
+        // set2a hanya berisi data pattern dna bar dari legs.
+        var set2a = new mutable.HashMap[Int,DNAS]
 
         legs //.filter(leg => leg.fractalCount > 3 && leg.fractalCount < 14)
-            .zipWithIndex.foreach { case (d, i) =>
+            .foreach { d =>
 
-            println("%d. %s".format(i, d))
+//            println("%d. %s".format(i, d))
 
-            //                 set2 ++=
             for(n <- 4 to 13){
                 val aoeu = Manticore.getDnas(new InlineDataSource(d.fractalPattern.map(_.toInt).toSeq), n)
-                    .map(dd => dd.map(_._1))
+//                    .map(dd => dd.map(_._1))
                 if (set2a.contains(n)){
                     val aoeu2 = set2a.get(n).get ++ aoeu
                     set2a.update(n, aoeu2)
@@ -68,12 +90,12 @@ object FlatLegX {
 
         }
 
-        val set2b = set1.zipWithIndex.filter { case (x, ii) =>
-            val p = x.map(_.map(_._1))
-            set2a(ii+4).exists { pp =>
-                p.contains(pp)
-            }
-        }
+//        val set2b = set1.filter { x =>
+//            val p = x.map(_._1)
+//            set2a.get(p.length).exists { pp =>
+//                pp.contains(p)
+//            }
+//        }
 
         println("")
 
@@ -98,11 +120,11 @@ object FlatLegX {
             }
             rv.result().reverse
         }
-        val trailingBarPattern = trailingBars.map(_.direction.toByte).toArray
+        val trailingBarPattern = trailingBars.map(_.bit.toByte).toArray
 
-        var finalPattern = legUsed.fractalPattern
+        val finalPattern = legUsed.fractalPattern
         back = back + 1
-        var legCount = 1
+        val legCount = 1
         //            while(finalPattern.length < 3){
         //                legCount = legCount + 1
         //                val leg2 = legs(legs.length - back)
@@ -124,7 +146,7 @@ object FlatLegX {
 
 
         if (pattBase.length < 3){
-            throw new Exception("insufficient pattern for search.")
+            throw ManticoreException("insufficient pattern for search.")
         }
 
         // (Occurences Count, Current history leg?, Next leg?)
@@ -180,17 +202,23 @@ object FlatLegX {
         }
 
         if (stats.size == 0)
-            throw new Exception("No pattern match")
+            throw ManticoreException("No pattern match")
 
         var upCount = 0
         var downCount = 0
 
         set2a.foreach { case (l, ps) =>
-            upCount += ps.count(_ == pattUp)
-            downCount += ps.count(_ == pattDown)
+            upCount += ps.count(_.map(_._1) == pattUp)
+            downCount += ps.count(_.map(_._1) == pattDown)
         }
 
+//        val (a,b,c) = Manticore.breakDown(set2a.flatMap(_._2).toSeq, data1, pattBase)
+
+//        upCount += set2b.count(_.map(_._1) == pattUp)
+//        downCount += set2b.count(_.map(_._1) == pattDown)
+
         println("up: " + upCount + ", down: " + downCount)
+//        println("up: " + a + ", down: " + b + ", chroms: " + c)
 
         println("Statistics: ===")
         var i = 0
@@ -257,7 +285,27 @@ object FlatLegX {
 
             i += 1
         }
+    }
 
+
+
+    def main(args: Array[String]) {
+
+        val data = new CsvReader(args(0), args(1)).toArray.toIndexedSeq
+
+        val start = System.currentTimeMillis()
+
+        try {
+            process(data)
+        }catch{
+            case e:ManticoreException =>
+                System.err.println(e.getMessage)
+        }finally{
+            actorSystem.shutdown()
+            NonBlockingChromosomeFinder.system.shutdown()
+        }
+
+        println("Done in " + (System.currentTimeMillis() - start) + "ms")
         println("\n")
 
     }

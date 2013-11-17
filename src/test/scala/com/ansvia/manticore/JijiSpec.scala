@@ -88,7 +88,7 @@ class JijiSpec extends Specification {
 
 
             println("creating SET1...")
-            val data1 = data.map(_.direction)
+            val data1 = data.map(_.bit)
 
             println("data1 length: " + data1.length)
 
@@ -152,7 +152,7 @@ class JijiSpec extends Specification {
                 }
                 rv.result().reverse
             }
-            val trailingBarPattern = trailingBars.map(_.direction.toByte).toArray
+            val trailingBarPattern = trailingBars.map(_.bit.toByte).toArray
 
             var finalPattern = legUsed.fractalPattern
             back = back + 1

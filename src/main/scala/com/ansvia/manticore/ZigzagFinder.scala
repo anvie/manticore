@@ -465,12 +465,12 @@ class ZigzagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backs
                     fractalPattern.clear()
                     fractalCount = 1
                     barCount = 1
-                    barPattern :+= data(i).direction.toByte
+                    barPattern :+= data(i).bit.toByte
                 }
             }else if (begin && isZzPoint(zzPoint)){
 //                begin = false
                 fractalPattern :+= zzPoint.fractalPos.toByte
-                barPattern :+= data(i).direction.toByte
+                barPattern :+= data(i).bit.toByte
 //                fractalCount += 1
 //                barCount += 1
                 if (data(i).time == "2013.11.15 19:50"){
@@ -487,7 +487,7 @@ class ZigzagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backs
                     fractalPattern :+= zzPoint.fractalPos.toByte
                 }
                 if (i < data.size){
-                    barPattern :+= data(i).direction.toByte
+                    barPattern :+= data(i).bit.toByte
                 }
                 barCount += 1
             }

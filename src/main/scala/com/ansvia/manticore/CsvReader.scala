@@ -18,7 +18,7 @@ case class Record(index:Int, time:String, open:Double, high:Double, low:Double, 
         "%s%s%s%s%s%s%s".format(index,time,open,high,low,close,volumes).hashCode
     }
 
-    def direction = {
+    def bit = {
         if (close > open) 1 else 0
     }
 
@@ -54,8 +54,14 @@ class CsvReader(is:InputStream, untilDate:String) {
 
         val s = line.split(",")
 
-        if (s(0) + " " + s(1) == untilDate)
-            throw new NoSuchElementException()
+        if (s.length == 7){
+            if (s(0) + " " + s(1) == untilDate)
+                throw new NoSuchElementException()
+        }else if (s.length == 6){
+            if (s(0) == untilDate)
+                throw new NoSuchElementException()
+        }
+
 
         val rv = {
             if (s.length == 6)

@@ -152,7 +152,7 @@ class FlatLegXSpec extends Specification {
                 }
                 rv.result().reverse
             }
-            val trailingBarPattern = trailingBars.map(_.direction.toByte).toArray
+            val trailingBarPattern = trailingBars.map(_.bit.toByte).toArray
 
             var finalPattern = legUsed.fractalPattern
             back = back + 1

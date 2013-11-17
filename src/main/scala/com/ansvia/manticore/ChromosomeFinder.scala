@@ -47,28 +47,32 @@ trait ChromosomeFinder {
             tail = tail - 1
             count = count + 1
 
+            if (dna.length == positivePattern.length){
 
-//             print("   %02d %02d %02d %02d".format(dna))
-//            println(dna)
+                //             print("   %02d %02d %02d %02d".format(dna))
+                //            println(dna)
 
-//            val chrom = Seq(d4, d3, d2, d1)
-            val chrom = dna.map { case (x, i) =>
-                val idx = size - (i.toInt - count)
-                if (idx < size)
-                    data(idx)
-                else
-                    -1
+                //            val chrom = Seq(d4, d3, d2, d1)
+                val chrom = dna.map { case (x, i) =>
+                    val idx = size - (i.toInt - count)
+                    if (idx < size)
+                        data(idx)
+                    else
+                        -1
+                }
+
+                if (positivePattern == chrom){
+                    positives.getAndIncrement
+                    //                    println(" +")
+                }else if (negativePattern == chrom){
+                    negatives.getAndIncrement
+                    //                    println(" -")
+                    //                }else{
+                    //                    println("")
+                }
+
             }
 
-            if (positivePattern == chrom){
-                positives.getAndIncrement
-                //                    println(" +")
-            }else if (negativePattern == chrom){
-                negatives.getAndIncrement
-                //                    println(" -")
-                //                }else{
-                //                    println("")
-            }
 
             chromosomes.incrementAndGet()
         }
