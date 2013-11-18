@@ -291,7 +291,13 @@ object FlatLegX {
 
     def main(args: Array[String]) {
 
-        val data = new CsvReader(args(0), args(1)).toArray.toIndexedSeq
+        val untilDate = {
+            if (args.length > 1)
+                args(1)
+            else
+                "-"
+        }
+        val data = new CsvReader(args(0), untilDate).toArray.toIndexedSeq
 
         val start = System.currentTimeMillis()
 
