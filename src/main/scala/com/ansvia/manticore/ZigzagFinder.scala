@@ -12,7 +12,7 @@ import java.text.SimpleDateFormat
 
 case class Leg(time:String, fractalCount:Int, barCount:Int, fractalPattern:Array[Byte], barPattern:Array[Byte]){
     override def toString = "leg[%s] = f: %d, bar: %d, pos: %s, fpatt: {%s}, bpatt: {%s}".format(time,
-        fractalCount, barCount, position, fractalPattern.map(_.toString).mkString(","), barPattern.mkString(","))
+        fractalCount, barCount, position, fractalPattern.map(_.toString).mkString(""), barPattern.mkString(""))
 
     def position = {
         if (fractalPattern.length > 1){
