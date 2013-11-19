@@ -4,6 +4,7 @@ import java.io._
 import java.util.NoSuchElementException
 import java.security.InvalidParameterException
 import scala.collection.mutable.ArrayBuffer
+import java.text.SimpleDateFormat
 
 /**
  * Author: robin
@@ -13,13 +14,34 @@ import scala.collection.mutable.ArrayBuffer
  */
 
 
-case class Record(index:Int, time:String, open:Double, high:Double, low:Double, close:Double, volumes:Double){
+/**
+ * Candle bar record representation.
+ * @param index
+ * @param time -- in this format yyyy.MM.dd HH:mm
+ * @param open
+ * @param high
+ * @param low
+ * @param close
+ * @param volumes
+ */
+case class Record(index:Int, time:String, open:Double,
+                  high:Double, low:Double, close:Double, volumes:Double){
+
     override def hashCode() = {
         "%s%s%s%s%s%s%s".format(index,time,open,high,low,close,volumes).hashCode
     }
 
     def bit = {
         if (close > open) 1 else 0
+    }
+
+    private val formatter = new SimpleDateFormat("yyyy.MM.dd HH:mm")
+    lazy val timestamp = {
+       date.getTime
+    }
+
+    lazy val date = {
+        formatter.parse(time)
     }
 
 }

@@ -1,6 +1,7 @@
 package com.ansvia.manticore
 
 import scala.collection.mutable.ArrayBuffer
+import java.text.SimpleDateFormat
 
 /**
  * Author: robin
@@ -12,6 +13,7 @@ import scala.collection.mutable.ArrayBuffer
 case class Leg(time:String, fractalCount:Int, barCount:Int, fractalPattern:Array[Byte], barPattern:Array[Byte]){
     override def toString = "leg[%s] = f: %d, bar: %d, pos: %s, fpatt: {%s}, bpatt: {%s}".format(time,
         fractalCount, barCount, position, fractalPattern.map(_.toString).mkString(","), barPattern.mkString(","))
+
     def position = {
         if (fractalPattern.length > 1){
             if (fractalPattern(fractalPattern.length-1) == 0x01)
@@ -24,6 +26,14 @@ case class Leg(time:String, fractalCount:Int, barCount:Int, fractalPattern:Array
             "-"
     }
 
+    private val formatter = new SimpleDateFormat("yyy.MM.dd HH:mm")
+    lazy val timestamp = {
+        date.getTime
+    }
+
+    lazy val date = {
+        formatter.parse(time)
+    }
 }
 case class Point(value:Double, fractalPos:Int){
     override def toString = {
