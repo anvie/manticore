@@ -73,22 +73,35 @@ object FlatLegX {
         // set2a hanya berisi data pattern dna bar dari legs.
         var set2a = new mutable.HashMap[Int,DNAS]
 
-        legs //.filter(leg => leg.fractalCount > 3 && leg.fractalCount < 14)
-            .foreach { d =>
 
-            println(d)
+//        legs //.filter(leg => leg.fractalCount > 3 && leg.fractalCount < 14)
+//            .foreach { d =>
+//
+//            println(d)
+//
+//            for(n <- 2 to 13){
+//                val aoeu = Manticore.getDnas(new InlineDataSource(d.fractalPattern.map(_.toInt).toSeq), n)
+////                    .map(dd => dd.map(_._1))
+//                if (set2a.contains(n)){
+//                    val aoeu2 = set2a.get(n).get ++ aoeu
+//                    set2a.update(n, aoeu2)
+//                }else{
+//                    set2a += n -> aoeu
+//                }
+//            }
+//
+//        }
 
-            for(n <- 2 to 13){
-                val aoeu = Manticore.getDnas(new InlineDataSource(d.fractalPattern.map(_.toInt).toSeq), n)
-//                    .map(dd => dd.map(_._1))
-                if (set2a.contains(n)){
-                    val aoeu2 = set2a.get(n).get ++ aoeu
-                    set2a.update(n, aoeu2)
-                }else{
-                    set2a += n -> aoeu
-                }
+
+        for(n <- 2 to 13){
+            val aoeu = Manticore.getDnas(new InlineDataSource(legs.flatMap(_.fractalPattern.map(_.toInt))), n)
+            //                    .map(dd => dd.map(_._1))
+            if (set2a.contains(n)){
+                val aoeu2 = set2a.get(n).get ++ aoeu
+                set2a.update(n, aoeu2)
+            }else{
+                set2a += n -> aoeu
             }
-
         }
 
 //        set2a.flatMap(_._2).foreach(x => println(x.map(_._1).mkString("")))

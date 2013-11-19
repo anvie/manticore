@@ -230,9 +230,9 @@ class ZigzagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backs
               * PROCESS FRACTAL UP
               ***********************************************/
 
-            if (data(i).time == "2013.11.15 22:05"){
-                println("break")
-            }
+//            if (data(i).time == "2013.11.15 22:05"){
+//                println("break")
+//            }
 
             if (current > high(data, i - 1) && current > high(data, i - 2) &&
                 current > high(data, i + 1) && current > high(data, i + 2)){
@@ -483,9 +483,9 @@ class ZigzagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backs
                 barPattern :+= data(i).bit.toByte
 //                fractalCount += 1
 //                barCount += 1
-                if (data(i).time == "2013.11.15 19:50"){
-                    println("break")
-                }
+//                if (data(i).time == "2013.11.15 19:50"){
+//                    println("break")
+//                }
                 rv :+= Leg(data(i).time, fractalCount + 1, barCount + 1, fractalPattern.toArray, barPattern.toArray)
                 fractalCount = 0
                 barCount = 0
