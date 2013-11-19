@@ -93,7 +93,7 @@ object FlatLegX {
 //        }
 
 
-        for(n <- 2 to 13){
+        for(n <- 2 to 14){
             val aoeu = Manticore.getDnas(new InlineDataSource(legs.flatMap(_.fractalPattern.map(_.toInt))), n)
             //                    .map(dd => dd.map(_._1))
             if (set2a.contains(n)){
@@ -129,16 +129,17 @@ object FlatLegX {
 //            val lastLeg = legs(legs.length - 1)
 
             var trailingData = data.filter(_.timestamp > lastLeg.timestamp)
+            var fractals = FractalFinder.find(trailingData)
 
-//            if (trailingData.length < 3){
-//                trailingData = data.filter(_.timestamp > legs(legs.length - 2).timestamp)
-//            }
-
-            val fractals = FractalFinder.find(trailingData)
+            if (fractals(fractals.length-1).isInstanceOf[Fractal]){
+                trailingData = data.filter(_.timestamp > legs(legs.length - 2).timestamp)
+                fractals = FractalFinder.find(trailingData)
+            }
 
             fractals.foreach(x => println("f: " + x))
 
-            val fractalPattern = fractals.filter(_.isInstanceOf[Fractal]).map(_.asInstanceOf[Fractal]).map(_.pos)
+            val fractalPattern = fractals.filter(_.isInstanceOf[Fractal])
+                .map(_.asInstanceOf[Fractal]).map(_.pos)
             val barPattern = trailingData.map(_.bit)
             val fractalCount = fractalPattern.length
             val barCount = barPattern.length
@@ -180,9 +181,9 @@ object FlatLegX {
         val pattDown = finalPattern.map(_.toInt).toSeq ++ Seq(0)
 
         println("\n")
-        println("base pattern: {"+ pattBase.mkString("") + "}")
-        println("up pattern: {" + pattUp.mkString("") + "}")
-        println("down pattern: {" + pattDown.mkString("") + "}")
+        println("base fractal pattern: {"+ pattBase.mkString("") + "}")
+        println("up fractal pattern: {" + pattUp.mkString("") + "}")
+        println("down fractal pattern: {" + pattDown.mkString("") + "}")
         println("\n")
 
 
@@ -269,9 +270,13 @@ object FlatLegX {
 
         val (ok, bellow) = sortedStats.partition(p => basePatternOccur / p.occurrences > 1)
 
+
 //        println("ok: " + ok)
 //        println("bellow: " + bellow)
         println("ok: %d, bellow: %d, %d/%d > 1 = %d".format(ok.length, bellow.length, ok.length, bellow.length, ok.length/bellow.length))
+
+        if (ok.length == 0)
+            throw ManticoreException("exact pattern not found on history, try again later")
 
         val isPatternMatch = ok.length/bellow.length > 1
 
@@ -282,13 +287,28 @@ object FlatLegX {
 
         var upCount = 0
         var downCount = 0
+        var upBarCount = 0
+        var downBarCount = 0
+
+        val pattBar = uncompletedLeg.barPattern.map(_.toInt)
+        val pattBarUp = pattBar ++ Seq(1)
+        val pattBarDown = pattBar ++ Seq(0)
+
+        println("\n")
+        println("base bar pattern: {"+ pattBar.mkString("") + "}")
+        println("up bar pattern: {" + pattBarUp.mkString("") + "}")
+        println("down bar pattern: {" + pattBarDown.mkString("") + "}")
+        println("\n")
 
         set2a.foreach { case (l, ps) =>
 //            ps.foreach { x =>
-//                println(x.map(_._1).mkString("") + " == " + pattUp.mkString(""))
+//                println(x.map(_._1).mkString("") + " == " + pattBarUp.mkString(""))
 //            }
             upCount += ps.count(_.map(_._1) == pattUp)
             downCount += ps.count(_.map(_._1) == pattDown)
+
+            upBarCount += ps.count(_.map(_._1) == pattBarUp)
+            downBarCount += ps.count(_.map(_._1) == pattBarDown)
         }
 
         //        val (a,b,c) = Manticore.breakDown(set2a.flatMap(_._2).toSeq, data1, pattBase)
@@ -296,7 +316,8 @@ object FlatLegX {
         //        upCount += set2b.count(_.map(_._1) == pattUp)
         //        downCount += set2b.count(_.map(_._1) == pattDown)
 
-        println("up: " + upCount + ", down: " + downCount)
+        println("FRACTAL: up: " + upCount + ", down: " + downCount)
+        println("BAR: up: " + upBarCount + ", down: " + downBarCount)
         //        println("up: " + a + ", down: " + b + ", chroms: " + c)
 //
 //        println("Statistics: ===")
