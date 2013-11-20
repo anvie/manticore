@@ -128,12 +128,13 @@ object FlatLegX {
 
 //            val lastLeg = legs(legs.length - 1)
 
-            var trailingData = data.filter(_.timestamp > lastLeg.timestamp)
+            val trailingData = data.filter(_.timestamp > lastLeg.timestamp)
             var fractals = FractalFinder.find(trailingData)
 
             if (fractals(fractals.length-1).isInstanceOf[Fractal]){
-                trailingData = data.filter(_.timestamp > legs(legs.length - 2).timestamp)
-                fractals = FractalFinder.find(trailingData)
+                fractals = fractals.slice(0, fractals.length-2)
+//                trailingData = data.filter(_.timestamp > legs(legs.length - 2).timestamp)
+//                fractals = FractalFinder.find(trailingData)
             }
 
             fractals.foreach(x => println("f: " + x))
@@ -290,7 +291,10 @@ object FlatLegX {
         var upBarCount = 0
         var downBarCount = 0
 
-        val pattBar = uncompletedLeg.barPattern.map(_.toInt)
+        var pattBar = uncompletedLeg.barPattern.map(_.toInt)
+        if (pattBar.length >= 13){
+            pattBar = pattBar.reverse.slice(0, 7).reverse
+        }
         val pattBarUp = pattBar ++ Seq(1)
         val pattBarDown = pattBar ++ Seq(0)
 
@@ -302,7 +306,8 @@ object FlatLegX {
 
         set2a.foreach { case (l, ps) =>
 //            ps.foreach { x =>
-//                println(x.map(_._1).mkString("") + " == " + pattBarUp.mkString(""))
+//                if (x.map(_._1).length == pattBarUp.length)
+//                    println(x.map(_._1).mkString("") + " == " + pattBarUp.mkString(""))
 //            }
             upCount += ps.count(_.map(_._1) == pattUp)
             downCount += ps.count(_.map(_._1) == pattDown)
