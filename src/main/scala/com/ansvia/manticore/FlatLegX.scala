@@ -230,21 +230,6 @@ object FlatLegX {
                 }
             }
 
-//            checkPatt(patt, pattBase ++ Seq(1), leg)
-//            checkPatt(patt, pattBase ++ Seq(0), leg)
-//            checkPatt(patt, pattBase ++ Seq(1,0), leg)
-//            checkPatt(patt, pattBase ++ Seq(1,1), leg)
-//            checkPatt(patt, pattBase ++ Seq(0,1), leg)
-//            checkPatt(patt, pattBase ++ Seq(0,0), leg)
-//            checkPatt(patt, pattBase ++ Seq(1,0,1), leg)
-//            checkPatt(patt, pattBase ++ Seq(1,0,0), leg)
-//            checkPatt(patt, pattBase ++ Seq(1,1,1), leg)
-//            checkPatt(patt, pattBase ++ Seq(1,1,0), leg)
-//            checkPatt(patt, pattBase ++ Seq(0,0,1), leg)
-//            checkPatt(patt, pattBase ++ Seq(0,1,1), leg)
-//            checkPatt(patt, pattBase ++ Seq(0,1,0), leg)
-//            checkPatt(patt, pattBase ++ Seq(0,0,0), leg)
-
         }
 
         if (stats.size == 0)
@@ -292,14 +277,21 @@ object FlatLegX {
         var downBarCount = 0
 
         var pattBar = uncompletedLeg.barPattern.map(_.toInt)
-        if (pattBar.length >= 13){
-            pattBar = pattBar.reverse.slice(0, 7).reverse
+        var pattBarSeq = Seq.empty[Seq[Int]]
+        if (pattBar.length >= 4){
+//            pattBar = pattBar.reverse.slice(0, 7).reverse
+            for (ii <- 4 to pattBar.length){
+                pattBarSeq :+= pattBar.reverse.slice(0, ii).reverse.toSeq
+            }
         }
         val pattBarUp = pattBar ++ Seq(1)
         val pattBarDown = pattBar ++ Seq(0)
 
         println("\n")
         println("base bar pattern: {"+ pattBar.mkString("") + "}")
+        pattBarSeq.zipWithIndex.foreach { case (p, i) =>
+            println("   %d-strings: %s".format(i+4, p.mkString("")))
+        }
         println("up bar pattern: {" + pattBarUp.mkString("") + "}")
         println("down bar pattern: {" + pattBarDown.mkString("") + "}")
         println("\n")
@@ -312,8 +304,10 @@ object FlatLegX {
             upCount += ps.count(_.map(_._1) == pattUp)
             downCount += ps.count(_.map(_._1) == pattDown)
 
-            upBarCount += ps.count(_.map(_._1) == pattBarUp)
-            downBarCount += ps.count(_.map(_._1) == pattBarDown)
+           pattBarSeq.zipWithIndex.foreach { case (p, i)=>
+               upBarCount += ps.count(_.map(_._1).mkString("") == (p ++ Seq(1)).mkString(""))
+               downBarCount += ps.count(_.map(_._1).mkString("") == (p ++ Seq(0)).mkString(""))
+           }
         }
 
         //        val (a,b,c) = Manticore.breakDown(set2a.flatMap(_._2).toSeq, data1, pattBase)
