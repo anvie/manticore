@@ -33,7 +33,7 @@ object FlatLegX {
     lazy val workers = actorSystem.actorOf(Props[DnaBarWorker]
         .withRouter(RoundRobinRouter(nrOfInstances=Runtime.getRuntime.availableProcessors())))
 
-    def process(data:IndexedSeq[Record]){
+    def process(data:IndexedSeq[Record], usingPatternMatch:Boolean){
 
         val dataSize = data.size
 
@@ -197,8 +197,6 @@ object FlatLegX {
 
         var stats = new mutable.HashMap[String, Pattern]()
 
-        println("Searching for pattern...")
-
 
 //        def checkPatt(curPatt:Seq[Int], pattToCheck:Seq[Int], leg:Leg) = {
 //            if (curPatt == pattToCheck){
@@ -232,44 +230,53 @@ object FlatLegX {
 
         }
 
-        if (stats.size == 0)
-            throw ManticoreException("No pattern match")
+        if (usingPatternMatch){
 
-        println("occurrences:")
+            println("using pattern matching, check for pattern match.")
 
-        val pattBaseStr = pattBase.mkString("")
+            println("Searching for pattern...")
 
-        if (!stats.get(pattBaseStr).isDefined)
-            throw ManticoreException("Base pattern match not found")
+            if (stats.size == 0)
+                throw ManticoreException("No pattern match")
 
-        val basePatternOccur = stats(pattBaseStr).occurrences
+            println("occurrences:")
 
-        println("base pattern occurrences: " + basePatternOccur)
+            val pattBaseStr = pattBase.mkString("")
 
-        val sortedStats = stats.toSeq.sortBy(_._2.occurrences).reverse.map(_._2)
+            if (!stats.get(pattBaseStr).isDefined)
+                throw ManticoreException("Base pattern match not found")
 
-//        sortedStats.foreach { patt =>
-//            println("%s ->  %d".format(patt.str, patt.occurrences))
-//        }
+            val basePatternOccur = stats(pattBaseStr).occurrences
 
-//        val divs = sortedStats.map(p => basePatternOccur / p.occurrences)
+            println("base pattern occurrences: " + basePatternOccur)
 
-        val (ok, bellow) = sortedStats.partition(p => basePatternOccur / p.occurrences > 1)
+            val sortedStats = stats.toSeq.sortBy(_._2.occurrences).reverse.map(_._2)
+
+            //        sortedStats.foreach { patt =>
+            //            println("%s ->  %d".format(patt.str, patt.occurrences))
+            //        }
+
+            //        val divs = sortedStats.map(p => basePatternOccur / p.occurrences)
+
+            val (ok, bellow) = sortedStats.partition(p => basePatternOccur / p.occurrences > 1)
 
 
-//        println("ok: " + ok)
-//        println("bellow: " + bellow)
-        println("ok: %d, bellow: %d, %d/%d > 1 = %d".format(ok.length, bellow.length, ok.length, bellow.length, ok.length/bellow.length))
+            //        println("ok: " + ok)
+            //        println("bellow: " + bellow)
+            println("ok: %d, bellow: %d, %d/%d > 1 = %d".format(ok.length, bellow.length, ok.length, bellow.length, ok.length/bellow.length))
 
-        if (ok.length == 0)
-            throw ManticoreException("exact pattern not found on history, try again later")
+            if (ok.length == 0)
+                throw ManticoreException("exact pattern not found on history, try again later")
 
-        val isPatternMatch = ok.length/bellow.length > 1
+            val isPatternMatch = ok.length/bellow.length > 1
 
-        if (!isPatternMatch)
-            throw ManticoreException("Pattern not matched yet, try again later")
+            if (!isPatternMatch)
+                throw ManticoreException("Pattern not matched yet, try again later")
 
-        println("pattern matched, do the probability calculation...")
+            println("pattern matched, do the probability calculation...")
+        }else{
+            println("pattern matching skiped.")
+        }
 
         var upCount = 0
         var downCount = 0
@@ -321,7 +328,7 @@ object FlatLegX {
         //        upCount += set2b.count(_.map(_._1) == pattUp)
         //        downCount += set2b.count(_.map(_._1) == pattDown)
 
-        println("FRACTAL: up: " + upCount + ", down: " + downCount + " --> " + (if (upCount>downCount) "UP" else "DOWN"))
+        println("FRACTAL: up: " + upCount + ", down: " + downCount + " --> " + (if (upCount>downCount) "UP" else if (upCount==downCount) "-" else "DOWN"))
         println("LEG BAR: up: " + upBarCount + ", down: " + downBarCount + " --> " + (if (upBarCount>downBarCount) "UP" else if (upBarCount==downBarCount) "-" else "DOWN"))
         println("FRACTAL SUB DNA: up: " + fsDnaUp + ", down: " + fsDnaDown + " --> " + (if (fsDnaUp>fsDnaDown) "UP" else "DOWN"))
         println("CANDLE SUB DNA (raw): up: " + cdDnaUp + ", down: " + cdDnaDown + " --> " + (if (cdDnaUp>cdDnaDown) "UP" else if (cdDnaUp==cdDnaDown) "-" else "DOWN"))
@@ -406,12 +413,16 @@ object FlatLegX {
             else
                 "-"
         }
+
+        // --nopm for not using pattern match at all
+        val usingPatternMatch = !args.contains("--nopm")
+
         val data = new CsvReader(args(0), untilDate).toArray.toIndexedSeq
 
         val start = System.currentTimeMillis()
 
         try {
-            process(data)
+            process(data, usingPatternMatch)
         }catch{
             case e:ManticoreException =>
                 System.err.println(e.getMessage)
