@@ -125,13 +125,13 @@ object Manticore extends Slf4jLogger {
             if (basePattern != null)
                 basePattern ++ Seq(1)
             else
-                dna.slice(0,dna.length).map(_._1) ++ Seq(1)
+                dna.slice(0,dna.length-1).map(_._1) ++ Seq(1)
         }
         val negativePattern = {
             if (basePattern != null)
                 basePattern ++ Seq(0)
             else
-                dna.slice(0,dna.length).map(_._1) ++ Seq(0)
+                dna.slice(0,dna.length-1).map(_._1) ++ Seq(0)
         }
 
         val positives = new AtomicInteger(0)
