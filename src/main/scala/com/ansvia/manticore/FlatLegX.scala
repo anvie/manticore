@@ -320,9 +320,12 @@ object FlatLegX {
         println("Calculating sub dna...")
         val legBin = set2a.flatMap(_._2).toSeq
         val (fsDnaUp,fsDnaDown,fsDnaOccurs) = Manticore.breakDown(legBin, legBin.flatMap(_.map(_._1)).toIndexedSeq, pattBar)
-        val rawDataBit = data.map(_.bit)
-        val candleDnaBar = Manticore.getDnas(new InlineDataSource(rawDataBit), 7)
-        val (cdDnaUp,cdDnaDown,cdDnaOccurs) = Manticore.breakDown(candleDnaBar, rawDataBit)
+
+        legs.flatMap(_.fractalPattern).map(_.toInt).mkString("")
+
+//        val rawDataBit = data.map(_.bit)
+//        val candleDnaBar = Manticore.getDnas(new InlineDataSource(rawDataBit), 7)
+//        val (cdDnaUp,cdDnaDown,cdDnaOccurs) = Manticore.breakDown(candleDnaBar, rawDataBit)
 //        val (cdfDnaUp,cdfDnaDown,cdfDnaOccurs) = Manticore.breakDown(candleDnaBar, legBin.flatMap(_.map(_._1)).toIndexedSeq)
 
         //        upCount += set2b.count(_.map(_._1) == pattUp)
@@ -331,7 +334,7 @@ object FlatLegX {
         println("FRACTAL: up: " + upCount + ", down: " + downCount + " --> " + (if (upCount>downCount) "UP" else if (upCount==downCount) "-" else "DOWN"))
         println("LEG BAR: up: " + upBarCount + ", down: " + downBarCount + " --> " + (if (upBarCount>downBarCount) "UP" else if (upBarCount==downBarCount) "-" else "DOWN"))
         println("FRACTAL SUB DNA: up: " + fsDnaUp + ", down: " + fsDnaDown + " --> " + (if (fsDnaUp>fsDnaDown) "UP" else "DOWN"))
-        println("CANDLE SUB DNA (raw): up: " + cdDnaUp + ", down: " + cdDnaDown + " --> " + (if (cdDnaUp>cdDnaDown) "UP" else if (cdDnaUp==cdDnaDown) "-" else "DOWN"))
+//        println("CANDLE SUB DNA (raw): up: " + cdDnaUp + ", down: " + cdDnaDown + " --> " + (if (cdDnaUp>cdDnaDown) "UP" else if (cdDnaUp==cdDnaDown) "-" else "DOWN"))
 //        println("CANDLE SUB DNA (filtered): up: " + cdfDnaUp + ", down: " + cdfDnaDown + " --> " + (if (cdfDnaUp>cdfDnaDown) "UP" else if (cdfDnaUp==cdfDnaDown) "-" else "DOWN"))
 
         //        println("up: " + a + ", down: " + b + ", chroms: " + c)

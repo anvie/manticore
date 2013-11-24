@@ -49,10 +49,6 @@ trait ChromosomeFinder {
 
             if (dna.length == positivePattern.length){
 
-                //             print("   %02d %02d %02d %02d".format(dna))
-                //            println(dna)
-
-                //            val chrom = Seq(d4, d3, d2, d1)
                 val chrom = dna.map { case (x, i) =>
                     val idx = size - (i.toInt - count)
                     if (idx < size)
@@ -61,14 +57,14 @@ trait ChromosomeFinder {
                         -1
                 }
 
+//                print(chrom.mkString(""))
+
                 if (positivePattern == chrom){
                     positives.getAndIncrement
-                    //                    println(" +")
+//                    println(" +")
                 }else if (negativePattern == chrom){
                     negatives.getAndIncrement
-                    //                    println(" -")
-                    //                }else{
-                    //                    println("")
+//                    println(" -")
                 }
 
             }
