@@ -180,12 +180,23 @@ object Manticore extends Slf4jLogger {
             else
                 "4-7"
         }
-
         if (!step.contains("-")){
             error("step must contains `-` char for range, ex: 4-14")
             sys.exit(3)
         }
-        
+
+        val untilDate = {
+            if (args.exists(_.startsWith("--until=")))
+                args.find(_.startsWith("--until=")).map { x =>
+                    x.split("=")(1)
+                }.getOrElse("-")
+            else
+                "-"
+        }
+
+        println("calculation until date: " + untilDate)
+
+
         val fileDataF = new File(fileDataPath)
         if (!fileDataF.exists()){
             println(" [ERROR] File not found " + fileDataPath)
@@ -213,7 +224,7 @@ object Manticore extends Slf4jLogger {
 
                     info("converting csv to bin...")
 
-                    CsvToBin.convert(new File(fileDataPath))
+                    CsvToBin.convert(new File(fileDataPath), untilDate)
 
                     val binFilePath = FileUtils.removeExtension(fileDataPath) + ".bin"
                     new BinaryDataSource(new File(binFilePath))

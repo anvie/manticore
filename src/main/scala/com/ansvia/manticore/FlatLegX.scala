@@ -318,7 +318,10 @@ object FlatLegX {
         }
 
         println("Calculating sub dna...")
-        val legBin = set2a.flatMap(_._2).toSeq
+        var legBin = set2a.flatMap(_._2).toSeq
+        if (legBin.length > 1024){
+            legBin = legBin.slice(0, 1024)
+        }
         val (fsDnaUp,fsDnaDown,fsDnaOccurs) = Manticore.breakDown(legBin, legBin.flatMap(_.map(_._1)).toIndexedSeq, pattBar)
 
         legs.flatMap(_.fractalPattern).map(_.toInt).mkString("")

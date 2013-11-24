@@ -235,6 +235,7 @@ class ZigzagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backs
 //            }
 
             if (current > high(data, i - 1) && current > high(data, i - 2) &&
+                (size - i - 1 >= 2) &&
                 current > high(data, i + 1) && current > high(data, i + 2)){
                 foundUp = true
                 //                update(1)

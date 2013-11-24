@@ -12,7 +12,15 @@ object FlatLeg {
 
     def main(args: Array[String]) {
 
-        val data = new CsvReader(args(0)).toArray.toIndexedSeq
+        val untilDate = {
+            if (args.length > 1)
+                args(1)
+            else
+                "-"
+        }
+
+
+        val data = new CsvReader(args(0), untilDate).toArray.toIndexedSeq
 
         val zz = new ZigzagFinder(data)
 

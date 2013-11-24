@@ -4,6 +4,7 @@ import java.io._
 import com.ansvia.commons.logging.Slf4jLogger
 import scala.io.Source
 import sun.misc.IOUtils
+import scala.util.control.Breaks._
 
 /**
  * Author: robin
@@ -20,7 +21,7 @@ object CsvToBin extends Slf4jLogger {
         sys.exit(2)
     }
 
-    def convert(file:File){
+    def convert(file:File, untilDate:String="-"){
 
         val lines = Source.fromFile(file).getLines()
 
@@ -31,33 +32,45 @@ object CsvToBin extends Slf4jLogger {
         var bytes = Seq.newBuilder[Byte]
         var prevBin = 0
 
-        while(lines.hasNext){
-            val line = lines.next()
-            val s = line.split(",")
-            val open = {
-                if (s.length == 7)
-                    s(2).toDouble
-                else
-                    s(1).toDouble
-            }
-            val close = {
-                if (s.length == 7)
-                    s(5).toDouble
-                else
-                    s(4).toDouble
-            }
-            val bin = if (close > open){
-                1
-            } else if (close == open) {
-                prevBin
-            } else {
-                0
-            }
-            prevBin = bin
+        breakable {
 
-            //                prevClose = close
+            while(lines.hasNext){
+                val line = lines.next()
+                val s = line.split(",")
 
-            bytes += bin.toByte
+                if (s.length == 7){
+                    if (s(0) + " " + s(1) == untilDate) {
+                        println("break to this date: " + untilDate)
+                        break()
+                    }
+                }
+
+                val open = {
+                    if (s.length == 7)
+                        s(2).toDouble
+                    else
+                        s(1).toDouble
+                }
+                val close = {
+                    if (s.length == 7)
+                        s(5).toDouble
+                    else
+                        s(4).toDouble
+                }
+                val bin = if (close > open){
+                    1
+                } else if (close == open) {
+                    prevBin
+                } else {
+                    0
+                }
+                prevBin = bin
+
+                //                prevClose = close
+
+                bytes += bin.toByte
+            }
+
         }
 
         val fName = org.apache.commons.io.FileUtils.removeExtension(file.getAbsolutePath) + ".bin"
