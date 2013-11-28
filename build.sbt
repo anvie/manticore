@@ -2,7 +2,7 @@ organization := "com.ansvia.manticore"
 
 name := "manticore"
 
-version := "0.3"
+version := "0.4"
 
 description := ""
 
@@ -15,7 +15,11 @@ proguardOptions += keepMain("com.ansvia.manticore.Manticore")
 proguardOptions ++= Seq(
     "-keep class ch.qos.logback.*",
     "-keep class org.slf4j.*",
-    "-keepclasseswithmembers class * { public static void main(java.lang.String[]); }"
+    "-keepclasseswithmembers class * { public static void main(java.lang.String[]); }",
+    "-keep class akka.actor.*",
+    "-keep class akka.event.Logging.*",
+    "-keepclasseswithmembers class akka.actor.LocalActorRefProvider { *; }",
+    "-keepclasseswithmembers class akka.event.* { *; }"
 )
 
 resolvers ++= Seq(

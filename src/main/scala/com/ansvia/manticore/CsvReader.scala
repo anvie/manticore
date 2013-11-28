@@ -4,6 +4,7 @@ import java.io._
 import java.util.NoSuchElementException
 import java.security.InvalidParameterException
 import scala.collection.mutable.ArrayBuffer
+import java.text.SimpleDateFormat
 
 /**
  * Author: robin
@@ -13,30 +14,51 @@ import scala.collection.mutable.ArrayBuffer
  */
 
 
-case class Record(index:Int, time:String, open:Double, high:Double, low:Double, close:Double, volumes:Double){
+/**
+ * Candle bar record representation.
+ * @param index
+ * @param time -- in this format yyyy.MM.dd HH:mm
+ * @param open
+ * @param high
+ * @param low
+ * @param close
+ * @param volumes
+ */
+case class Record(index:Int, time:String, open:Double,
+                  high:Double, low:Double, close:Double, volumes:Double){
+
     override def hashCode() = {
         "%s%s%s%s%s%s%s".format(index,time,open,high,low,close,volumes).hashCode
     }
 
-    def direction = {
+    def bit = {
         if (close > open) 1 else 0
+    }
+
+    private val formatter = new SimpleDateFormat("yyyy.MM.dd HH:mm")
+    lazy val timestamp = {
+       date.getTime
+    }
+
+    lazy val date = {
+        formatter.parse(time)
     }
 
 }
 
 
 
-class CsvReader(is:InputStream) {
+class CsvReader(is:InputStream, untilDate:String) {
 
     private var idx = 0
     lazy val bfr = new BufferedReader(new InputStreamReader(is))
 
-    def this(file:File){
-        this(new FileInputStream(file))
+    def this(file:File, untilDate:String){
+        this(new FileInputStream(file), untilDate)
     }
 
-    def this(file:String){
-        this(new File(file))
+    def this(file:String, untilDate:String="-"){
+        this(new File(file), untilDate)
     }
 
 
@@ -53,6 +75,16 @@ class CsvReader(is:InputStream) {
             throw new NoSuchElementException()
 
         val s = line.split(",")
+
+        if (s.length == 7){
+            if (s(0) + " " + s(1) == untilDate)
+                throw new NoSuchElementException()
+        }else if (s.length == 6){
+            if (s(0) == untilDate)
+                throw new NoSuchElementException()
+        }
+
+
         val rv = {
             if (s.length == 6)
                 Record(idx, s(0), s(1).toDouble, s(2).toDouble, s(3).toDouble, s(4).toDouble, s(5).toDouble)

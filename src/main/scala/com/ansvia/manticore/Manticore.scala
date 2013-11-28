@@ -115,14 +115,24 @@ object Manticore extends Slf4jLogger {
 
 
 
-    def breakDown(dnas:DNAS, data:IndexedSeq[Int]) = {
+    def breakDown(dnas:DNAS, data:IndexedSeq[Int], basePattern:Seq[Int]=null) = {
 
         val dna = dnas.head
 
 //        val positivePattern = Seq(fs(0)._1,fs(1)._1,fs(2)._1,1)
 //        val negativePattern = Seq(fs(0)._1,fs(1)._1,fs(2)._1,0)
-        val positivePattern = dna.slice(0,dna.length-1).map(_._1) ++ Seq(1)
-        val negativePattern = dna.slice(0,dna.length-1).map(_._1) ++ Seq(0)
+        val positivePattern = {
+            if (basePattern != null)
+                basePattern ++ Seq(1)
+            else
+                dna.slice(0,dna.length-1).map(_._1) ++ Seq(1)
+        }
+        val negativePattern = {
+            if (basePattern != null)
+                basePattern ++ Seq(0)
+            else
+                dna.slice(0,dna.length-1).map(_._1) ++ Seq(0)
+        }
 
         val positives = new AtomicInteger(0)
         val negatives = new AtomicInteger(0)
@@ -277,3 +287,6 @@ object DataModes {
     val CSV = 2
     val INLINE = 3
 }
+
+
+case class ManticoreException(msg:String) extends Exception(msg)
