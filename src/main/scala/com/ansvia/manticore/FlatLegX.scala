@@ -146,15 +146,15 @@ object FlatLegX {
             val fractalCount = fractalPattern.length
             val barCount = barPattern.length
 
-            if (fractalCount == 0 && barCount < 2){
-                // using last leg to be uncompleted leg
-
-                println("uncompleted leg too sort, using last leg as the uncompleted leg pattern")
-
-                lastLeg
-            }else{
+//            if (fractalCount == 0 && barCount < 2){
+//                // using last leg to be uncompleted leg
+//
+//                println("uncompleted leg too sort, using last leg as the uncompleted leg pattern")
+//
+//                lastLeg
+//            }else{
                 Leg("-", fractalCount, barCount, fractalPattern.map(_.toByte), barPattern.map(_.toByte).toArray, 0.0)
-            }
+//            }
 
         }
 
@@ -495,9 +495,9 @@ object FlatLegX {
             val pips =
                 stateInt match {
                     case 1 =>
-                        matchedLegsStats.toSeq.flatMap(_._2).filter(_.position=="up").head.pips
+                        matchedLegsStats.toSeq.flatMap(_._2).find(_.position=="up").map(_.pips).getOrElse(0.0)
                     case 0 =>
-                        matchedLegsStats.toSeq.flatMap(_._2).filter(_.position=="down").head.pips
+                        matchedLegsStats.toSeq.flatMap(_._2).find(_.position == "down").map(_.pips).getOrElse(0.0)
                     case _ => 0.0
                 }
 
@@ -509,6 +509,26 @@ object FlatLegX {
                 matchedLegs.length, pips, state))
 
             allAlgoResults.+=(stateInt)
+        }
+
+        {
+            /**
+             * Heur-4
+             */
+            val rawBinData = data.map(_.bit)
+            val rbdi = rawBinData.zipWithIndex
+
+            val dnas = for(i <- 4 to 25) yield
+                rbdi.slice(dataSize-i,dataSize).map(x => (x._1, x._2.toLong)).toSeq
+
+            val (up, down, count) = Manticore.breakDown(dnas, rawBinData)
+
+            val state = if (up > down) "UP" else if (up < down) "DOWN" else "-"
+
+            println("MANTICORE HEUR-4 (%d/%d) --> %s".format(up,down,state))
+
+            allAlgoResults.+=(if (state == "UP") 1 else if (state == "DOWN") 0 else -1)
+            allAlgoResults.+=(if (state == "UP") 1 else if (state == "DOWN") 0 else -1)
         }
 
         val state = {
