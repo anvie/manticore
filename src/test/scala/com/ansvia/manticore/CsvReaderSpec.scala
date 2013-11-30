@@ -19,7 +19,7 @@ class CsvReaderSpec extends Specification {
               |123,1.333,1.334,1.332,1.334,3.0
               |124,1.332,1.335,1.332,1.335,7.0
             """.stripMargin.trim
-        val inlineReader = new CsvReader(new ByteArrayInputStream(inlinedata.getBytes))
+        val inlineReader = new CsvReader(new ByteArrayInputStream(inlinedata.getBytes), "-")
 
         val realReader = new CsvReader("data/EURUSD60.csv")
     }

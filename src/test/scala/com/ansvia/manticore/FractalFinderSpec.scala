@@ -30,7 +30,6 @@ class FractalFinderSpec extends Specification {
         try {
             while (true) {
                 rec = csv.nextRecord()
-                //                println("  high: " + rec.high + ", low: " + rec.low)
                 buff :+= rec
             }
         }
@@ -39,14 +38,12 @@ class FractalFinderSpec extends Specification {
         }
 
         val data:immutable.IndexedSeq[Record] = buff.result().toIndexedSeq
-        //        val data = data.reverse
-        //        val data = data
         val size:Int = data.size
     }
 
     "Fractal finder" should {
         "extract fractals from tr" in new Ctx {
-            val fractals = FractalFinder.find(data, size)
+            val fractals = FractalFinder.find(data)
                 .filter(_.isInstanceOf[Fractal])
                 .map(_.asInstanceOf[Fractal])
             val fractalSize = fractals.size

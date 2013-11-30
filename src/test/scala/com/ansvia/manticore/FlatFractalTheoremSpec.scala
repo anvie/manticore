@@ -56,7 +56,7 @@ class FlatFractalTheoremSpec extends Specification {
              val start = System.currentTimeMillis()
 
 
-             val fractals = FractalFinder.find(data, data.size)
+             val fractals = FractalFinder.find(data)
 
              val fractalsBinary = fractals.filter(_.isInstanceOf[Fractal])
                  .map(_.asInstanceOf[Fractal])

@@ -7,6 +7,7 @@ import akka.routing.RoundRobinRouter
 import com.ansvia.manticore.Manticore.{DNAS, DNA}
 import java.util.concurrent.CountDownLatch
 import scala.collection.immutable.HashMap
+import com.rockymadden.stringmetric.similarity.DiceSorensenMetric
 
 /**
  * Author: robin
@@ -351,18 +352,103 @@ object FlatLegX {
 
 //            val x = matchedLegsStats.flatMap(_._2)
 //            println("    pattern: " + matchedLegsStats.flatMap(_._2).map(_.position).mkString(" "))
-            val (up, down) = matchedLegsStats.flatMap(_._2).map(_.position).partition(_ == "up")
-            println("   up: %d, down: %d".format(down.size, up.size))
+            val (down, up) = matchedLegsStats.flatMap(_._2).map(_.position).partition(_ == "up")
             val state = {
-                val a = up.size
-                val b = down.size
+                val a = down.size
+                val b = up.size
 
                 if (a == 0 && b > 0) "UP"
                 else if (b == 0 && a > 0) "DOWN"
                 else "-"
     
             }
-            println("MANTICORE HEUR-1: " + state)
+            println("MANTICORE HEUR-1 (%d/%d): %s".format(up.size, down.size, state))
+        }
+
+        {
+            /**
+             * Using leg matching algo (heur-2) menggunakan hamming distance
+             */
+            val matchedLegs = legs.filter { leg =>
+                leg.fractalPattern.startsWith(uncompletedLeg.fractalPattern) &&
+                    leg.barCount < (uncompletedLeg.barCount+3) //&&
+//                    (uncompletedLeg.position=="-" || leg.position == uncompletedLeg.position)
+            }
+            //        println("matched legs:")
+            //        matchedLegs.foreach(println)
+
+            val matchedLegsStats = matchedLegs.groupBy { l =>
+                hammingDistance(l.barPattern, uncompletedLeg.barPattern)
+            }.filter(_._2.length > 3)
+//            matchedLegsStats.toSeq.sortBy(_._2.length)
+//                .reverse.foreach { case (hash, _legs) =>
+//
+//                println("%d. %s".format(_legs.length, _legs(0)))
+//
+//                _legs.groupBy(_.barPattern.mkString("")).toSeq.sortBy(_._2.length).reverse
+//                    .foreach { case (bpat, _legs2) =>
+//
+//                    println("    %s - %s".format(bpat, _legs2.length))
+//                }
+//            }
+
+//            val x = matchedLegsStats.flatMap(_._2)
+//            println("    pattern: " + matchedLegsStats.flatMap(_._2).map(_.position).mkString(" "))
+            val (down, up) = matchedLegsStats.flatMap(_._2).map(_.position).partition(_ == "up")
+            val state = {
+                val a = down.size
+                val b = up.size
+
+                if (a == 0 && b > 0) "UP"
+                else if (b == 0 && a > 0) "DOWN"
+                else "-"
+
+            }
+            println("MANTICORE HEUR-2 (%d/%d): %s".format(up.size, down.size, state))
+        }
+
+        {
+            /**
+             * Using leg matching algo (heur-3) menggunakan jaccard coefficient
+             */
+
+            val matchedLegs = legs.filter { leg =>
+//                if (leg.barCount == uncompletedLeg.barCount)
+//                    println("sim: " + leg.barPattern.mkString("") + " vs " + uncompletedLeg.barPattern.mkString("") + " " + (DiceSorensenMetric.compare(leg.barPattern.mkString(""), uncompletedLeg.barPattern.mkString("")))(1).get )
+                leg.fractalPattern.startsWith(uncompletedLeg.fractalPattern) &&
+                    ((leg.barCount == uncompletedLeg.barCount) && DiceSorensenMetric.compare(leg.barPattern, uncompletedLeg.barPattern)(1).get > 0.60)
+            }
+            //        println("matched legs:")
+            //        matchedLegs.foreach(println)
+
+            val matchedLegsStats = matchedLegs.groupBy { leg =>
+                DiceSorensenMetric.compare(leg.barPattern, uncompletedLeg.barPattern)(1).get
+            }.filter(_._2.length > 3)
+//            matchedLegsStats.toSeq.sortBy(_._2.length)
+//                .reverse.foreach { case (hash, _legs) =>
+//
+//                println("%d. %s".format(_legs.length, _legs(0)))
+//
+//                _legs.groupBy(_.barPattern.mkString("")).toSeq.sortBy(_._2.length).reverse
+//                    .foreach { case (bpat, _legs2) =>
+//
+//                    println("    %s - %s".format(bpat, _legs2.length))
+//                }
+//            }
+
+//            val x = matchedLegsStats.flatMap(_._2)
+//            println("    pattern: " + matchedLegsStats.flatMap(_._2).map(_.position).mkString(" "))
+            val (down, up) = matchedLegsStats.flatMap(_._2).map(_.position).partition(_ == "up")
+            val state = {
+                val a = down.size
+                val b = up.size
+
+                if (b > a) "UP"
+                else if (b < a) "DOWN"
+                else "-"
+
+            }
+            println("MANTICORE HEUR-3 (%d/%d): %s".format(up.size, down.size, state))
         }
 
 
