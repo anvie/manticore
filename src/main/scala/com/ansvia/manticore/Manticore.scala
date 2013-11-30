@@ -224,10 +224,17 @@ object Manticore extends Slf4jLogger {
 
                     info("converting csv to bin...")
 
-                    CsvToBin.convert(new File(fileDataPath), untilDate)
 
                     val binFilePath = FileUtils.removeExtension(fileDataPath) + ".bin"
-                    new BinaryDataSource(new File(binFilePath))
+
+                    val f = new File(binFilePath)
+                    if (f.exists){
+                        f.delete()
+                    }
+
+                    CsvToBin.convert(new File(fileDataPath), untilDate)
+
+                    new BinaryDataSource(f)
 
 //                    new CsvDataSource(new File(fileDataPath), len)
 //                case _ =>
@@ -243,6 +250,8 @@ object Manticore extends Slf4jLogger {
         val end = s(1).toInt
 
         val tsStart = System.currentTimeMillis()
+
+        println("last 10 bars: " + source.indexedData.slice(source.size.toInt-10,source.size.toInt).mkString(""))
 
         val results = for (i <- start to end) yield process(source, i)
         val probs = new ArrayBuffer[Int]

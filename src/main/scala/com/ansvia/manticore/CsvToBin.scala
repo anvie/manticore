@@ -38,13 +38,6 @@ object CsvToBin extends Slf4jLogger {
                 val line = lines.next()
                 val s = line.split(",")
 
-                if (s.length == 7){
-                    if (s(0) + " " + s(1) == untilDate) {
-                        println("break to this date: " + untilDate)
-                        break()
-                    }
-                }
-
                 val open = {
                     if (s.length == 7)
                         s(2).toDouble
@@ -64,6 +57,22 @@ object CsvToBin extends Slf4jLogger {
                 } else {
                     0
                 }
+
+                if (s.length == 7){
+                    if (s(0) + " " + s(1) == untilDate) {
+                        bytes += bin.toByte
+                        println("break to this date: " + untilDate)
+                        break()
+                    }
+                }else{
+                    if (s(0) == untilDate){
+                        bytes += bin.toByte
+                        println("break to this date: " + untilDate)
+                        break()
+                    }
+                }
+
+
                 prevBin = bin
 
                 //                prevClose = close
@@ -72,6 +81,9 @@ object CsvToBin extends Slf4jLogger {
             }
 
         }
+
+        bytes.result().foreach(x => print("%d".format(x.toInt)))
+        println("")
 
         val fName = org.apache.commons.io.FileUtils.removeExtension(file.getAbsolutePath) + ".bin"
 
