@@ -454,10 +454,11 @@ object FlatLegX {
             val downSize = down.size
             val upSize = up.size
 
-            val state = {
-                val delta = ( ((downSize + upSize) * 3) / 2 )
+            val delta = ( (downSize + upSize) / 1.7 )
 
-                println("delta up: " + (upSize + delta))
+            val state = {
+
+//                println("delta up: " + (upSize + delta))
 
                 if (upSize > (downSize + delta) ) "UP"
                 else if ((upSize + delta) < downSize) "DOWN"
@@ -465,7 +466,10 @@ object FlatLegX {
 
             }
 
-            println("MANTICORE HEUR-3 (%d/%d): %s".format(up.size, down.size, state))
+            val deltaUp = upSize + delta
+            val deltaDown = downSize + delta
+
+            println("MANTICORE HEUR-3 (%d/%d) delta(%f/%f): %s".format(up.size, down.size, deltaUp, deltaDown, state))
 
             allAlgoResults.+=(if (state == "UP") 1 else if (state == "DOWN") 0 else -1)
         }
