@@ -265,6 +265,7 @@ object FlatLegX {
         var downCount = 0
         var upBarCount = 0
         var downBarCount = 0
+        var allAlgoResults = Seq.newBuilder[Int]
 
         // diambil dari candle pattern
         val pattBar = uncompletedLeg.barPattern.map(_.toInt)
@@ -300,6 +301,10 @@ object FlatLegX {
                downBarCount += ps.count(_.map(_._1).mkString("") == (p ++ Seq(0)).mkString(""))
             }
         }
+
+        allAlgoResults.+=(if (upCount > downCount) 1 else if (upCount < downCount) 0 else -1)
+        allAlgoResults.+=(if (upBarCount > downBarCount) 1 else if (upBarCount < downBarCount) 0 else -1)
+
 //
 //        println("Calculating sub dna...")
 //        var legBin = set2a.flatMap(_._2).toSeq
@@ -362,7 +367,10 @@ object FlatLegX {
                 else "-"
     
             }
+
             println("MANTICORE HEUR-1 (%d/%d): %s".format(up.size, down.size, state))
+
+            allAlgoResults.+=(if (state == "UP") 1 else if (state == "DOWN") 0 else -1)
         }
 
         {
@@ -404,7 +412,10 @@ object FlatLegX {
                 else "-"
 
             }
+
             println("MANTICORE HEUR-2 (%d/%d): %s".format(up.size, down.size, state))
+
+            allAlgoResults.+=(if (state == "UP") 1 else if (state == "DOWN") 0 else -1)
         }
 
         {
@@ -416,7 +427,7 @@ object FlatLegX {
 //                if (leg.barCount == uncompletedLeg.barCount)
 //                    println("sim: " + leg.barPattern.mkString("") + " vs " + uncompletedLeg.barPattern.mkString("") + " " + (DiceSorensenMetric.compare(leg.barPattern.mkString(""), uncompletedLeg.barPattern.mkString("")))(1).get )
                 leg.fractalPattern.startsWith(uncompletedLeg.fractalPattern) &&
-                    ((leg.barCount == uncompletedLeg.barCount) && DiceSorensenMetric.compare(leg.barPattern, uncompletedLeg.barPattern)(1).get > 0.60)
+                    ((leg.barCount == uncompletedLeg.barCount) && DiceSorensenMetric.compare(leg.barPattern, uncompletedLeg.barPattern)(1).get > 0.65)
             }
             //        println("matched legs:")
             //        matchedLegs.foreach(println)
@@ -439,18 +450,40 @@ object FlatLegX {
 //            val x = matchedLegsStats.flatMap(_._2)
 //            println("    pattern: " + matchedLegsStats.flatMap(_._2).map(_.position).mkString(" "))
             val (down, up) = matchedLegsStats.flatMap(_._2).map(_.position).partition(_ == "up")
-            val state = {
-                val a = down.size
-                val b = up.size
 
-                if (b > a) "UP"
-                else if (b < a) "DOWN"
+            val downSize = down.size
+            val upSize = up.size
+
+            val state = {
+                val delta = ( ((downSize + upSize) * 3) / 2 )
+
+                println("delta up: " + (upSize + delta))
+
+                if (upSize > (downSize + delta) ) "UP"
+                else if ((upSize + delta) < downSize) "DOWN"
                 else "-"
 
             }
+
             println("MANTICORE HEUR-3 (%d/%d): %s".format(up.size, down.size, state))
+
+            allAlgoResults.+=(if (state == "UP") 1 else if (state == "DOWN") 0 else -1)
         }
 
+        val state = {
+            val r = allAlgoResults.result()
+//            println(r.toSeq)
+            if (r.count(_ == 1) > r.count(_ == 0)){
+                "UP"
+            }else if (r.count(_ == 1) < r.count(_ == 0)){
+                "DOWN"
+            }else{
+                "-"
+            }
+        }
+        println("------------------------------")
+        println("PROBABILITY: " + state)
+        println("------------------------------")
 
     }
 
