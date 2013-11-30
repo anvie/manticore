@@ -10,7 +10,7 @@ import java.text.SimpleDateFormat
  *
  */
 
-case class Leg(time:String, fractalCount:Int, barCount:Int, fractalPattern:Array[Byte], barPattern:Array[Byte]){
+case class Leg(time:String, fractalCount:Int, barCount:Int, fractalPattern:Array[Byte], barPattern:Array[Byte], pips:Double){
     override def toString = "leg[%s] = f: %d, bar: %d, pos: %s, fpatt: {%s}, bpatt: {%s}".format(time,
         fractalCount, barCount, position, fractalPattern.map(_.toString).mkString(""), barPattern.mkString(""))
 
@@ -471,6 +471,7 @@ class ZigzagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backs
         var fractalCount = 0
         var barCount = 0
         var i = 0
+        var pips = 0.0
 
 //        println("data.size: " + data.size)
 
@@ -482,6 +483,7 @@ class ZigzagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backs
                     fractalCount = 1
                     barCount = 1
                     barPattern :+= data(i).bit.toByte
+                    pips = data(i).close
                 }
             }else if (begin && isZzPoint(zzPoint)){
 //                begin = false
@@ -492,12 +494,19 @@ class ZigzagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backs
 //                if (data(i).time == "2013.11.15 19:50"){
 //                    println("break")
 //                }
-                rv :+= Leg(data(i).time, fractalCount + 1, barCount + 1, fractalPattern.toArray, barPattern.toArray)
+
+                pips = data(i).close - pips
+
+                rv :+= Leg(data(i).time, fractalCount + 1, barCount + 1, fractalPattern.toArray, barPattern.toArray, pips)
                 fractalCount = 0
                 barCount = 0
                 fractalPattern.clear()
                 barPattern.clear()
             }else if (begin){
+                if (fractalCount == 0){
+                    if (i < data.size)
+                        pips = data(i).close
+                }
                 if (isFractal(zzPoint)){
                     fractalCount += 1
                     fractalPattern :+= zzPoint.fractalPos.toByte

@@ -69,9 +69,13 @@ object FlatLegX {
           * Process Zigzag
           ***********************************************/
 
+        println("calculating zigzag...")
+
         val zz = new ZigzagFinder(data, 13, 8, 5)
 
         val legs = zz.getLegs
+
+        println(legs.length + " zigzag legs loaded")
 
         // set2a hanya berisi data pattern dna bar dari legs.
         var set2a = new mutable.HashMap[Int,DNAS]
@@ -149,7 +153,7 @@ object FlatLegX {
 
                 lastLeg
             }else{
-                Leg("-", fractalCount, barCount, fractalPattern.map(_.toByte), barPattern.map(_.toByte).toArray)
+                Leg("-", fractalCount, barCount, fractalPattern.map(_.toByte), barPattern.map(_.toByte).toArray, 0.0)
             }
 
         }
@@ -368,7 +372,7 @@ object FlatLegX {
     
             }
 
-            println("MANTICORE HEUR-1 (%d/%d): %s".format(up.size, down.size, state))
+            println("MANTICORE HEUR-1 (%d/%d) --> %s".format(up.size, down.size, state))
 
             allAlgoResults.+=(if (state == "UP") 1 else if (state == "DOWN") 0 else -1)
         }
@@ -413,39 +417,55 @@ object FlatLegX {
 
             }
 
-            println("MANTICORE HEUR-2 (%d/%d): %s".format(up.size, down.size, state))
+            println("MANTICORE HEUR-2 (%d/%d) --> %s".format(up.size, down.size, state))
 
             allAlgoResults.+=(if (state == "UP") 1 else if (state == "DOWN") 0 else -1)
         }
 
         {
             /**
-             * Using leg matching algo (heur-3) menggunakan jaccard coefficient
+             * Using leg matching algo (heur-3) menggunakan dice sorensen metric.
              */
 
             val matchedLegs = legs.filter { leg =>
 //                if (leg.barCount == uncompletedLeg.barCount)
 //                    println("sim: " + leg.barPattern.mkString("") + " vs " + uncompletedLeg.barPattern.mkString("") + " " + (DiceSorensenMetric.compare(leg.barPattern.mkString(""), uncompletedLeg.barPattern.mkString("")))(1).get )
+                (leg.fractalCount < (uncompletedLeg.fractalCount+3)) &&
                 leg.fractalPattern.startsWith(uncompletedLeg.fractalPattern) &&
-                    ((leg.barCount == uncompletedLeg.barCount) && DiceSorensenMetric.compare(leg.barPattern, uncompletedLeg.barPattern)(1).get > 0.65)
+                    (leg.barCount > uncompletedLeg.barCount) &&
+                    (DiceSorensenMetric.compare(leg.barPattern, uncompletedLeg.barPattern)(1).get > 0.7)
             }
-            //        println("matched legs:")
-            //        matchedLegs.foreach(println)
 
             val matchedLegsStats = matchedLegs.groupBy { leg =>
                 DiceSorensenMetric.compare(leg.barPattern, uncompletedLeg.barPattern)(1).get
             }.filter(_._2.length > 3)
-//            matchedLegsStats.toSeq.sortBy(_._2.length)
-//                .reverse.foreach { case (hash, _legs) =>
-//
-//                println("%d. %s".format(_legs.length, _legs(0)))
-//
-//                _legs.groupBy(_.barPattern.mkString("")).toSeq.sortBy(_._2.length).reverse
-//                    .foreach { case (bpat, _legs2) =>
-//
+
+            var fractalSum = 0
+            var probUp = 0
+            var probDown = 0
+
+            probUp += matchedLegs.count { l =>
+                l.barPattern(uncompletedLeg.barCount) == 0x01
+            }
+            probDown += matchedLegs.count { l =>
+                l.barPattern(uncompletedLeg.barCount) == 0x00
+            }
+
+            matchedLegsStats.toSeq.sortBy(_._2.length)
+                .reverse.foreach { case (hash, _legs) =>
+
+//                println("%d. (%s) %s".format(_legs.length, hash, _legs(0)))
+
+                fractalSum += _legs.map(_.fractalCount).sum
+
+
+                _legs.groupBy(_.barPattern.mkString("")).toSeq.sortBy(_._2.length).reverse
+                    .foreach { case (bpat, _legs2) =>
+
 //                    println("    %s - %s".format(bpat, _legs2.length))
-//                }
-//            }
+
+                }
+            }
 
 //            val x = matchedLegsStats.flatMap(_._2)
 //            println("    pattern: " + matchedLegsStats.flatMap(_._2).map(_.position).mkString(" "))
@@ -454,11 +474,12 @@ object FlatLegX {
             val downSize = down.size
             val upSize = up.size
 
-            val delta = ( (downSize + upSize) / 1.7 )
+
+
+//            val delta = ( (downSize + upSize) / 1.7 )
+            val delta = 0.0
 
             val state = {
-
-//                println("delta up: " + (upSize + delta))
 
                 if (upSize > (downSize + delta) ) "UP"
                 else if ((upSize + delta) < downSize) "DOWN"
@@ -469,9 +490,25 @@ object FlatLegX {
             val deltaUp = upSize + delta
             val deltaDown = downSize + delta
 
-            println("MANTICORE HEUR-3 (%d/%d) delta(%f/%f): %s".format(up.size, down.size, deltaUp, deltaDown, state))
+            val stateInt = if (state == "UP") 1 else if (state == "DOWN") 0 else -1
 
-            allAlgoResults.+=(if (state == "UP") 1 else if (state == "DOWN") 0 else -1)
+            val pips =
+                stateInt match {
+                    case 1 =>
+                        matchedLegsStats.toSeq.flatMap(_._2).filter(_.position=="up").head.pips
+                    case 0 =>
+                        matchedLegsStats.toSeq.flatMap(_._2).filter(_.position=="down").head.pips
+                    case _ => 0.0
+                }
+
+//            val fractalSumRounded = fractalSum / ((downSize + upSize) - stateInt)
+//            val fractalSumRounded2 = fractalSum / (((downSize + upSize) / 3) - stateInt)
+
+            println("MANTICORE HEUR-3 (%d/%d) delta(%s/%s), fsum(%s), prob(%d/%d), ds(%d), pips(%f) --> %s".format(up.size, down.size,
+                deltaUp, deltaDown, fractalSum, /*fractalSumRounded, fractalSumRounded2,*/ probUp, probDown,
+                matchedLegs.length, pips, state))
+
+            allAlgoResults.+=(stateInt)
         }
 
         val state = {
@@ -524,34 +561,34 @@ object FlatLegX {
         println("\n")
 
     }
-
-    def getProbLeg(legs:Seq[Leg]) = {
-
-        var buff = new ArrayBuffer[Byte]
-        val numFracAvg = legs.map(_.fractalCount).sum / legs.length
-        val numBarAvg = legs.map(_.barCount).sum / legs.length
-
-        var i = 0
-        while(i < numBarAvg){
-            val bp = legs.map { x =>
-                if (i < x.barPattern.length) {
-                    x.barPattern(i)
-                } else {
-                    0xFF
-                }
-            }
-            if (bp.filter(_ == 0x01).length > bp.filter(_ == 0x00).length){
-                buff += 0x01
-            }else{
-                buff += 0x00
-            }
-            i = i + 1
-        }
-
-        Leg("xxx", numFracAvg, numBarAvg, Array.empty[Byte], buff.result().toArray)
-
-    }
-
+//
+//    def getProbLeg(legs:Seq[Leg]) = {
+//
+//        var buff = new ArrayBuffer[Byte]
+//        val numFracAvg = legs.map(_.fractalCount).sum / legs.length
+//        val numBarAvg = legs.map(_.barCount).sum / legs.length
+//
+//        var i = 0
+//        while(i < numBarAvg){
+//            val bp = legs.map { x =>
+//                if (i < x.barPattern.length) {
+//                    x.barPattern(i)
+//                } else {
+//                    0xFF
+//                }
+//            }
+//            if (bp.filter(_ == 0x01).length > bp.filter(_ == 0x00).length){
+//                buff += 0x01
+//            }else{
+//                buff += 0x00
+//            }
+//            i = i + 1
+//        }
+//
+//        Leg("xxx", numFracAvg, numBarAvg, Array.empty[Byte], buff.result().toArray)
+//
+//    }
+//
     // Calculate a sum of set bits of XOR'ed bytes
     def hammingDistance(b1: Array[Byte], b2: Array[Byte]) = {
         (b1.zip(b2).map((x: (Byte, Byte)) => numberOfBitsSet((x._1 ^ x._2).toByte))).sum
