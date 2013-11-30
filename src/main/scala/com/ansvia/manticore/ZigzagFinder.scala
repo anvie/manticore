@@ -14,6 +14,11 @@ case class Leg(time:String, fractalCount:Int, barCount:Int, fractalPattern:Array
     override def toString = "leg[%s] = f: %d, bar: %d, pos: %s, fpatt: {%s}, bpatt: {%s}".format(time,
         fractalCount, barCount, position, fractalPattern.map(_.toString).mkString(""), barPattern.mkString(""))
 
+
+    def similarity() = {
+        (fractalCount + barCount + fractalPattern.mkString("")).hashCode
+    }
+
     def position = {
         if (fractalPattern.length > 1){
             if (fractalPattern(fractalPattern.length-1) == 0x01)
@@ -71,7 +76,7 @@ class ZigzagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backs
         var lastHighPos = 0
         var lastLowPos = 0
 
-        println("data size: " + size)
+//        println("data size: " + size)
 
         while(shift < size - 1){
 

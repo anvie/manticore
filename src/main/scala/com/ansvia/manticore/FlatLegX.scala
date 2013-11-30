@@ -37,6 +37,8 @@ object FlatLegX {
 
         val dataSize = data.size
 
+        println("data size: " + dataSize)
+
 //        println("creating SET1...")
 //        val data1 = data.map(_.bit)
 //
@@ -95,11 +97,10 @@ object FlatLegX {
 
         for(n <- 2 to 14){
             val aoeu = Manticore.getDnas(new InlineDataSource(legs.flatMap(_.fractalPattern.map(_.toInt))), n)
-            //                    .map(dd => dd.map(_._1))
             if (set2a.contains(n)){
                 val aoeu2 = set2a.get(n).get ++ aoeu
                 set2a.update(n, aoeu2)
-            }else{
+            } else {
                 set2a += n -> aoeu
             }
         }
@@ -116,28 +117,23 @@ object FlatLegX {
         println("")
 
         val lastLeg = legs(legs.length - 1)
-//        println("leg used to be pattern: " + legUsed)
+
+        println("last leg: " + lastLeg)
 
 
-        // get uncompleted legs
+        // get uncompleted leg
 
         val uncompletedLeg =
         {
-            //            import scala.util.control.Breaks._
-            //            var rv = Seq.newBuilder[Record]
-
-//            val lastLeg = legs(legs.length - 1)
 
             val trailingData = data.filter(_.timestamp > lastLeg.timestamp)
             var fractals = FractalFinder.find(trailingData)
 
             if (fractals(fractals.length-1).isInstanceOf[Fractal]){
                 fractals = fractals.slice(0, fractals.length-2)
-//                trailingData = data.filter(_.timestamp > legs(legs.length - 2).timestamp)
-//                fractals = FractalFinder.find(trailingData)
             }
 
-            fractals.foreach(x => println("f: " + x))
+//            fractals.foreach(x => println("f: " + x))
 
             val fractalPattern = fractals.filter(_.isInstanceOf[Fractal])
                 .map(_.asInstanceOf[Fractal]).map(_.pos)
@@ -145,38 +141,27 @@ object FlatLegX {
             val fractalCount = fractalPattern.length
             val barCount = barPattern.length
 
-            Leg("-", fractalCount, barCount, fractalPattern.map(_.toByte), barPattern.map(_.toByte).toArray)
+            if (fractalCount == 0 && barCount < 2){
+                // using last leg to be uncompleted leg
 
+                println("uncompleted leg too sort, using last leg as the uncompleted leg pattern")
 
-            //            rv.result().reverse
-            //            uncompletedLeg
+                lastLeg
+            }else{
+                Leg("-", fractalCount, barCount, fractalPattern.map(_.toByte), barPattern.map(_.toByte).toArray)
+            }
+
         }
 
-        println("uncompletedLeg: " + uncompletedLeg)
+        println("uncompleted leg: " + uncompletedLeg)
 
-
-//        val trailingBars =
-//        {
-//            import scala.util.control.Breaks._
-//            var rv = Seq.newBuilder[Record]
-//            breakable {
-//                for (i <- 1 to dataSize - 1){
-//                    // searching for last zigzag end point
-//                    if (data(dataSize - i).time == lastLeg.time){
-//                        break
-//                    }else{
-//                        rv += data(dataSize - i)
-//                    }
-//                }
-//            }
-//            rv.result().reverse
-//        }
         val trailingBarPattern = uncompletedLeg.barPattern
 
         val finalPattern = uncompletedLeg.fractalPattern
 
         println("trailing bars pattern: {" + trailingBarPattern.map(_.toInt).mkString("") + "}")
 
+        // diambil dari fractal pattern.
         val pattBase: Seq[Int] = finalPattern.map(_.toInt).toSeq
         val pattUp = finalPattern.map(_.toInt).toSeq ++ Seq(1)
         val pattDown = finalPattern.map(_.toInt).toSeq ++ Seq(0)
@@ -232,43 +217,40 @@ object FlatLegX {
 
         if (usingPatternMatch){
 
-            println("using pattern matching, check for pattern match.")
+            //// BEGIN PROBABILITY STYLE PATTERN MATCHING ----------------
+//            println("using pattern matching, check for pattern match.")
+//
+//            println("Searching for pattern...")
+//
+//            if (stats.size == 0)
+//                throw ManticoreException("No pattern match")
+//
+//            println("occurrences:")
+//
+//            val pattBaseStr = pattBase.mkString("")
+//
+//            if (!stats.get(pattBaseStr).isDefined)
+//                throw ManticoreException("Base pattern match not found")
+//
+//            val basePatternOccur = stats(pattBaseStr).occurrences
+//
+//            println("base pattern occurrences: " + basePatternOccur)
+//
+//            val sortedStats = stats.toSeq.sortBy(_._2.occurrences).reverse.map(_._2)
+//
+//            val (ok, bellow) = sortedStats.partition(p => basePatternOccur / p.occurrences > 1)
+//
+//
+//            println("ok: %d, bellow: %d, %d/%d > 1 = %d".format(ok.length, bellow.length,
+//                ok.length, bellow.length, ok.length/bellow.length))
+//
+//            if (ok.length == 0)
+//                throw ManticoreException("exact pattern not found on history, try again later")
+//
+//            val isPatternMatch = ok.length/bellow.length > 1
+            //// END OF PROBABILITY STYLE PATTERN MATCHING ----------------
 
-            println("Searching for pattern...")
-
-            if (stats.size == 0)
-                throw ManticoreException("No pattern match")
-
-            println("occurrences:")
-
-            val pattBaseStr = pattBase.mkString("")
-
-            if (!stats.get(pattBaseStr).isDefined)
-                throw ManticoreException("Base pattern match not found")
-
-            val basePatternOccur = stats(pattBaseStr).occurrences
-
-            println("base pattern occurrences: " + basePatternOccur)
-
-            val sortedStats = stats.toSeq.sortBy(_._2.occurrences).reverse.map(_._2)
-
-            //        sortedStats.foreach { patt =>
-            //            println("%s ->  %d".format(patt.str, patt.occurrences))
-            //        }
-
-            //        val divs = sortedStats.map(p => basePatternOccur / p.occurrences)
-
-            val (ok, bellow) = sortedStats.partition(p => basePatternOccur / p.occurrences > 1)
-
-
-            //        println("ok: " + ok)
-            //        println("bellow: " + bellow)
-            println("ok: %d, bellow: %d, %d/%d > 1 = %d".format(ok.length, bellow.length, ok.length, bellow.length, ok.length/bellow.length))
-
-            if (ok.length == 0)
-                throw ManticoreException("exact pattern not found on history, try again later")
-
-            val isPatternMatch = ok.length/bellow.length > 1
+            val isPatternMatch = legs.exists(l => l.similarity() == uncompletedLeg.similarity())
 
             if (!isPatternMatch)
                 throw ManticoreException("Pattern not matched yet, try again later")
@@ -283,7 +265,8 @@ object FlatLegX {
         var upBarCount = 0
         var downBarCount = 0
 
-        var pattBar = uncompletedLeg.barPattern.map(_.toInt)
+        // diambil dari candle pattern
+        val pattBar = uncompletedLeg.barPattern.map(_.toInt)
         var pattBarSeq = Seq.empty[Seq[Int]]
         if (pattBar.length >= 4){
 //            pattBar = pattBar.reverse.slice(0, 7).reverse
@@ -311,20 +294,20 @@ object FlatLegX {
             upCount += ps.count(_.map(_._1) == pattUp)
             downCount += ps.count(_.map(_._1) == pattDown)
 
-           pattBarSeq.zipWithIndex.foreach { case (p, i)=>
+            pattBarSeq.zipWithIndex.foreach { case (p, i)=>
                upBarCount += ps.count(_.map(_._1).mkString("") == (p ++ Seq(1)).mkString(""))
                downBarCount += ps.count(_.map(_._1).mkString("") == (p ++ Seq(0)).mkString(""))
-           }
+            }
         }
+//
+//        println("Calculating sub dna...")
+//        var legBin = set2a.flatMap(_._2).toSeq
+//        if (legBin.length > 1024){
+//            legBin = legBin.slice(0, 1024)
+//        }
+//        val (fsDnaUp,fsDnaDown,fsDnaOccurs) = Manticore.breakDown(legBin, legBin.flatMap(_.map(_._1)).toIndexedSeq, pattBar)
 
-        println("Calculating sub dna...")
-        var legBin = set2a.flatMap(_._2).toSeq
-        if (legBin.length > 1024){
-            legBin = legBin.slice(0, 1024)
-        }
-        val (fsDnaUp,fsDnaDown,fsDnaOccurs) = Manticore.breakDown(legBin, legBin.flatMap(_.map(_._1)).toIndexedSeq, pattBar)
-
-        legs.flatMap(_.fractalPattern).map(_.toInt).mkString("")
+//        legs.flatMap(_.fractalPattern).map(_.toInt).mkString("")
 
 //        val rawDataBit = data.map(_.bit)
 //        val candleDnaBar = Manticore.getDnas(new InlineDataSource(rawDataBit), 7)
@@ -336,77 +319,53 @@ object FlatLegX {
 
         println("FRACTAL: up: " + upCount + ", down: " + downCount + " --> " + (if (upCount>downCount) "UP" else if (upCount==downCount) "-" else "DOWN"))
         println("LEG BAR: up: " + upBarCount + ", down: " + downBarCount + " --> " + (if (upBarCount>downBarCount) "UP" else if (upBarCount==downBarCount) "-" else "DOWN"))
-        println("FRACTAL SUB DNA: up: " + fsDnaUp + ", down: " + fsDnaDown + " --> " + (if (fsDnaUp>fsDnaDown) "UP" else "DOWN"))
+//        println("FRACTAL SUB DNA: up: " + fsDnaUp + ", down: " + fsDnaDown + " --> " + (if (fsDnaUp>fsDnaDown) "UP" else if (fsDnaUp==fsDnaDown) "-" else "DOWN"))
 //        println("CANDLE SUB DNA (raw): up: " + cdDnaUp + ", down: " + cdDnaDown + " --> " + (if (cdDnaUp>cdDnaDown) "UP" else if (cdDnaUp==cdDnaDown) "-" else "DOWN"))
 //        println("CANDLE SUB DNA (filtered): up: " + cdfDnaUp + ", down: " + cdfDnaDown + " --> " + (if (cdfDnaUp>cdfDnaDown) "UP" else if (cdfDnaUp==cdfDnaDown) "-" else "DOWN"))
 
-        //        println("up: " + a + ", down: " + b + ", chroms: " + c)
+
+        {
+            /**
+             * Using leg matching algo (heur-1)
+             */
+            val matchedLegs = legs.filter { leg =>
+                leg.fractalPattern.startsWith(uncompletedLeg.fractalPattern) &&
+                    leg.barCount < (uncompletedLeg.barCount+3) //&&
+//                    (uncompletedLeg.position=="-" || leg.position == uncompletedLeg.position)
+            }
+            //        println("matched legs:")
+            //        matchedLegs.foreach(println)
+
+            val matchedLegsStats = matchedLegs.groupBy(_.similarity()).filter(_._2.length > 3)
+//            matchedLegsStats.toSeq.sortBy(_._2.length)
+//                .reverse.foreach { case (hash, _legs) =>
 //
-//        println("Statistics: ===")
-//        var i = 0
-//        for ( (patt, leg) <- stats.toSeq.sortBy(_._2._1).reverse.slice(0,5) ){
-//            val count = leg._1
-//            val nextLegs = leg._3
-//            println(" %d \t- %s".format(count, patt))
+//                println("%d. %s".format(_legs.length, _legs(0)))
 //
-//            if (nextLegs != null){
-//                println("   \t   ch-leg: " + leg._2)
-//                println("   \t   next-legs (" + nextLegs.length + "): ")
-//                val probLegs =
-//                    nextLegs.filter(hm => trailingBarPattern.length - hm.barPattern.length <= (trailingBarPattern.length/2)).map { hm =>
-//                    //                        val x = hm.barPattern.mkString
-//                    //                            var hmm = 0
-//                    //                            nextLegs.foreach { hm2 =>
-//                    //                            //                            val x2 = hm2.barPattern.mkString
-//                    //                                hmm += hammingDistance(hm.barPattern, hm2.barPattern)
-//                    //                            }
+//                _legs.groupBy(_.barPattern.mkString("")).toSeq.sortBy(_._2.length).reverse
+//                    .foreach { case (bpat, _legs2) =>
 //
-//                        val hmm = hammingDistance(trailingBarPattern, hm.barPattern)
-//                        (hm, hmm)
-//                    }
-//                //                            .sortBy(_._2)
-//                //                            .reverse
-//                //                            .slice(0, 10)
-//
-//
-//                //                        if (i==0) {
-//                var ii = 0
-//                probLegs.sortBy(_._2)/*.slice(0,5)*/.foreach {
-//                    case (l, power) =>
-//                        ii = ii + 1
-//                        println("   \t    " + ii + " - " + l + ". power: " + power)
+//                    println("    %s - %s".format(bpat, _legs2.length))
 //                }
-//                //                        }
-//
-//                var goodProbLegs:Seq[(Leg, Int)] = Seq.empty[(Leg, Int)]
-//
-//                if (probLegs.length > 5){
-//                    val probI = math.round(probLegs.length / 1.56).toInt
-//                    //                            println("probI: " + probI + ", probI/2: " + (probI/2))
-//                    println("")
-//                    println("   \t   -> good candidate: ")
-//                    goodProbLegs = probLegs.sortBy(_._2).slice(probI-2,probI+2)
-//                    goodProbLegs.zipWithIndex.foreach { case( goodLeg, ii ) =>
-//                        println("   \t    -> (" + (probI-2+ii) + "): " + goodLeg)
-//                    }
-//                }
-//
-//                //                    println("   \t   -> cur bpatt prob: {" + getStrongLegBarPattern(nextLegs).map(_.toInt).mkString(",") + "}")
-//                println("   \t   -> next leg prob: {" + getProbLeg(nextLegs) + "}")
-//
-//                val upBin = goodProbLegs.flatMap(_._1.barPattern.filter(_ == 0x01)).length
-//                val downBin = goodProbLegs.flatMap(_._1.barPattern.filter(_ == 0x00)).length
-//                if (upBin > 0 && downBin > 0){
-//                    println("   \t Power:")
-//                    println("   \t      - UP power: " + upBin + " (" + ( (upBin * 100) / (upBin + downBin) ) + "%)")
-//                    println("   \t      - DOWN power: " + downBin + " (" + ( (downBin * 100) / (upBin + downBin) ) + "%)")
-//                    println("--------------------------------------------------------------------------------------")
-//                }
-//
 //            }
-//
-//            i += 1
-//        }
+
+//            val x = matchedLegsStats.flatMap(_._2)
+//            println("    pattern: " + matchedLegsStats.flatMap(_._2).map(_.position).mkString(" "))
+            val (up, down) = matchedLegsStats.flatMap(_._2).map(_.position).partition(_ == "up")
+            println("   up: %d, down: %d".format(down.size, up.size))
+            val state = {
+                val a = up.size
+                val b = down.size
+
+                if (a == 0 && b > 0) "UP"
+                else if (b == 0 && a > 0) "DOWN"
+                else "-"
+    
+            }
+            println("MANTICORE HEUR-1: " + state)
+        }
+
+
     }
 
 
@@ -437,6 +396,7 @@ object FlatLegX {
             NonBlockingChromosomeFinder.system.shutdown()
         }
 
+        println("")
         println("Done in " + (System.currentTimeMillis() - start) + "ms")
         println("\n")
 
