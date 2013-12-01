@@ -5,7 +5,7 @@ import com.ansvia.manticore.Fractal
 import com.ansvia.manticore.Leg
 import com.ansvia.manticore.Manticore.DNAS
 import scala.collection.mutable
-import com.ansvia.manticore.algo.ManticoreAlgo
+import com.ansvia.manticore.algo.{Result, ManticoreAlgo}
 
 /**
  * Using leg matching algo (heur-3) menggunakan dice sorensen metric.

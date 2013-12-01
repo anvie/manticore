@@ -24,10 +24,55 @@ class ManticoreHeur5(dataGen:DataGenerator) extends ManticoreAlgo {
         rv
     }
     val absOffset = (dataGen.data.size - dataGen.chunkedData.size) - 1
+    var prevIsWrong = false
 
     private var prevResult:Result = Result(Direction.NEUTRAL, 0.0)
 
     def lastResult = prevResult
+
+    private var _aiRegs = Seq.empty[(String, Result)]
+
+    def train(pos:Int, result:Result){
+
+        val lastLeg = getLastLeg(pos).get
+
+        val signature = lastLeg.barPattern.mkString("")
+
+        _aiRegs :+= (signature, result)
+
+    }
+
+
+    def guess(pos: Int) = {
+        val lastLeg = getLastLeg(pos).get
+
+        val curSign = lastLeg.barPattern.mkString("")
+
+        val goodCandidates =
+            _aiRegs.filter { case (sign, _pos) =>
+//                sign.length < (curSign.length + 5) &&
+                DiceSorensenMetric.compare(sign, curSign)(1).getOrElse(0.0) > 0.6
+//                curSign.endsWith(uLeg.barPattern.mkString(""))
+            }
+
+        val up = goodCandidates.count(_._2.direction == Direction.UP)
+        val down = goodCandidates.length - up
+
+        val rv = if (up > down) Some(Result(Direction.UP, 0.0))
+        else if (up < down) Some(Result(Direction.DOWN, 0.0))
+        else None
+
+//        rv.map { x =>
+//            println("got from ai: " + x)
+//        }
+
+        rv
+    }
+
+
+    def markWrong(){
+        prevIsWrong = true
+    }
 
     def getUleg(pos:Int) = {
         var trailingData = dataGen.data.filter(_.timestamp > dataGen.chunkedData(pos).timestamp)
@@ -72,23 +117,23 @@ class ManticoreHeur5(dataGen:DataGenerator) extends ManticoreAlgo {
         val lastLeg = getLastLeg(pos).getOrElse {
             throw new Ignored
         }
-        
+
         val uLeg = getUleg(pos)
 
         // attempt #1
         // mixin last leg bar pattern and uleg bar pattern
-        
+
 //        var lookForBarPattern = lastLeg.barPattern ++ uLeg.barPattern
-        
+
         // searching for pattern in history
-        
+
         var matchedLegs = legs.filter { leg =>
             leg.fractalPattern.startsWith(lastLeg.fractalPattern ++ uLeg.fractalPattern) &&
                 leg.length == (lastLeg.length + uLeg.length) &&
                 leg.direction == lastLeg.direction &&
                 DiceSorensenMetric.compare(leg.barPattern, lastLeg.barPattern ++ uLeg.barPattern)(1).getOrElse(0.0) > 0.8
         }
-        
+
         // if any then just use it as master
         if (matchedLegs.length == 1){
 
@@ -101,19 +146,19 @@ class ManticoreHeur5(dataGen:DataGenerator) extends ManticoreAlgo {
         }else if (matchedLegs.length > 1){
 
             val (up, down) = matchedLegs.map(_.direction).partition(_ == Direction.UP)
-            
+
             val upSize = up.size
             val downSize = down.size
-            
-            val direction = 
+
+            val direction =
                 if (upSize > downSize) Direction.UP
                 else if (upSize < downSize) Direction.DOWN
                 else Direction.NEUTRAL
 
             val rv = Result(direction, 0.0)
-            
+
             prevResult = rv
-            
+
             rv
         }else{
 
@@ -174,22 +219,18 @@ class ManticoreHeur5(dataGen:DataGenerator) extends ManticoreAlgo {
                     val rv = Result(opposite, 0.0)
                     prevResult = rv
                     rv
+
                 }else{
+
+                    // get from previous result
+
+//                    guess(pos).getOrElse(prevResult)
                     prevResult
+
                 }
             }
 
         }
-
-//        println(uLeg.barPattern.mkString(""))
-
-//        lazy val matchedLegs = legs.filter { leg =>
-//            (leg.fractalCount < (uLeg.fractalCount+3)) &&
-//                leg.fractalPattern.startsWith(uLeg.fractalPattern) &&
-//                (leg.barCount > uLeg.barCount) &&
-//                (DiceSorensenMetric.compare(leg.barPattern, uLeg.barPattern)(1).getOrElse(0.0) > 0.8)
-//        }
-//
 
     }
 }

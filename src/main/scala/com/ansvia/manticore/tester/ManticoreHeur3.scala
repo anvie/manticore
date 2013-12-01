@@ -2,7 +2,7 @@ package com.ansvia.manticore.tester
 
 import com.ansvia.manticore._
 import com.rockymadden.stringmetric.similarity.DiceSorensenMetric
-import com.ansvia.manticore.algo.ManticoreAlgo
+import com.ansvia.manticore.algo.{Result, ManticoreAlgo}
 import com.ansvia.manticore.Fractal
 import com.ansvia.manticore.Leg
 

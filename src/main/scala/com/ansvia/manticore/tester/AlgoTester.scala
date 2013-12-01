@@ -3,7 +3,9 @@ package com.ansvia.manticore.tester
 import com.ansvia.manticore._
 import java.text.SimpleDateFormat
 import com.ansvia.manticore.Record
-import com.ansvia.manticore.algo.{Ignored, ManticoreHeur5, ManticoreAlgo}
+import com.ansvia.manticore.algo._
+import com.ansvia.manticore.algo.Ignored
+import com.ansvia.manticore.DataGenerator
 
 /**
  * Author: robin
@@ -79,6 +81,15 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo) {
                     misses = misses + 1
                     legMiss = legMiss + 1
                     print("x")
+
+                    // train the algo if algo support AI
+                    algo match {
+                        case ai:AI => {
+                            ai.markWrong()
+                            ai.train(curPos + i, Result(leg.direction, 0.0))
+                        }
+                        case _ =>
+                    }
                 }
             }
 //            if (legMiss > 30){
