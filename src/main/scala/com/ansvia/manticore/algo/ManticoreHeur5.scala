@@ -59,14 +59,14 @@ class ManticoreHeur5(dataGen:DataGenerator) extends ManticoreAlgo {
         // attempt #1
         // mixin last leg bar pattern and uleg bar pattern
         
-        var lookForBarPattern = lastLeg.barPattern ++ uLeg.barPattern
+//        var lookForBarPattern = lastLeg.barPattern ++ uLeg.barPattern
         
         // searching for pattern in history
         
-        val matchedLegs = legs.filter { leg =>
-            leg.fractalPattern.startsWith(lastLeg.fractalPattern) &&
+        var matchedLegs = legs.filter { leg =>
+            leg.fractalPattern.startsWith(lastLeg.fractalPattern ++ uLeg.fractalPattern) &&
                 leg.length == (lastLeg.length + uLeg.length) &&
-                DiceSorensenMetric.compare(leg.barPattern, lookForBarPattern)(1).getOrElse(0.0) > 0.8
+                DiceSorensenMetric.compare(leg.barPattern, lastLeg.barPattern ++ uLeg.barPattern)(1).getOrElse(0.0) > 0.8
         }
         
         // if any then just use it as master
@@ -89,9 +89,36 @@ class ManticoreHeur5(dataGen:DataGenerator) extends ManticoreAlgo {
         }else{
 
             // attempt #2
+            // only using uleg
 
+            // searching for pattern in history
 
-            prevResult
+            matchedLegs = legs.filter { leg =>
+                leg.fractalPattern.startsWith(uLeg.fractalPattern) &&
+                    leg.length == uLeg.length &&
+                    DiceSorensenMetric.compare(leg.barPattern, uLeg.barPattern)(1).getOrElse(0.0) > 0.8
+            }
+
+            if (matchedLegs.length > 2){
+                val (up, down) = matchedLegs.map(_.direction).partition(_ == Direction.UP)
+
+                val upSize = up.size
+                val downSize = down.size
+
+                val direction =
+                    if (upSize > downSize) Direction.UP
+                    else if (upSize < downSize) Direction.DOWN
+                    else Direction.NEUTRAL
+
+                val rv = Result(direction, 0.0)
+
+                prevResult = rv
+
+                rv
+            }else{
+                prevResult
+            }
+
         }
 
 //        println(uLeg.barPattern.mkString(""))
