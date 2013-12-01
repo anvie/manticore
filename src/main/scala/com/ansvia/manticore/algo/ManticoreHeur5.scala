@@ -16,7 +16,13 @@ class ManticoreHeur5(dataGen:DataGenerator) extends ManticoreAlgo {
     val name = "MTH5"
 
     // only in range max startTs
-    lazy val legs = dataGen.zzLegsRaw.filter(_.timestamp < dataGen.startTs)
+    lazy val legs = {
+//        println("before: " + dataGen.zzLegsRaw.length)
+        val rv = dataGen.zzLegsRaw.filter(_.timestamp < dataGen.startTs)
+//        println("after: " + rv.length)
+//        println("last sim leg: " + rv(rv.length-1))
+        rv
+    }
 
     private var prevResult:Result = Result(Direction.NEUTRAL, 0.0)
 
@@ -66,11 +72,20 @@ class ManticoreHeur5(dataGen:DataGenerator) extends ManticoreAlgo {
         var matchedLegs = legs.filter { leg =>
             leg.fractalPattern.startsWith(lastLeg.fractalPattern ++ uLeg.fractalPattern) &&
                 leg.length == (lastLeg.length + uLeg.length) &&
+                leg.direction == lastLeg.direction &&
                 DiceSorensenMetric.compare(leg.barPattern, lastLeg.barPattern ++ uLeg.barPattern)(1).getOrElse(0.0) > 0.8
         }
         
         // if any then just use it as master
-        if (matchedLegs.length > 0){
+        if (matchedLegs.length == 1){
+
+            val rv = Result(lastLeg.direction, 0.0)
+
+            prevResult = rv
+
+            rv
+
+        }else if (matchedLegs.length > 1){
             val (up, down) = matchedLegs.map(_.direction).partition(_ == Direction.UP)
             
             val upSize = up.size

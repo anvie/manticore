@@ -69,7 +69,8 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo) {
                 }catch {
                     case e:Ignored => algo.lastResult.direction
                 }
-                if (direction == leg.direction){
+
+                if (direction == leg.direction || (direction!=leg.direction && i==leg.barCount-1)){
                     passes = passes + 1
                     print(".")
                 }else if (direction == Direction.NEUTRAL){
