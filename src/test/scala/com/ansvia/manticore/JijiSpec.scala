@@ -104,7 +104,7 @@ class JijiSpec extends Specification {
                 println("  + %d-string = %d patterns".format(i+4, d.length))
             }
 
-            val zz = new ZigzagFinder(data)
+            val zz = new ZigZagFinder(data)
 
             val legs = zz.getLegs
 

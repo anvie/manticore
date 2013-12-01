@@ -74,7 +74,7 @@ class FlatLegSpec extends Specification {
 //
 //             println("creating SET2...")
 
-             val zz = new ZigzagFinder(data)
+             val zz = new ZigZagFinder(data)
 
 //             zz.process().getZigZagBuffer.zipWithIndex.foreach { case (z, i) =>
 //                 println("%d. %s => %s".format(i, data(i).time, z))

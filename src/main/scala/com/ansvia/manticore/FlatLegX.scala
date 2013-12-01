@@ -71,7 +71,7 @@ object FlatLegX {
 
         println("calculating zigzag...")
 
-        val zz = new ZigzagFinder(data, 13, 8, 5)
+        val zz = new ZigZagFinder(data, 13, 8, 5)
 
         val legs = zz.getLegs
 
@@ -361,7 +361,7 @@ object FlatLegX {
 
 //            val x = matchedLegsStats.flatMap(_._2)
 //            println("    pattern: " + matchedLegsStats.flatMap(_._2).map(_.position).mkString(" "))
-            val (down, up) = matchedLegsStats.flatMap(_._2).map(_.position).partition(_ == "up")
+            val (down, up) = matchedLegsStats.flatMap(_._2).map(_.direction).partition(_ == "up")
             val state = {
                 val a = down.size
                 val b = up.size
@@ -406,7 +406,7 @@ object FlatLegX {
 
 //            val x = matchedLegsStats.flatMap(_._2)
 //            println("    pattern: " + matchedLegsStats.flatMap(_._2).map(_.position).mkString(" "))
-            val (down, up) = matchedLegsStats.flatMap(_._2).map(_.position).partition(_ == "up")
+            val (down, up) = matchedLegsStats.flatMap(_._2).map(_.direction).partition(_ == "up")
             val state = {
                 val a = down.size
                 val b = up.size
@@ -469,7 +469,7 @@ object FlatLegX {
 
 //            val x = matchedLegsStats.flatMap(_._2)
 //            println("    pattern: " + matchedLegsStats.flatMap(_._2).map(_.position).mkString(" "))
-            val (down, up) = matchedLegsStats.flatMap(_._2).map(_.position).partition(_ == "up")
+            val (down, up) = matchedLegsStats.flatMap(_._2).map(_.direction).partition(_ == "up")
 
             val downSize = down.size
             val upSize = up.size
@@ -495,9 +495,9 @@ object FlatLegX {
             val pips =
                 stateInt match {
                     case 1 =>
-                        matchedLegsStats.toSeq.flatMap(_._2).find(_.position=="up").map(_.pips).getOrElse(0.0)
+                        matchedLegsStats.toSeq.flatMap(_._2).find(_.direction=="up").map(_.pips).getOrElse(0.0)
                     case 0 =>
-                        matchedLegsStats.toSeq.flatMap(_._2).find(_.position == "down").map(_.pips).getOrElse(0.0)
+                        matchedLegsStats.toSeq.flatMap(_._2).find(_.direction == "down").map(_.pips).getOrElse(0.0)
                     case _ => 0.0
                 }
 

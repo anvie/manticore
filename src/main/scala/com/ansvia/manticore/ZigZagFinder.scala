@@ -2,6 +2,7 @@ package com.ansvia.manticore
 
 import scala.collection.mutable.ArrayBuffer
 import java.text.SimpleDateFormat
+import com.ansvia.manticore.tester.Direction
 
 /**
  * Author: robin
@@ -12,24 +13,33 @@ import java.text.SimpleDateFormat
 
 case class Leg(time:String, fractalCount:Int, barCount:Int, fractalPattern:Array[Byte], barPattern:Array[Byte], pips:Double){
     override def toString = "leg[%s] = f: %d, bar: %d, pos: %s, fpatt: {%s}, bpatt: {%s}".format(time,
-        fractalCount, barCount, position, fractalPattern.map(_.toString).mkString(""), barPattern.mkString(""))
+        fractalCount, barCount, directionStr, fractalPattern.map(_.toString).mkString(""), barPattern.mkString(""))
 
 
     def similarity() = {
         (fractalCount + barCount + fractalPattern.mkString("")).hashCode
     }
 
-    def position = {
+    def direction = {
         if (fractalPattern.length > 1){
             if (fractalPattern(fractalPattern.length-1) == 0x01)
-                "up"
+                Direction.UP
             else
-                "down"
+                Direction.DOWN
         }else if (fractalPattern.length == 1)
-            if (fractalPattern(0) == 0x01) "up" else "down"
+            if (fractalPattern(0) == 0x01) Direction.UP else Direction.DOWN
         else
-            "-"
+            Direction.NEUTRAL
     }
+
+    def directionStr = {
+        direction match {
+            case Direction.UP => "up"
+            case Direction.DOWN => "down"
+            case _ => "-"
+        }
+    }
+
 
     private val formatter = new SimpleDateFormat("yyy.MM.dd HH:mm")
     lazy val timestamp = {
@@ -50,7 +60,7 @@ case class Point(value:Double, fractalPos:Int){
     }
 }
 
-class ZigzagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backstep:Int=5) {
+class ZigZagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backstep:Int=5) {
 
     val size = data.length
     private var lowMapBuffer = new Array[Double](size + 1)
@@ -530,7 +540,7 @@ object ZigZagFinder {
 
         val csvr = new CsvReader(filePath)
         val data = csvr.toArray.toIndexedSeq
-        val zzf = new ZigzagFinder(data)
+        val zzf = new ZigZagFinder(data)
 
         readLine("find for what? 1=zz, 2=legs : ").trim match {
             case "1" =>

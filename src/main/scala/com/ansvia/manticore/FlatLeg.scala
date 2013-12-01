@@ -22,7 +22,7 @@ object FlatLeg {
 
         val data = new CsvReader(args(0), untilDate).toArray.toIndexedSeq
 
-        val zz = new ZigzagFinder(data)
+        val zz = new ZigZagFinder(data)
 
         //             zz.process().getZigZagBuffer.zipWithIndex.foreach { case (z, i) =>
         //                 println("%d. %s => %s".format(i, data(i).time, z))

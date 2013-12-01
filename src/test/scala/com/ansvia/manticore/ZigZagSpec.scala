@@ -40,7 +40,7 @@ class ZigZagSpec extends Specification {
             val data = csvr.toArray
 //            val reversedData = data.reverse
 //            val size = reversedData.size
-            val zzf = new ZigzagFinder(data)
+            val zzf = new ZigZagFinder(data)
             val zb = zzf.process().getZigZagBuffer.filter(x => x != 0.0 && x != 1.0 && x != -1.0)
             zb.slice(zb.length-expectedDatas.length,zb.length).zipWithIndex.foreach { case (d, i) =>
 //                if (d > 0.0){
@@ -82,7 +82,7 @@ class ZigZagSpec extends Specification {
                   |2013.11.08 23:59 => -
                 """.stripMargin
             val data = csvr.toArray
-            val zzf = new ZigzagFinder(data)
+            val zzf = new ZigZagFinder(data)
             val zb = zzf.process().getZigZagBuffer
             zb.slice(zb.length-expectedDatas.length,zb.length).zipWithIndex.foreach { case (d,i) =>
                 val time = data(i).time
