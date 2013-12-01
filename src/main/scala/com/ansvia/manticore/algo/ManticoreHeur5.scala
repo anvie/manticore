@@ -23,6 +23,7 @@ class ManticoreHeur5(dataGen:DataGenerator) extends ManticoreAlgo {
 //        println("last sim leg: " + rv(rv.length-1))
         rv
     }
+    val absOffset = (dataGen.data.size - dataGen.chunkedData.size) - 1
 
     private var prevResult:Result = Result(Direction.NEUTRAL, 0.0)
 
@@ -53,7 +54,19 @@ class ManticoreHeur5(dataGen:DataGenerator) extends ManticoreAlgo {
         dataGen.zzLegsRaw.find(_.timestamp > dataGen.chunkedData(pos).timestamp)
     }
 
+    lazy val ensureProceed = dataGen.zzfRaw.process()
+
     def calculate(pos: Int) = {
+
+        ensureProceed
+
+        // check is fractal?
+        // alo interest in fractal, non fractal point will be ignored
+
+        val isFractal = dataGen.zzfRaw.isFractal(dataGen.zzfRaw.getZigZagBuffer(absOffset + pos))
+
+        if (!isFractal)
+            throw new Ignored
 
         // get last leg
         val lastLeg = getLastLeg(pos).getOrElse {
@@ -111,10 +124,17 @@ class ManticoreHeur5(dataGen:DataGenerator) extends ManticoreAlgo {
             matchedLegs = legs.filter { leg =>
                 leg.fractalPattern.startsWith(uLeg.fractalPattern) &&
                     leg.length == uLeg.length &&
+//                    leg.direction == uLeg.direction &&
                     DiceSorensenMetric.compare(leg.barPattern, uLeg.barPattern)(1).getOrElse(0.0) > 0.8
             }
 
-            if (matchedLegs.length > 2){
+            if (matchedLegs.length == 1){
+                val rv = Result(matchedLegs(0).direction, 0.0)
+
+                prevResult = rv
+
+                rv
+            }else if (matchedLegs.length > 1){
                 val (up, down) = matchedLegs.map(_.direction).partition(_ == Direction.UP)
 
                 val upSize = up.size
@@ -131,7 +151,30 @@ class ManticoreHeur5(dataGen:DataGenerator) extends ManticoreAlgo {
 
                 rv
             }else{
-                prevResult
+
+                // attempt #3
+                // only using last leg
+
+                // searching for pattern in history
+                matchedLegs = legs.filter { leg =>
+                    leg.fractalPattern.startsWith(lastLeg.fractalPattern) &&
+                        leg.length == lastLeg.length &&
+                        leg.direction == lastLeg.direction &&
+                        DiceSorensenMetric.compare(leg.barPattern, lastLeg.barPattern)(1).getOrElse(0.0) > 0.7
+                }
+
+//                println("matchedLegs.length: " + matchedLegs.length)
+
+                if (matchedLegs.length > 6){
+                    // give opposite direction from last leg
+
+                    val opposite = if (lastLeg.direction == Direction.UP) Direction.DOWN else Direction.UP
+                    val rv = Result(opposite, 0.0)
+                    prevResult = rv
+                    rv
+                }else{
+                    prevResult
+                }
             }
 
         }

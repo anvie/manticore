@@ -454,7 +454,7 @@ class ZigZagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backs
         zz != null && zz.value != 0.0 && zz.value != 1.0 && zz.value != -1.0
     }
 
-    private def isFractal(p:Point) = {
+    def isFractal(p:Point) = {
         p != null &&
         p.fractalPos != FractalPos.NONE
     }
