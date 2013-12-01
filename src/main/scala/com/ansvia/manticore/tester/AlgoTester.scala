@@ -2,7 +2,6 @@ package com.ansvia.manticore.tester
 
 import com.ansvia.manticore._
 import java.text.SimpleDateFormat
-import com.rockymadden.stringmetric.similarity.DiceSorensenMetric
 import com.ansvia.manticore.Record
 
 /**

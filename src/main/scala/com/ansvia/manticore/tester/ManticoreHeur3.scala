@@ -35,7 +35,7 @@ class ManticoreHeur3(dataGen:DataGenerator) extends ManticoreAlgo {
 
     def calculate(pos: Int) = {
 
-        lazy val uLeg = getUleg(pos)
+        val uLeg = getUleg(pos)
 
         lazy val matchedLegs = legs.filter { leg =>
         //                if (leg.barCount == uncompletedLeg.barCount)
@@ -62,26 +62,26 @@ class ManticoreHeur3(dataGen:DataGenerator) extends ManticoreAlgo {
             l.barPattern(uLeg.barCount) == 0x00
         }
 
-        matchedLegsStats.toSeq.sortBy(_._2.length)
-            .reverse.foreach { case (hash, _legs) =>
-
-//                println("%d. (%s) %s".format(_legs.length, hash, _legs(0)))
-
-            fractalSum += _legs.map(_.fractalCount).sum
-
-
-            _legs.groupBy(_.barPattern.mkString("")).toSeq.sortBy(_._2.length).reverse
-                .foreach { case (bpat, _legs2) =>
-
-//                    println("    %s - %s".format(bpat, _legs2.length))
-
-            }
-        }
+//        matchedLegsStats.toSeq.sortBy(_._2.length)
+//            .reverse.foreach { case (hash, _legs) =>
+//
+////                println("%d. (%s) %s".format(_legs.length, hash, _legs(0)))
+//
+//            fractalSum += _legs.map(_.fractalCount).sum
+//
+//
+//            _legs.groupBy(_.barPattern.mkString("")).toSeq.sortBy(_._2.length).reverse
+//                .foreach { case (bpat, _legs2) =>
+//
+////                    println("    %s - %s".format(bpat, _legs2.length))
+//
+//            }
+//        }
 
         val (down, up) = matchedLegsStats.flatMap(_._2).map(_.direction).partition(_ == Direction.UP)
 
-        val downSize = down.size
-        val upSize = up.size
+        val downSize = probUp // down.size
+        val upSize = probDown // up.size
 
 
 
