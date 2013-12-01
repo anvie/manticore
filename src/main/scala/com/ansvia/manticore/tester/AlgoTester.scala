@@ -14,7 +14,7 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo) {
 
     case class TesterResult(var passed:Int, var missed:Int){
         def printSummary() = {
-            val accuracy = math.floor((passed * 100).toDouble / (passed + missed).toDouble)
+            val accuracy = (passed * 100).toDouble / (passed + missed).toDouble
             println(
                 """
                   |Summary:
@@ -23,7 +23,7 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo) {
                   |   Start time: %s
                   |   End time: %s
                   |   Result: %d passed and %d missed.
-                  |   Accuracy level: %f %%
+                  |   Accuracy level: %.02f %%
                 """.stripMargin.format(dataGen.data.size, dataGen.startTime, dataGen.endTime,
                     passed, missed, accuracy)
             )
@@ -47,6 +47,10 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo) {
 
             val leg = legIterator.next()
 
+            if (leg.time == "2013.11.21 20:25"){
+                println("break")
+            }
+
 //            // fix offset
 //            while (leg.timestamp < dataGen.chunkedData(curPos).timestamp){
 //                curPos = curPos + 1
@@ -54,6 +58,9 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo) {
 
 //            curPos = curPos + leg.barCount
 
+            var legMiss = 0
+
+            print(" " + leg.directionStr + ": ")
 
             for (i <- 0 to leg.barCount - 1){
                 val direction = algo.calculate(curPos + i).direction
@@ -64,8 +71,12 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo) {
                     print("_")
                 }else{
                     misses = misses + 1
+                    legMiss = legMiss + 1
                     print("x")
                 }
+            }
+            if (legMiss > 30){
+                println("  -> leg[%s]".format(leg.time))
             }
             println("")
 

@@ -37,13 +37,15 @@ class ManticoreHeur3(dataGen:DataGenerator) extends ManticoreAlgo {
 
         val uLeg = getUleg(pos)
 
+//        println(uLeg.barPattern.mkString(""))
+
         lazy val matchedLegs = legs.filter { leg =>
         //                if (leg.barCount == uncompletedLeg.barCount)
         //                    println("sim: " + leg.barPattern.mkString("") + " vs " + uncompletedLeg.barPattern.mkString("") + " " + (DiceSorensenMetric.compare(leg.barPattern.mkString(""), uncompletedLeg.barPattern.mkString("")))(1).get )
             (leg.fractalCount < (uLeg.fractalCount+3)) &&
                 leg.fractalPattern.startsWith(uLeg.fractalPattern) &&
                 (leg.barCount > uLeg.barCount) &&
-                (DiceSorensenMetric.compare(leg.barPattern, uLeg.barPattern)(1).getOrElse(0.0) > 0.7)
+                (DiceSorensenMetric.compare(leg.barPattern, uLeg.barPattern)(1).getOrElse(0.0) > 0.87)
         }
 
 
@@ -51,7 +53,7 @@ class ManticoreHeur3(dataGen:DataGenerator) extends ManticoreAlgo {
             DiceSorensenMetric.compare(leg.barPattern, uLeg.barPattern)(1).getOrElse(0.0)
         }.filter(_._2.length > 3)
 
-        var fractalSum = 0
+//        var fractalSum = 0
         var probUp = 0
         var probDown = 0
 
@@ -80,9 +82,8 @@ class ManticoreHeur3(dataGen:DataGenerator) extends ManticoreAlgo {
 
         val (down, up) = matchedLegsStats.flatMap(_._2).map(_.direction).partition(_ == Direction.UP)
 
-        val downSize = probUp // down.size
-        val upSize = probDown // up.size
-
+        val downSize = down.size + probDown
+        val upSize = up.size + probUp
 
 
 //            val delta = ( (downSize + upSize) / 1.7 )
