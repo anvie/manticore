@@ -6,7 +6,6 @@ import akka.actor.{Props, ActorSystem, Actor}
 import akka.routing.RoundRobinRouter
 import com.ansvia.manticore.Manticore.{DNAS, DNA}
 import java.util.concurrent.CountDownLatch
-import scala.collection.immutable.HashMap
 import com.rockymadden.stringmetric.similarity.DiceSorensenMetric
 
 /**
@@ -361,7 +360,7 @@ object FlatLegX {
 
 //            val x = matchedLegsStats.flatMap(_._2)
 //            println("    pattern: " + matchedLegsStats.flatMap(_._2).map(_.position).mkString(" "))
-            val (down, up) = matchedLegsStats.flatMap(_._2).map(_.direction).partition(_ == "up")
+            val (down, up) = matchedLegsStats.flatMap(_._2).map(_.direction).partition(_ == Direction.UP)
             val state = {
                 val a = down.size
                 val b = up.size

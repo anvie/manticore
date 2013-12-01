@@ -13,7 +13,24 @@ import com.ansvia.manticore.Record
  */
 class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo) {
 
-    case class TesterResult(var passed:Int, var missed:Int)
+    case class TesterResult(var passed:Int, var missed:Int){
+        def printSummary() = {
+            val accuracy = math.floor((passed * 100).toDouble / (passed + missed).toDouble)
+            println(
+                """
+                  |Summary:
+                  |-----------
+                  |   Data size: %d
+                  |   Start time: %s
+                  |   End time: %s
+                  |   Result: %d passed and %d missed.
+                  |   Accuracy level: %f %%
+                """.stripMargin.format(dataGen.data.size, dataGen.startTime, dataGen.endTime,
+                    passed, missed, accuracy)
+            )
+        }
+
+    }
 
     lazy val legIterator = dataGen.zzLegsChunked.toIterator
 
@@ -25,16 +42,33 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo) {
         var passes = 0
         var misses = 0
 
+        println("testing...")
 
         while(legIterator.hasNext){
+
             val leg = legIterator.next()
 
-            for (i <- curPos to leg.barCount - 1){
-                if (algo.calculate(i).direction == leg.direction)
+//            // fix offset
+//            while (leg.timestamp < dataGen.chunkedData(curPos).timestamp){
+//                curPos = curPos + 1
+//            }
+
+//            curPos = curPos + leg.barCount
+
+
+            for (i <- 0 to leg.barCount - 1){
+                val direction = algo.calculate(curPos + i).direction
+                if (direction == leg.direction){
                     passes = passes + 1
-                else
+                    print(".")
+                }else if (direction == Direction.NEUTRAL){
+                    print("_")
+                }else{
                     misses = misses + 1
+                    print("x")
+                }
             }
+            println("")
 
             curPos = curPos + leg.barCount
 
@@ -46,11 +80,7 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo) {
 
 }
 
-object Direction {
-    val UP = 1
-    val DOWN = 0
-    val NEUTRAL = -1
-}
+
 
 
 
@@ -58,7 +88,7 @@ abstract class ManticoreAlgo {
 
     /**
      * Manticore algo result
-     * @param direction swing direction @see [[com.ansvia.manticore.tester.Direction]]
+     * @param direction swing direction @see [[com.ansvia.manticore.Direction]]
      * @param pips pips information if any.
      */
     case class Result(direction:Int, pips:Double)
@@ -67,10 +97,16 @@ abstract class ManticoreAlgo {
 
 }
 
-class DataGenerator(data:IndexedSeq[Record], startTime:String="", endTime:String=""){
+case class DataGenerator(data:IndexedSeq[Record], startTime:String="", endTime:String=""){
     private val formatter = new SimpleDateFormat("yyyy.MM.dd HH:mm")
-    val startTs = formatter.parse(startTime).getTime
-    val endTs = formatter.parse(endTime).getTime
+    val startTs = if (startTime.length > 0)
+            formatter.parse(startTime).getTime
+        else
+            0L
+    val endTs = if (endTime.length > 0)
+            formatter.parse(endTime).getTime
+        else
+            0L
 
     /**
      * contains data that has been sliced out
@@ -102,10 +138,10 @@ class DataGenerator(data:IndexedSeq[Record], startTime:String="", endTime:String
     lazy val lastLegChunked = zzLegsChunked(zzLegsChunked.length - 1)
 
     /**
-     * Unidentified leg a.k.a uncompleted leg.
+     * Unidentified leg a.k.a uncompleted leg (chunked).
      */
     lazy val uLeg = {
-        val trailingData = data.filter(_.timestamp > lastLegRaw.timestamp)
+        val trailingData = chunkedData.filter(_.timestamp > lastLegChunked.timestamp)
 
         var fractals = FractalFinder.find(trailingData)
         if (fractals(fractals.length-1).isInstanceOf[Fractal]){
@@ -123,96 +159,67 @@ class DataGenerator(data:IndexedSeq[Record], startTime:String="", endTime:String
 
 }
 
-/**
- * Using leg matching algo (heur-3) menggunakan dice sorensen metric.
- */
-class ManticoreHeur3(dataGen:DataGenerator) extends ManticoreAlgo {
-
-    lazy val legs = dataGen.zzLegsChunked
-    lazy val uLeg = dataGen.uLeg
-
-    def calculate(pos: Int) = {
 
 
-        val matchedLegs = legs.filter { leg =>
-        //                if (leg.barCount == uncompletedLeg.barCount)
-        //                    println("sim: " + leg.barPattern.mkString("") + " vs " + uncompletedLeg.barPattern.mkString("") + " " + (DiceSorensenMetric.compare(leg.barPattern.mkString(""), uncompletedLeg.barPattern.mkString("")))(1).get )
-            (leg.fractalCount < (uLeg.fractalCount+3)) &&
-                leg.fractalPattern.startsWith(uLeg.fractalPattern) &&
-                (leg.barCount > uLeg.barCount) &&
-                (DiceSorensenMetric.compare(leg.barPattern, uLeg.barPattern)(1).get > 0.7)
+object AlgoTester {
+
+    val availableAlgos = Seq("MTH3", "FRAC1")
+
+    def showUsage(){
+        println("Usage: \n" +
+            "AlgoTester [ALGO-NAME] [CSV-FILE] [START-TIME] [END-TIME]")
+        sys.exit(2)
+    }
+
+    def main(args: Array[String]) {
+
+        if (args.length < 3){
+            showUsage()
         }
 
-        val matchedLegsStats = matchedLegs.groupBy { leg =>
-            DiceSorensenMetric.compare(leg.barPattern, uLeg.barPattern)(1).get
-        }.filter(_._2.length > 3)
+        val algoName = args(0)
+        val csvFilePath = args(1)
+        val startTime = if (args.length > 2) args(2) else ""
+        val endTime = if (args.length > 3) args(3) else ""
 
-        var fractalSum = 0
-        var probUp = 0
-        var probDown = 0
-
-        probUp += matchedLegs.count { l =>
-            l.barPattern(uLeg.barCount) == 0x01
-        }
-        probDown += matchedLegs.count { l =>
-            l.barPattern(uLeg.barCount) == 0x00
+        if (!availableAlgos.map(_.toLowerCase).contains(algoName.toLowerCase)){
+            sys.error("No algo name: " + algoName)
+            sys.error("Available algos: " + availableAlgos.mkString(", "))
+            sys.exit(3)
         }
 
-        matchedLegsStats.toSeq.sortBy(_._2.length)
-            .reverse.foreach { case (hash, _legs) =>
+        println("Setup:")
+        println("   algo name: " + algoName)
+        println("   csv file: " + csvFilePath)
+        println("   start time: " + startTime)
+        println("   end time: " + endTime)
+        println("")
+        Console.readLine("ready? [Y/n] ").trim match {
+            case "y" | "Y" => {
 
-//                println("%d. (%s) %s".format(_legs.length, hash, _legs(0)))
+                val csv = new CsvReader(csvFilePath)
+                val data = csv.toArray
+                val dataGen = DataGenerator(data, startTime, endTime)
 
-            fractalSum += _legs.map(_.fractalCount).sum
+                val algo =
+                algoName.toLowerCase match {
+                    case "mth3" => {
+                        new ManticoreHeur3(dataGen)
+                    }
+                    case "frac1" => new Fractal1(dataGen)
+                }
 
+                val tester = new AlgoTester(dataGen, algo)
+                val result = tester.play()
 
-            _legs.groupBy(_.barPattern.mkString("")).toSeq.sortBy(_._2.length).reverse
-                .foreach { case (bpat, _legs2) =>
+                result.printSummary()
 
-//                    println("    %s - %s".format(bpat, _legs2.length))
-
+                csv.close()
             }
+            case _ =>
+                println("aborted.")
         }
-
-        val (down, up) = matchedLegsStats.flatMap(_._2).map(_.direction).partition(_ == "up")
-
-        val downSize = down.size
-        val upSize = up.size
-
-
-
-//            val delta = ( (downSize + upSize) / 1.7 )
-        val delta = 0.0
-
-        val nextDirection = {
-
-            if (upSize > (downSize + delta) ) Direction.UP
-            else if ((upSize + delta) < downSize) Direction.DOWN
-            else Direction.NEUTRAL
-
-        }
-
-//        val deltaUp = upSize + delta
-//        val deltaDown = downSize + delta
-
-        val pips =
-            nextDirection match {
-                case Direction.UP =>
-                    matchedLegsStats.toSeq.flatMap(_._2).find(_.direction== "up").map(_.pips).getOrElse(0.0)
-                case Direction.DOWN =>
-                    matchedLegsStats.toSeq.flatMap(_._2).find(_.direction == "down").map(_.pips).getOrElse(0.0)
-                case _ => 
-                    0.0
-            }
-
-        //            val fractalSumRounded = fractalSum / ((downSize + upSize) - stateInt)
-        //            val fractalSumRounded2 = fractalSum / (((downSize + upSize) / 3) - stateInt)
-//
-//        println("MANTICORE HEUR-3 (%d/%d) delta(%s/%s), fsum(%s), prob(%d/%d), ds(%d), pips(%f) --> %s".format(up.size, down.size,
-//            deltaUp, deltaDown, fractalSum, /*fractalSumRounded, fractalSumRounded2,*/ probUp, probDown,
-//            matchedLegs.length, pips, state))
-        
-        Result(nextDirection, pips)
     }
 }
+
 

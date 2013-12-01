@@ -2,7 +2,6 @@ package com.ansvia.manticore
 
 import scala.collection.mutable.ArrayBuffer
 import java.text.SimpleDateFormat
-import com.ansvia.manticore.tester.Direction
 
 /**
  * Author: robin
