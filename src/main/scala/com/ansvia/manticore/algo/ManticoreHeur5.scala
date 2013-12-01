@@ -99,6 +99,7 @@ class ManticoreHeur5(dataGen:DataGenerator) extends ManticoreAlgo {
             rv
 
         }else if (matchedLegs.length > 1){
+
             val (up, down) = matchedLegs.map(_.direction).partition(_ == Direction.UP)
             
             val upSize = up.size
@@ -108,7 +109,7 @@ class ManticoreHeur5(dataGen:DataGenerator) extends ManticoreAlgo {
                 if (upSize > downSize) Direction.UP
                 else if (upSize < downSize) Direction.DOWN
                 else Direction.NEUTRAL
-            
+
             val rv = Result(direction, 0.0)
             
             prevResult = rv
@@ -135,6 +136,7 @@ class ManticoreHeur5(dataGen:DataGenerator) extends ManticoreAlgo {
 
                 rv
             }else if (matchedLegs.length > 1){
+
                 val (up, down) = matchedLegs.map(_.direction).partition(_ == Direction.UP)
 
                 val upSize = up.size
@@ -160,12 +162,12 @@ class ManticoreHeur5(dataGen:DataGenerator) extends ManticoreAlgo {
                     leg.fractalPattern.startsWith(lastLeg.fractalPattern) &&
                         leg.length == lastLeg.length &&
                         leg.direction == lastLeg.direction &&
-                        DiceSorensenMetric.compare(leg.barPattern, lastLeg.barPattern)(1).getOrElse(0.0) > 0.7
+                        leg.barPattern == lastLeg.barPattern
                 }
 
 //                println("matchedLegs.length: " + matchedLegs.length)
 
-                if (matchedLegs.length > 6){
+                if (matchedLegs.length > 5){
                     // give opposite direction from last leg
 
                     val opposite = if (lastLeg.direction == Direction.UP) Direction.DOWN else Direction.UP
