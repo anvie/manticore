@@ -6,12 +6,10 @@ import com.ansvia.manticore.Fractal
 import com.ansvia.manticore.Leg
 
 
-
-
 /**
- * Using leg matching algo (heur-3) menggunakan dice sorensen metric.
+ * HEUR-5 improvements version of HEUR-3
  */
-class ManticoreHeur5(dataGen:DataGenerator) extends ManticoreAlgo {
+class ManticoreHeur5(dataGen:DataGenerator) extends ManticoreAlgo with AI {
 
     val name = "MTH5"
 
