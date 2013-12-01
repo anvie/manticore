@@ -1,0 +1,13 @@
+last achievements:
+69.24%
+69.31%
+69.34%
+69.48%
+69.63%
+71.42%
+72.22%
+72.24%
+72.38%
+
+"run-main com.ansvia.manticore.tester.AlgoTester mth5 /home/robin/mt4/tester/files/out.csv \"2012.11.01 00:00\""
+--> 78.69%
