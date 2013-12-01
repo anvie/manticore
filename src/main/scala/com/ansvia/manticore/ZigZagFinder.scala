@@ -14,6 +14,7 @@ case class Leg(time:String, fractalCount:Int, barCount:Int, fractalPattern:Array
     override def toString = "leg[%s] = f: %d, bar: %d, pos: %s, fpatt: {%s}, bpatt: {%s}".format(time,
         fractalCount, barCount, directionStr, fractalPattern.map(_.toString).mkString(""), barPattern.mkString(""))
 
+    val length = barCount
 
     def similarity() = {
         (fractalCount + barCount + fractalPattern.mkString("")).hashCode

@@ -3,6 +3,7 @@ package com.ansvia.manticore.tester
 import com.ansvia.manticore._
 import java.text.SimpleDateFormat
 import com.ansvia.manticore.Record
+import com.ansvia.manticore.algo.{Ignored, ManticoreHeur5, ManticoreAlgo}
 
 /**
  * Author: robin
@@ -63,7 +64,11 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo) {
             print(" " + leg.directionStr + ": ")
 
             for (i <- 0 to leg.barCount - 1){
-                val direction = algo.calculate(curPos + i).direction
+                val direction = try {
+                    algo.calculate(curPos + i).direction
+                }catch {
+                    case e:Ignored => algo.lastResult.direction
+                }
                 if (direction == leg.direction){
                     passes = passes + 1
                     print(".")
@@ -75,9 +80,9 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo) {
                     print("x")
                 }
             }
-            if (legMiss > 30){
-                println("  -> leg[%s]".format(leg.time))
-            }
+//            if (legMiss > 30){
+                print(" -> leg[%s]".format(leg.time))
+//            }
             println("")
 
             curPos = curPos + leg.barCount
@@ -91,89 +96,9 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo) {
 }
 
 
-
-
-
-abstract class ManticoreAlgo {
-
-    /**
-     * Manticore algo result
-     * @param direction swing direction @see [[com.ansvia.manticore.Direction]]
-     * @param pips pips information if any.
-     */
-    case class Result(direction:Int, pips:Double)
-
-    def calculate(pos:Int):Result
-
-}
-
-case class DataGenerator(data:IndexedSeq[Record], startTime:String="", endTime:String=""){
-    private val formatter = new SimpleDateFormat("yyyy.MM.dd HH:mm")
-    val startTs = if (startTime.length > 0)
-            formatter.parse(startTime).getTime
-        else
-            0L
-    val endTs = if (endTime.length > 0)
-            formatter.parse(endTime).getTime
-        else
-            0L
-
-    /**
-     * contains data that has been sliced out
-     * using startTime and endTime.
-     */
-    lazy val chunkedData = {
-        if (startTime.length > 0 && endTime.length > 0){
-            data.filter { d =>
-                d.timestamp > startTs && d.timestamp < endTs
-            }
-        }else if (startTime.length > 0 && endTime.length == 0){
-            data.filter { d =>
-                d.timestamp > startTs
-            }
-        }else if (startTime.length == 0 && endTime.length > 0){
-            data.filter { d =>
-                d.timestamp < endTs
-            }
-        }else{
-            data
-        }
-    }
-    lazy val zzfRaw = new ZigZagFinder(data, 13, 8, 5)
-    lazy val zzLegsRaw = zzfRaw.getLegs
-    lazy val zzfChunked = new ZigZagFinder(chunkedData, 13, 8, 5)
-    lazy val zzLegsChunked = zzfChunked.getLegs
-
-    lazy val lastLegRaw = zzLegsRaw(zzLegsRaw.length - 1)
-    lazy val lastLegChunked = zzLegsChunked(zzLegsChunked.length - 1)
-
-    /**
-     * Unidentified leg a.k.a uncompleted leg (chunked).
-     */
-    lazy val uLeg = {
-        val trailingData = chunkedData.filter(_.timestamp > lastLegChunked.timestamp)
-
-        var fractals = FractalFinder.find(trailingData)
-        if (fractals(fractals.length-1).isInstanceOf[Fractal]){
-            fractals = fractals.slice(0, fractals.length-2)
-        }
-
-        val fractalPattern = fractals.filter(_.isInstanceOf[Fractal])
-            .map(_.asInstanceOf[Fractal]).map(_.pos)
-        val barPattern = trailingData.map(_.bit)
-        val fractalCount = fractalPattern.length
-        val barCount = barPattern.length
-
-        Leg("-", fractalCount, barCount, fractalPattern.map(_.toByte), barPattern.map(_.toByte).toArray, 0.0)
-    }
-
-}
-
-
-
 object AlgoTester {
 
-    val availableAlgos = Seq("MTH3", "FRAC1")
+    val availableAlgos = Seq("MTH3", "MTH5", "FRAC1")
 
     def showUsage(){
         println("Usage: \n" +
@@ -204,8 +129,8 @@ object AlgoTester {
         println("   start time: " + startTime)
         println("   end time: " + endTime)
         println("")
-        Console.readLine("ready? [Y/n] ").trim match {
-            case "y" | "Y" => {
+//        Console.readLine("ready? [Y/n] ").trim match {
+//            case "y" | "Y" => {
 
                 val csv = new CsvReader(csvFilePath)
                 val data = csv.toArray
@@ -213,9 +138,8 @@ object AlgoTester {
 
                 val algo =
                 algoName.toLowerCase match {
-                    case "mth3" => {
-                        new ManticoreHeur3(dataGen)
-                    }
+                    case "mth3" => new ManticoreHeur3(dataGen)
+                    case "mth5" => new ManticoreHeur5(dataGen)
                     case "frac1" => new Fractal1(dataGen)
                 }
 
@@ -225,10 +149,10 @@ object AlgoTester {
                 result.printSummary()
 
                 csv.close()
-            }
-            case _ =>
-                println("aborted.")
-        }
+//            }
+//            case _ =>
+//                println("aborted.")
+//        }
     }
 }
 

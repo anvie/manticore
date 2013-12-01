@@ -5,6 +5,7 @@ import com.ansvia.manticore.Fractal
 import com.ansvia.manticore.Leg
 import com.ansvia.manticore.Manticore.DNAS
 import scala.collection.mutable
+import com.ansvia.manticore.algo.ManticoreAlgo
 
 /**
  * Using leg matching algo (heur-3) menggunakan dice sorensen metric.
@@ -14,6 +15,10 @@ class Fractal1(dataGen:DataGenerator) extends ManticoreAlgo {
     val name = "FRAC1"
 
     lazy val legs = dataGen.zzLegsRaw
+
+    private var prevResult = Result(Direction.NEUTRAL, 0.0)
+
+    def lastResult = prevResult
 
     def getUleg(pos:Int) = {
         var trailingData = dataGen.data.filter(_.timestamp > dataGen.chunkedData(pos).timestamp)
@@ -101,6 +106,8 @@ class Fractal1(dataGen:DataGenerator) extends ManticoreAlgo {
             else if (upCount < downCount) Direction.DOWN
             else Direction.NEUTRAL
 
-        Result(nextDirection, 0.0)
+        val rv = Result(nextDirection, 0.0)
+        prevResult = rv
+        rv
     }
 }

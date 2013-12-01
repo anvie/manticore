@@ -405,7 +405,7 @@ object FlatLegX {
 
 //            val x = matchedLegsStats.flatMap(_._2)
 //            println("    pattern: " + matchedLegsStats.flatMap(_._2).map(_.position).mkString(" "))
-            val (down, up) = matchedLegsStats.flatMap(_._2).map(_.direction).partition(_ == "up")
+            val (down, up) = matchedLegsStats.flatMap(_._2).map(_.direction).partition(_ == Direction.UP)
             val state = {
                 val a = down.size
                 val b = up.size
@@ -468,7 +468,7 @@ object FlatLegX {
 
 //            val x = matchedLegsStats.flatMap(_._2)
 //            println("    pattern: " + matchedLegsStats.flatMap(_._2).map(_.position).mkString(" "))
-            val (down, up) = matchedLegsStats.flatMap(_._2).map(_.direction).partition(_ == "up")
+            val (down, up) = matchedLegsStats.flatMap(_._2).map(_.direction).partition(_ == Direction.UP)
 
             val downSize = down.size
             val upSize = up.size
@@ -494,9 +494,9 @@ object FlatLegX {
             val pips =
                 stateInt match {
                     case 1 =>
-                        matchedLegsStats.toSeq.flatMap(_._2).find(_.direction=="up").map(_.pips).getOrElse(0.0)
+                        matchedLegsStats.toSeq.flatMap(_._2).find(_.direction==Direction.UP).map(_.pips).getOrElse(0.0)
                     case 0 =>
-                        matchedLegsStats.toSeq.flatMap(_._2).find(_.direction == "down").map(_.pips).getOrElse(0.0)
+                        matchedLegsStats.toSeq.flatMap(_._2).find(_.direction==Direction.DOWN).map(_.pips).getOrElse(0.0)
                     case _ => 0.0
                 }
 
