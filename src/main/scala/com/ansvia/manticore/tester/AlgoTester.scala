@@ -182,35 +182,35 @@ object AlgoTester {
             println("Interactive mode")
             algoName = Console.readLine("algo name: ").trim
             scanningStartTime = Console.readLine("scanning start time: ").trim
-
-            if (!availableAlgos.map(_.toLowerCase).contains(algoName.toLowerCase)){
-                sys.error("No algo name: " + algoName)
-                sys.error("Available algos: " + availableAlgos.mkString(", "))
-                sys.exit(3)
-            }
-
-            println("Setup:")
-            println("   algo name: " + algoName)
-            println("   source csv file: " + historyDataFile)
-            println("   history start time: " + historyStartTime)
-            println("   history end time: " + historyEndTime)
-            println("   target csv file: " + targetDataFile)
-            println("   scanning start time: " + scanningStartTime)
-            println("")
         }else{
             algoName = args(1)
             scanningStartTime = if (args.length > 3) args(3) else ""
         }
 
-        Console.readLine("ready? [Y/n] ").trim match {
-            case "y" | "Y" => {
+        if (!availableAlgos.map(_.toLowerCase).contains(algoName.toLowerCase)){
+            sys.error("No algo name: " + algoName)
+            sys.error("Available algos: " + availableAlgos.mkString(", "))
+            sys.exit(3)
+        }
+
+        println("Setup:")
+        println("   algo name: " + algoName)
+        println("   source csv file: " + historyDataFile)
+        println("   history start time: " + historyStartTime)
+        println("   history end time: " + historyEndTime)
+        println("   target csv file: " + targetDataFile)
+        println("   scanning start time: " + scanningStartTime)
+        println("")
+
+//        Console.readLine("ready? [Y/n] ").trim match {
+//            case "y" | "Y" => {
 
                 var done = false
 
                 println("loading " + historyDataFile + "...")
                 val csv = new CsvReader(historyDataFile)
                 val data = csv.toArray
-                val dataGen = DataGenerator(data, historyStartTime, historyEndTime)
+                val dataGenSource = DataGenerator(data, historyStartTime, historyEndTime)
 
                 println("loading " + targetDataFile + "...")
                 val csv2 = new CsvReader(targetDataFile)
@@ -220,7 +220,7 @@ object AlgoTester {
                 val algo =
                 algoName.toLowerCase match {
 //                    case "mth3" => new ManticoreHeur3(dataGen)
-                    case "mth5" => new ManticoreHeur5(dataGen)
+                    case "mth5" => new ManticoreHeur5(dataGenSource, dataGenTarget)
 //                    case "frac1" => new Fractal1(dataGen)
                 }
 
@@ -237,14 +237,16 @@ object AlgoTester {
 
                         if (rv == "x")
                             done = true
+                    }else{
+                        done = true
                     }
                 }
 
                 csv.close()
-            }
-            case _ =>
-                println("aborted.")
-        }
+//            }
+//            case _ =>
+//                println("aborted.")
+//        }
     }
 }
 

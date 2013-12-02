@@ -10,14 +10,14 @@ import java.text.SimpleDateFormat
 /**
  * HEUR-5 improvements version of HEUR-3
  */
-class ManticoreHeur5(dataGen:DataGenerator) extends ManticoreAlgo {
+class ManticoreHeur5(dataGenSource:DataGenerator, dataGenTarget:DataGenerator) extends ManticoreAlgo {
 
     val name = "MTH5"
 
     // only in range max startTs
     lazy val legs = {
 //        println("before: " + dataGen.zzLegsRaw.length)
-        val rv = dataGen.zzLegsChunked //.zzLegsRaw.filter(_.timestamp < dataGen.startTs)
+        val rv = dataGenSource.zzLegsChunked //.zzLegsRaw.filter(_.timestamp < dataGen.startTs)
 //        println("after: " + rv.length)
 //        println("last sim leg: " + rv(rv.length-1))
         rv
@@ -29,7 +29,7 @@ class ManticoreHeur5(dataGen:DataGenerator) extends ManticoreAlgo {
 
     def lastResult = prevResult
 
-    private var _aiRegs = Seq.empty[(String, Result)]
+//    private var _aiRegs = Seq.empty[(String, Result)]
 //
 //    def train(pos:Int, result:Result){
 //
@@ -77,10 +77,10 @@ class ManticoreHeur5(dataGen:DataGenerator) extends ManticoreAlgo {
 
     def getUleg(posTime:String) = {
         val ts = formatter.parse(posTime).getTime
-        var trailingData = dataGen.data.filter(_.timestamp > ts)
+        var trailingData = dataGenTarget.data.filter(_.timestamp > ts)
 
-        if (trailingData.length > 10){
-            trailingData = trailingData.slice(0, 10)
+        if (trailingData.length > 3){
+            trailingData = trailingData.slice(0, 3)
         }
 
         var fractals = FractalFinder.find(trailingData)
@@ -101,95 +101,62 @@ class ManticoreHeur5(dataGen:DataGenerator) extends ManticoreAlgo {
 
     def getLastLeg(posTime:String) = {
         val ts = formatter.parse(posTime).getTime
-        dataGen.zzLegsRaw.find(_.timestamp > ts)
+        dataGenTarget.zzLegsRaw.find(_.timestamp > ts)
     }
 
 //    lazy val ensureProceed = dataGen.zzfRaw.process()
 
-    lazy val fractalsData = FractalFinder.find(dataGen.data).filter(_.isInstanceOf[Fractal]).map(_.asInstanceOf[Fractal])
+    lazy val fractalsData = FractalFinder.find(dataGenTarget.data)
+        .filter(_.isInstanceOf[Fractal])
+        .map(_.asInstanceOf[Fractal])
 
     def calculate(posTime:String) = {
 
-//        ensureProceed
+        try {
 
-        // check is fractal?
-        // alo interest in fractal, non fractal point will be ignored
+            //        ensureProceed
 
-//        val targetRecord = dataGen.data.find(_.time == dataGen.chunkedData(pos).time)
+            // check is fractal?
+            // alo interest in fractal, non fractal point will be ignored
 
-//        val isFractal = dataGen.zzfRaw.isFractal(dataGen.zzfRaw.getZigZagBuffer(pos))
-        val isFractal = fractalsData.exists(_.time == posTime)
+            //        val targetRecord = dataGen.data.find(_.time == dataGen.chunkedData(pos).time)
 
-        if (!isFractal)
-            throw new Ignored
+            //        val isFractal = dataGen.zzfRaw.isFractal(dataGen.zzfRaw.getZigZagBuffer(pos))
+            val isFractal = fractalsData.exists(_.time == posTime)
 
-        // get last leg
-        val lastLeg = getLastLeg(posTime).getOrElse {
-            throw new Ignored
-        }
+            if (!isFractal)
+                throw new Ignored
 
-        val uLeg = getUleg(posTime)
+            // get last leg
+            val lastLeg = getLastLeg(posTime).getOrElse {
+                throw new Ignored
+            }
 
-        // attempt #1
-        // mixin last leg bar pattern and uleg bar pattern
+            val uLeg = getUleg(posTime)
 
-//        var lookForBarPattern = lastLeg.barPattern ++ uLeg.barPattern
+            // attempt #1
+            // mixin last leg bar pattern and uleg bar pattern
 
-        // searching for pattern in history
-
-        var matchedLegs = legs.filter { leg =>
-            leg.fractalPattern.startsWith(lastLeg.fractalPattern ++ uLeg.fractalPattern) &&
-                leg.length == (lastLeg.length + uLeg.length) &&
-                leg.direction == lastLeg.direction &&
-                DiceSorensenMetric.compare(leg.barPattern, lastLeg.barPattern ++ uLeg.barPattern)(1).getOrElse(0.0) > 0.8
-        }
-
-        // if any then just use it as master
-        if (matchedLegs.length == 1){
-
-            val rv = Result(lastLeg.direction, 0.0)
-
-            prevResult = rv
-
-            rv
-
-        }else if (matchedLegs.length > 1){
-
-            val (up, down) = matchedLegs.map(_.direction).partition(_ == Direction.UP)
-
-            val upSize = up.size
-            val downSize = down.size
-
-            val direction =
-                if (upSize > downSize) Direction.UP
-                else if (upSize < downSize) Direction.DOWN
-                else Direction.NEUTRAL
-
-            val rv = Result(direction, 0.0)
-
-            prevResult = rv
-
-            rv
-        }else{
-
-            // attempt #2
-            // only using uleg
+            //        var lookForBarPattern = lastLeg.barPattern ++ uLeg.barPattern
 
             // searching for pattern in history
 
-            matchedLegs = legs.filter { leg =>
-                leg.fractalPattern.startsWith(uLeg.fractalPattern) &&
-                    leg.length == uLeg.length &&
-//                    leg.direction == uLeg.direction &&
-                    DiceSorensenMetric.compare(leg.barPattern, uLeg.barPattern)(1).getOrElse(0.0) > 0.8
+            var matchedLegs = legs.filter { leg =>
+                leg.fractalPattern.startsWith(lastLeg.fractalPattern ++ uLeg.fractalPattern) &&
+                    leg.length == (lastLeg.length + uLeg.length) &&
+                    leg.direction == lastLeg.direction &&
+                    DiceSorensenMetric.compare(leg.barPattern, lastLeg.barPattern ++ uLeg.barPattern)(1).getOrElse(0.0) > 0.8
             }
 
+            // if any then just use it as master
             if (matchedLegs.length == 1){
-                val rv = Result(matchedLegs(0).direction, 0.0)
+
+                val rv = Result(lastLeg.direction, 0.0)
 
                 prevResult = rv
 
                 rv
+
             }else if (matchedLegs.length > 1){
 
                 val (up, down) = matchedLegs.map(_.direction).partition(_ == Direction.UP)
@@ -209,38 +176,81 @@ class ManticoreHeur5(dataGen:DataGenerator) extends ManticoreAlgo {
                 rv
             }else{
 
-                // attempt #3
-                // only using last leg
+                // attempt #2
+                // only using uleg
 
                 // searching for pattern in history
+
                 matchedLegs = legs.filter { leg =>
-                    leg.fractalPattern.startsWith(lastLeg.fractalPattern) &&
-                        leg.length == lastLeg.length &&
-                        leg.direction == lastLeg.direction &&
-                        leg.barPattern == lastLeg.barPattern
+                    leg.fractalPattern.startsWith(uLeg.fractalPattern) &&
+                        leg.length == uLeg.length &&
+                        //                    leg.direction == uLeg.direction &&
+                        DiceSorensenMetric.compare(leg.barPattern, uLeg.barPattern)(1).getOrElse(0.0) > 0.8
                 }
 
-//                println("matchedLegs.length: " + matchedLegs.length)
+                if (matchedLegs.length == 1){
+                    val rv = Result(matchedLegs(0).direction, 0.0)
 
-                if (matchedLegs.length > 5){
-                    // give opposite direction from last leg
-
-                    val opposite = if (lastLeg.direction == Direction.UP) Direction.DOWN else Direction.UP
-                    val rv = Result(opposite, 0.0)
                     prevResult = rv
-                    rv
 
+                    rv
+                }else if (matchedLegs.length > 1){
+
+                    val (up, down) = matchedLegs.map(_.direction).partition(_ == Direction.UP)
+
+                    val upSize = up.size
+                    val downSize = down.size
+
+                    val direction =
+                        if (upSize > downSize) Direction.UP
+                        else if (upSize < downSize) Direction.DOWN
+                        else Direction.NEUTRAL
+
+                    val rv = Result(direction, 0.0)
+
+                    prevResult = rv
+
+                    rv
                 }else{
 
-                    // get from previous result
+                    // attempt #3
+                    // only using last leg
 
-//                    guess(pos).getOrElse(prevResult)
-                    prevResult
+                    // searching for pattern in history
+                    matchedLegs = legs.filter { leg =>
+                        leg.fractalPattern.startsWith(lastLeg.fractalPattern) &&
+                            leg.length == lastLeg.length &&
+                            leg.direction == lastLeg.direction &&
+                            leg.barPattern == lastLeg.barPattern
+                    }
 
+                    //                println("matchedLegs.length: " + matchedLegs.length)
+
+                    if (matchedLegs.length > 5){
+                        // give opposite direction from last leg
+
+                        val opposite = if (lastLeg.direction == Direction.UP) Direction.DOWN else Direction.UP
+                        val rv = Result(opposite, 0.0)
+                        prevResult = rv
+                        rv
+
+                    }else{
+
+                        // get from previous result
+
+                        //                    guess(pos).getOrElse(prevResult)
+                        prevResult
+
+                    }
                 }
-            }
 
+            }
+        }catch{
+            case e:Ignored =>
+                prevResult
         }
 
     }
+
+
 }
