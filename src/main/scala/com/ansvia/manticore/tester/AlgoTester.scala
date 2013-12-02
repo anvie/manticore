@@ -13,7 +13,7 @@ import com.ansvia.manticore.DataGenerator
  * Time: 5:41 PM
  *
  */
-class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo) {
+class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo, startTime:String="", endTime:String="") {
 
     case class TesterResult(var passed:Int, var missed:Int){
         def printSummary() = {
@@ -34,7 +34,43 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo) {
 
     }
 
-    lazy val legIterator = dataGen.zzLegsChunked.toIterator
+
+    private val formatter = new SimpleDateFormat("yyyy.MM.dd HH:mm")
+
+    // test starting point
+    private val startTs = if (startTime.length > 0)
+        formatter.parse(startTime).getTime
+    else
+        dataGen.data(0).timestamp
+
+    // test end point
+    private val endTs = if (endTime.length > 0)
+        formatter.parse(endTime).getTime
+    else
+        dataGen.data(dataGen.data.size - 1).timestamp
+
+    lazy val chunkedData = {
+        if (startTime.length > 0 && endTime.length > 0){
+            dataGen.data.filter { d =>
+                d.timestamp > startTs && d.timestamp < endTs
+            }
+        }else if (startTime.length > 0 && endTime.length == 0){
+            dataGen.data.filter { d =>
+                d.timestamp > startTs
+            }
+        }else if (startTime.length == 0 && endTime.length > 0){
+            dataGen.data.filter { d =>
+                d.timestamp < endTs
+            }
+        }else{
+            dataGen.data
+        }
+    }
+
+    lazy val zzfChunked = new ZigZagFinder(chunkedData, 13, 8, 5).process()
+    lazy val zzLegsChunked = zzfChunked.getLegs
+    
+    lazy val legIterator = zzLegsChunked.toIterator //dataGen.zzLegsChunked.toIterator
 
 
     def play():TesterResult = {
@@ -66,8 +102,10 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo) {
             print(" " + leg.directionStr + ": ")
 
             for (i <- 0 to leg.barCount - 1){
+                val timePos = chunkedData(curPos + i).time
+
                 val direction = try {
-                    algo.calculate(curPos + i).direction
+                    algo.calculate(timePos).direction
                 }catch {
                     case e:Ignored => algo.lastResult.direction
                 }
@@ -82,14 +120,14 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo) {
                     legMiss = legMiss + 1
                     print("x")
 
-                    // train the algo if algo support AI
-                    algo match {
-                        case ai:AI => {
-                            ai.markWrong()
-                            ai.train(curPos + i, Result(leg.direction, 0.0))
-                        }
-                        case _ =>
-                    }
+//                    // train the algo if algo support AI
+//                    algo match {
+//                        case ai:AI => {
+//                            ai.markWrong()
+//                            ai.train(curPos + i, Result(leg.direction, 0.0))
+//                        }
+//                        case _ =>
+//                    }
                 }
             }
 //            if (legMiss > 30){
@@ -126,8 +164,9 @@ object AlgoTester {
 
         val algoName = args(0)
         val csvFilePath = args(1)
-        val startTime = if (args.length > 2) args(2) else ""
-        val endTime = if (args.length > 3) args(3) else ""
+        val historyStartTime = if (args.length > 2) args(2) else ""
+        val historyEndTime = if (args.length > 3) args(3) else ""
+        val scanningStartTime = if (args.length > 4) args(4) else ""
 
         if (!availableAlgos.map(_.toLowerCase).contains(algoName.toLowerCase)){
             sys.error("No algo name: " + algoName)
@@ -138,24 +177,25 @@ object AlgoTester {
         println("Setup:")
         println("   algo name: " + algoName)
         println("   csv file: " + csvFilePath)
-        println("   start time: " + startTime)
-        println("   end time: " + endTime)
+        println("   history start time: " + historyStartTime)
+        println("   history end time: " + historyEndTime)
+        println("   scanning start time: " + scanningStartTime)
         println("")
 //        Console.readLine("ready? [Y/n] ").trim match {
 //            case "y" | "Y" => {
 
                 val csv = new CsvReader(csvFilePath)
                 val data = csv.toArray
-                val dataGen = DataGenerator(data, startTime, endTime)
+                val dataGen = DataGenerator(data, historyStartTime, historyEndTime)
 
                 val algo =
                 algoName.toLowerCase match {
-                    case "mth3" => new ManticoreHeur3(dataGen)
+//                    case "mth3" => new ManticoreHeur3(dataGen)
                     case "mth5" => new ManticoreHeur5(dataGen)
-                    case "frac1" => new Fractal1(dataGen)
+//                    case "frac1" => new Fractal1(dataGen)
                 }
 
-                val tester = new AlgoTester(dataGen, algo)
+                val tester = new AlgoTester(dataGen, algo, scanningStartTime)
                 val result = tester.play()
 
                 result.printSummary()

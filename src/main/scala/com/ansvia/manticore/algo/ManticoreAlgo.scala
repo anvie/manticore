@@ -19,14 +19,14 @@ case class Result(direction:Int, pips:Double)
 
 abstract class ManticoreAlgo {
 
-    def calculate(pos:Int):Result
+    def calculate(posTime:String):Result
 
     def lastResult:Result
 }
 
 trait AI {
-    def train(pos:Int, result:Result)
-    def guess(pos:Int):Option[Result]
+    def train(posTime:String, result:Result)
+    def guess(posTime:String):Option[Result]
     def markWrong()
 }
 

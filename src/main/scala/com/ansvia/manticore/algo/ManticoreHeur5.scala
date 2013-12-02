@@ -4,24 +4,25 @@ import com.ansvia.manticore._
 import com.rockymadden.stringmetric.similarity.DiceSorensenMetric
 import com.ansvia.manticore.Fractal
 import com.ansvia.manticore.Leg
+import java.text.SimpleDateFormat
 
 
 /**
  * HEUR-5 improvements version of HEUR-3
  */
-class ManticoreHeur5(dataGen:DataGenerator) extends ManticoreAlgo with AI {
+class ManticoreHeur5(dataGen:DataGenerator) extends ManticoreAlgo {
 
     val name = "MTH5"
 
     // only in range max startTs
     lazy val legs = {
 //        println("before: " + dataGen.zzLegsRaw.length)
-        val rv = dataGen.zzLegsRaw.filter(_.timestamp < dataGen.startTs)
+        val rv = dataGen.zzLegsChunked //.zzLegsRaw.filter(_.timestamp < dataGen.startTs)
 //        println("after: " + rv.length)
 //        println("last sim leg: " + rv(rv.length-1))
         rv
     }
-    val absOffset = (dataGen.data.size - dataGen.chunkedData.size) - 1
+//    val absOffset = (dataGen.data.size - dataGen.chunkedData.size) - 1
     var prevIsWrong = false
 
     private var prevResult:Result = Result(Direction.NEUTRAL, 0.0)
@@ -29,51 +30,54 @@ class ManticoreHeur5(dataGen:DataGenerator) extends ManticoreAlgo with AI {
     def lastResult = prevResult
 
     private var _aiRegs = Seq.empty[(String, Result)]
+//
+//    def train(pos:Int, result:Result){
+//
+//        val lastLeg = getLastLeg(pos).get
+//
+//        val signature = lastLeg.barPattern.mkString("")
+//
+//        _aiRegs :+= (signature, result)
+//
+//    }
+//
+//
+//    def guess(pos: Int) = {
+//        val lastLeg = getLastLeg(pos).get
+//
+//        val curSign = lastLeg.barPattern.mkString("")
+//
+//        val goodCandidates =
+//            _aiRegs.filter { case (sign, _pos) =>
+////                sign.length < (curSign.length + 5) &&
+//                DiceSorensenMetric.compare(sign, curSign)(1).getOrElse(0.0) > 0.6
+////                curSign.endsWith(uLeg.barPattern.mkString(""))
+//            }
+//
+//        val up = goodCandidates.count(_._2.direction == Direction.UP)
+//        val down = goodCandidates.length - up
+//
+//        val rv = if (up > down) Some(Result(Direction.UP, 0.0))
+//        else if (up < down) Some(Result(Direction.DOWN, 0.0))
+//        else None
+//
+////        rv.map { x =>
+////            println("got from ai: " + x)
+////        }
+//
+//        rv
+//    }
+//
+//
+//    def markWrong(){
+//        prevIsWrong = true
+//    }
 
-    def train(pos:Int, result:Result){
+    private val formatter = new SimpleDateFormat("yyyy.MM.dd HH:mm")
 
-        val lastLeg = getLastLeg(pos).get
-
-        val signature = lastLeg.barPattern.mkString("")
-
-        _aiRegs :+= (signature, result)
-
-    }
-
-
-    def guess(pos: Int) = {
-        val lastLeg = getLastLeg(pos).get
-
-        val curSign = lastLeg.barPattern.mkString("")
-
-        val goodCandidates =
-            _aiRegs.filter { case (sign, _pos) =>
-//                sign.length < (curSign.length + 5) &&
-                DiceSorensenMetric.compare(sign, curSign)(1).getOrElse(0.0) > 0.6
-//                curSign.endsWith(uLeg.barPattern.mkString(""))
-            }
-
-        val up = goodCandidates.count(_._2.direction == Direction.UP)
-        val down = goodCandidates.length - up
-
-        val rv = if (up > down) Some(Result(Direction.UP, 0.0))
-        else if (up < down) Some(Result(Direction.DOWN, 0.0))
-        else None
-
-//        rv.map { x =>
-//            println("got from ai: " + x)
-//        }
-
-        rv
-    }
-
-
-    def markWrong(){
-        prevIsWrong = true
-    }
-
-    def getUleg(pos:Int) = {
-        var trailingData = dataGen.data.filter(_.timestamp > dataGen.chunkedData(pos).timestamp)
+    def getUleg(posTime:String) = {
+        val ts = formatter.parse(posTime).getTime
+        var trailingData = dataGen.data.filter(_.timestamp > ts)
 
         if (trailingData.length > 10){
             trailingData = trailingData.slice(0, 10)
@@ -92,31 +96,39 @@ class ManticoreHeur5(dataGen:DataGenerator) extends ManticoreAlgo with AI {
 
         Leg("-", fractalCount, barCount, fractalPattern.map(_.toByte), barPattern.map(_.toByte).toArray, 0.0)
     }
-    
-    def getLastLeg(pos:Int) = {
-        dataGen.zzLegsRaw.find(_.timestamp > dataGen.chunkedData(pos).timestamp)
+
+
+
+    def getLastLeg(posTime:String) = {
+        val ts = formatter.parse(posTime).getTime
+        dataGen.zzLegsRaw.find(_.timestamp > ts)
     }
 
-    lazy val ensureProceed = dataGen.zzfRaw.process()
+//    lazy val ensureProceed = dataGen.zzfRaw.process()
 
-    def calculate(pos: Int) = {
+    lazy val fractalsData = FractalFinder.find(dataGen.data).filter(_.isInstanceOf[Fractal]).map(_.asInstanceOf[Fractal])
 
-        ensureProceed
+    def calculate(posTime:String) = {
+
+//        ensureProceed
 
         // check is fractal?
         // alo interest in fractal, non fractal point will be ignored
 
-        val isFractal = dataGen.zzfRaw.isFractal(dataGen.zzfRaw.getZigZagBuffer(absOffset + pos))
+//        val targetRecord = dataGen.data.find(_.time == dataGen.chunkedData(pos).time)
+
+//        val isFractal = dataGen.zzfRaw.isFractal(dataGen.zzfRaw.getZigZagBuffer(pos))
+        val isFractal = fractalsData.exists(_.time == posTime)
 
         if (!isFractal)
             throw new Ignored
 
         // get last leg
-        val lastLeg = getLastLeg(pos).getOrElse {
+        val lastLeg = getLastLeg(posTime).getOrElse {
             throw new Ignored
         }
 
-        val uLeg = getUleg(pos)
+        val uLeg = getUleg(posTime)
 
         // attempt #1
         // mixin last leg bar pattern and uleg bar pattern
