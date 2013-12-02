@@ -167,30 +167,45 @@ object AlgoTester {
 
         val conf = Configuration.load(configFile)
 
-        val algoName = args(1)
         val historyDataFile = conf[String]("manticore.history.data")
         val historyStartTime = conf[String]("manticore.history.range-start")
         val historyEndTime = conf[String]("manticore.history.range-end")
 
         val targetDataFile = if (args.length > 2) args(2) else ""
-        val scanningStartTime = if (args.length > 3) args(3) else ""
 
-        if (!availableAlgos.map(_.toLowerCase).contains(algoName.toLowerCase)){
-            sys.error("No algo name: " + algoName)
-            sys.error("Available algos: " + availableAlgos.mkString(", "))
-            sys.exit(3)
+        var scanningStartTime:String = ""
+        var algoName:String = ""
+
+        val interactive = args(1) == "--interactive"
+
+        if (interactive){
+            println("Interactive mode")
+            algoName = Console.readLine("algo name: ").trim
+            scanningStartTime = Console.readLine("scanning start time: ").trim
+
+            if (!availableAlgos.map(_.toLowerCase).contains(algoName.toLowerCase)){
+                sys.error("No algo name: " + algoName)
+                sys.error("Available algos: " + availableAlgos.mkString(", "))
+                sys.exit(3)
+            }
+
+            println("Setup:")
+            println("   algo name: " + algoName)
+            println("   source csv file: " + historyDataFile)
+            println("   history start time: " + historyStartTime)
+            println("   history end time: " + historyEndTime)
+            println("   target csv file: " + targetDataFile)
+            println("   scanning start time: " + scanningStartTime)
+            println("")
+        }else{
+            algoName = args(1)
+            scanningStartTime = if (args.length > 3) args(3) else ""
         }
 
-        println("Setup:")
-        println("   algo name: " + algoName)
-        println("   source csv file: " + historyDataFile)
-        println("   history start time: " + historyStartTime)
-        println("   history end time: " + historyEndTime)
-        println("   target csv file: " + targetDataFile)
-        println("   scanning start time: " + scanningStartTime)
-        println("")
         Console.readLine("ready? [Y/n] ").trim match {
             case "y" | "Y" => {
+
+                var done = false
 
                 println("loading " + historyDataFile + "...")
                 val csv = new CsvReader(historyDataFile)
@@ -209,10 +224,21 @@ object AlgoTester {
 //                    case "frac1" => new Fractal1(dataGen)
                 }
 
-                val tester = new AlgoTester(dataGenTarget, algo, scanningStartTime)
-                val result = tester.play()
+                while(!done){
+                    val tester = new AlgoTester(dataGenTarget, algo, scanningStartTime)
+                    val result = tester.play()
 
-                result.printSummary()
+                    result.printSummary()
+
+                    if (interactive){
+                        val rv = Console.readLine("scanning start time: [" + scanningStartTime + "] ").trim
+                        if (rv != "")
+                            scanningStartTime = rv
+
+                        if (rv == "x")
+                            done = true
+                    }
+                }
 
                 csv.close()
             }

@@ -50,6 +50,20 @@ case class Leg(time:String, fractalCount:Int, barCount:Int, fractalPattern:Array
         formatter.parse(time)
     }
 }
+
+object Leg {
+    def parse(str:String) = {
+        val s = str.split("\\|")
+        Leg(s(0), s(1).toInt, s(2).toInt, s(3).map(_.toByte).toArray, s(4).map(_.toByte).toArray, s(5).toDouble)
+    }
+
+    def serialize(leg:Leg) = {
+        "%s|%d|%d|%d|%s|%s|%f".format(leg.time, leg.fractalCount, leg.barCount, leg.direction,
+            leg.fractalPattern.mkString(""), leg.barPattern.mkString(""), leg.pips)
+    }
+}
+
+
 case class Point(value:Double, fractalPos:Int){
     override def toString = {
         if (fractalPos==FractalPos.NONE){
