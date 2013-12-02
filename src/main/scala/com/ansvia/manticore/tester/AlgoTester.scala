@@ -6,6 +6,7 @@ import com.ansvia.manticore.Record
 import com.ansvia.manticore.algo._
 import com.ansvia.manticore.algo.Ignored
 import com.ansvia.manticore.DataGenerator
+import org.streum.configrity.Configuration
 
 /**
  * Author: robin
@@ -162,11 +163,17 @@ object AlgoTester {
             showUsage()
         }
 
-        val algoName = args(0)
-        val csvFilePath = args(1)
-        val historyStartTime = if (args.length > 2) args(2) else ""
-        val historyEndTime = if (args.length > 3) args(3) else ""
-        val scanningStartTime = if (args.length > 4) args(4) else ""
+        val configFile = args(0)
+
+        val conf = Configuration.load(configFile)
+
+        val algoName = args(1)
+        val historyDataFile = conf[String]("manticore.history.data")
+        val historyStartTime = conf[String]("manticore.history.range-start")
+        val historyEndTime = conf[String]("manticore.history.range-end")
+
+        val targetDataFile = if (args.length > 2) args(2) else ""
+        val scanningStartTime = if (args.length > 3) args(3) else ""
 
         if (!availableAlgos.map(_.toLowerCase).contains(algoName.toLowerCase)){
             sys.error("No algo name: " + algoName)
@@ -176,17 +183,24 @@ object AlgoTester {
 
         println("Setup:")
         println("   algo name: " + algoName)
-        println("   csv file: " + csvFilePath)
+        println("   source csv file: " + historyDataFile)
         println("   history start time: " + historyStartTime)
         println("   history end time: " + historyEndTime)
+        println("   target csv file: " + targetDataFile)
         println("   scanning start time: " + scanningStartTime)
         println("")
-//        Console.readLine("ready? [Y/n] ").trim match {
-//            case "y" | "Y" => {
+        Console.readLine("ready? [Y/n] ").trim match {
+            case "y" | "Y" => {
 
-                val csv = new CsvReader(csvFilePath)
+                println("loading " + historyDataFile + "...")
+                val csv = new CsvReader(historyDataFile)
                 val data = csv.toArray
                 val dataGen = DataGenerator(data, historyStartTime, historyEndTime)
+
+                println("loading " + targetDataFile + "...")
+                val csv2 = new CsvReader(targetDataFile)
+                val data2 = csv2.toArray
+                val dataGenTarget = DataGenerator(data2, "", "")
 
                 val algo =
                 algoName.toLowerCase match {
@@ -195,16 +209,16 @@ object AlgoTester {
 //                    case "frac1" => new Fractal1(dataGen)
                 }
 
-                val tester = new AlgoTester(dataGen, algo, scanningStartTime)
+                val tester = new AlgoTester(dataGenTarget, algo, scanningStartTime)
                 val result = tester.play()
 
                 result.printSummary()
 
                 csv.close()
-//            }
-//            case _ =>
-//                println("aborted.")
-//        }
+            }
+            case _ =>
+                println("aborted.")
+        }
     }
 }
 

@@ -34,7 +34,8 @@ libraryDependencies ++= Seq(
     "ch.qos.logback" % "logback-classic" % "1.0.13",
     "com.ansvia" % "ansvia-commons" % "0.0.9-20131015-SNAPSHOT",
     "commons-io" % "commons-io" % "20030203.000550",
-    "com.typesafe.akka" % "akka-actor" % "2.0.5"
+    "com.typesafe.akka" % "akka-actor" % "2.0.5",
+    "org.streum" %% "configrity-core" % "1.0.0"
 )
 
 EclipseKeys.withSource := true

@@ -40,7 +40,10 @@ case class DataGenerator(data:IndexedSeq[Record], startTime:String="", endTime:S
             data
         }
     }
-    lazy val zzfRaw = new ZigZagFinder(data, 13, 8, 5).process()
+    lazy val zzfRaw = {
+//        println("calculating zigzag (raw)...")
+        new ZigZagFinder(data, 13, 8, 5).process()
+    }
     lazy val zzLegsRaw = zzfRaw.getLegs
     lazy val zzfChunked = new ZigZagFinder(chunkedData, 13, 8, 5).process()
     lazy val zzLegsChunked = zzfChunked.getLegs
