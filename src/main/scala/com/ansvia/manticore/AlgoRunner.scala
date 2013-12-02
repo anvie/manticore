@@ -91,6 +91,9 @@ object AlgoRunner {
                     val scStartTime = formatter.parse(scanningStartTime).getTime
                     val candles = dataGenTarget.data.filter(_.timestamp > scStartTime)
 
+                    var prevs = Seq.empty[String]
+                    var dominator = ""
+
                     println("Probability: ")
                     candles.foreach { candle =>
                         val direction = algo.calculate(candle.time).direction
@@ -99,8 +102,19 @@ object AlgoRunner {
                             case Direction.DOWN => "DOWN"
                             case _ => "-"
                         }
-                        println(candle.time + " -> " + directionStr)
+
+                        dominator = prevs.find(x => prevs.count(_ == x) > prevs.length / 2).getOrElse("-")
+
+                        if (directionStr == dominator){
+                            println(candle.time + " -> " + directionStr)
+                        }else{
+                            println(candle.time + " -> " + Console.RED + directionStr + Console.RESET)
+                        }
+
+                        prevs :+= directionStr
                     }
+
+                    println("dominator: " + dominator)
 
                     val rv = Console.readLine("scanning start time: [" + scanningStartTime + "] ").trim
                     if (rv != "")
