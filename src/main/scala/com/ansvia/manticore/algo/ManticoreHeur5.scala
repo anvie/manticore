@@ -10,7 +10,8 @@ import java.text.SimpleDateFormat
 /**
  * HEUR-5 improvements version of HEUR-3
  */
-class ManticoreHeur5(dataGenSource:DataGenerator, dataGenTarget:DataGenerator) extends ManticoreAlgo {
+class ManticoreHeur5(dataGenSource:DataGenerator, dataGenTarget:DataGenerator)
+    extends ManticoreAlgo(dataGenSource, dataGenTarget) {
 
     val name = "MTH5"
 

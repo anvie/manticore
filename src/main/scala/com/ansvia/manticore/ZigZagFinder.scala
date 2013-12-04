@@ -14,6 +14,9 @@ case class Leg(time:String, fractalCount:Int, barCount:Int, fractalPattern:Array
     override def toString = "leg[%s] = f: %d, bar: %d, pos: %s, fpatt: {%s}, bpatt: {%s}".format(time,
         fractalCount, barCount, directionStr, fractalPattern.map(_.toString).mkString(""), barPattern.mkString(""))
 
+    var prevLeg:Option[Leg] = None
+    var nextLeg:Option[Leg] = None
+
     val length = barCount
 
     def similarity() = {
@@ -494,6 +497,7 @@ class ZigZagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backs
         var barCount = 0
         var i = 0
         var pips = 0.0
+        var prevLeg:Option[Leg] = None
 
 //        println("data.size: " + data.size)
 
@@ -519,7 +523,17 @@ class ZigZagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backs
 
                 pips = data(i).close - pips
 
-                rv :+= Leg(data(i).time, fractalCount + 1, barCount + 1, fractalPattern.toArray, barPattern.toArray, pips)
+                val leg = Leg(data(i).time, fractalCount + 1, barCount + 1, fractalPattern.toArray, barPattern.toArray, pips)
+
+                prevLeg.map { _leg =>
+                    leg.prevLeg = Some(_leg)
+                    _leg.nextLeg = Some(leg)
+                }
+
+                rv :+= leg
+
+                prevLeg = Some(leg)
+
                 fractalCount = 0
                 barCount = 0
                 fractalPattern.clear()

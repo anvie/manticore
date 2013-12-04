@@ -14,7 +14,7 @@ import java.text.SimpleDateFormat
 
 object AlgoRunner {
 
-    val availableAlgos = Seq("MTH3", "MTH5", "FRAC1")
+    val availableAlgos = Seq("MTH3", "MTH5", "FRAC1", "MTH6")
 
     def showUsage(){
         println("Usage: \n" +
@@ -122,11 +122,13 @@ object AlgoRunner {
                         done = true
 
                     if (!done){
+                        // update data gen target
                         println("loading " + targetDataFile + "...")
                         csv2.close()
                         csv2 = new CsvReader(targetDataFile)
                         val data2 = csv2.toArray
                         dataGenTarget = DataGenerator(data2, "", "")
+                        algo.setDataGenTarget(dataGenTarget)
                     }
                 }
 

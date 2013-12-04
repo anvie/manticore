@@ -147,7 +147,7 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo, startTime:String="",
 
 object AlgoTester {
 
-    val availableAlgos = Seq("MTH3", "MTH5", "FRAC1")
+    val availableAlgos = Seq("MTH3", "MTH5", "FRAC1", "MTH6")
 
     def showUsage(){
         println("Usage: \n" +
@@ -219,10 +219,12 @@ object AlgoTester {
                 algoName.toLowerCase match {
 //                    case "mth3" => new ManticoreHeur3(dataGen)
                     case "mth5" => new ManticoreHeur5(dataGenSource, dataGenTarget)
-                    case "frac1" => new Fractal1(dataGenSource, dataGenTarget)
+                    case "mth6" => new ManticoreHeur6(dataGenSource, dataGenTarget)
+//                    case "frac1" => new Fractal1(dataGenSource, dataGenTarget)
                 }
 
                 while(!done){
+
                     val tester = new AlgoTester(dataGenTarget, algo, scanningStartTime)
                     val result = tester.play()
 
