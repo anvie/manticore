@@ -9,13 +9,13 @@ import java.text.SimpleDateFormat
  *
  */
 case class DataGenerator(data:IndexedSeq[Record], startTime:String="", endTime:String=""){
-    private val formatter = new SimpleDateFormat("yyyy.MM.dd HH:mm")
+
     val startTs = if (startTime.length > 0)
-            formatter.parse(startTime).getTime
+            Util.parseTime(startTime).getTime
         else
             data(0).timestamp
     val endTs = if (endTime.length > 0)
-            formatter.parse(endTime).getTime
+            Util.parseTime(endTime).getTime
         else
             data(data.length-1).timestamp
 

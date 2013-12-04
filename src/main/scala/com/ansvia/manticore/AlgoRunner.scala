@@ -84,11 +84,9 @@ object AlgoRunner {
     //                    case "frac1" => new Fractal1(dataGen)
                     }
 
-                val formatter = new SimpleDateFormat("yyyy.MM.dd HH:mm")
-
                 while(!done){
 
-                    val scStartTime = formatter.parse(scanningStartTime).getTime
+                    val scStartTime = Util.parseTime(scanningStartTime).getTime
                     val candles = dataGenTarget.data.filter(_.timestamp > scStartTime)
 
                     var prevs = Seq.empty[String]

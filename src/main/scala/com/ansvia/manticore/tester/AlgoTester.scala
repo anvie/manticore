@@ -36,17 +36,15 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo, startTime:String="",
     }
 
 
-    private val formatter = new SimpleDateFormat("yyyy.MM.dd HH:mm")
-
     // test starting point
     private val startTs = if (startTime.length > 0)
-        formatter.parse(startTime).getTime
+        Util.parseTime(startTime).getTime
     else
         dataGen.data(0).timestamp
 
     // test end point
     private val endTs = if (endTime.length > 0)
-        formatter.parse(endTime).getTime
+        Util.parseTime(endTime).getTime
     else
         dataGen.data(dataGen.data.size - 1).timestamp
 
@@ -221,7 +219,7 @@ object AlgoTester {
                 algoName.toLowerCase match {
 //                    case "mth3" => new ManticoreHeur3(dataGen)
                     case "mth5" => new ManticoreHeur5(dataGenSource, dataGenTarget)
-//                    case "frac1" => new Fractal1(dataGen)
+                    case "frac1" => new Fractal1(dataGenSource, dataGenTarget)
                 }
 
                 while(!done){

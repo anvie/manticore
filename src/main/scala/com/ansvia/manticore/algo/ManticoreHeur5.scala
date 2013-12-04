@@ -73,10 +73,8 @@ class ManticoreHeur5(dataGenSource:DataGenerator, dataGenTarget:DataGenerator) e
 //        prevIsWrong = true
 //    }
 
-    private val formatter = new SimpleDateFormat("yyyy.MM.dd HH:mm")
-
     def getUleg(posTime:String) = {
-        val ts = formatter.parse(posTime).getTime
+        val ts = Util.parseTime(posTime).getTime
         var trailingData = dataGenTarget.data.filter(_.timestamp > ts)
 
         if (trailingData.length > 3){
@@ -100,7 +98,7 @@ class ManticoreHeur5(dataGenSource:DataGenerator, dataGenTarget:DataGenerator) e
 
 
     def getLastLeg(posTime:String) = {
-        val ts = formatter.parse(posTime).getTime
+        val ts = Util.parseTime(posTime).getTime
         dataGenTarget.zzLegsRaw.find(_.timestamp > ts)
     }
 

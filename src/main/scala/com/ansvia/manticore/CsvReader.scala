@@ -35,13 +35,12 @@ case class Record(index:Int, time:String, open:Double,
         if (close > open) 1 else 0
     }
 
-    private val formatter = new SimpleDateFormat("yyyy.MM.dd HH:mm")
     lazy val timestamp = {
        date.getTime
     }
 
     lazy val date = {
-        formatter.parse(time)
+        Util.parseTime(time)
     }
 
 }

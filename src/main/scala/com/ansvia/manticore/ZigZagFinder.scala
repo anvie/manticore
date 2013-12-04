@@ -40,14 +40,12 @@ case class Leg(time:String, fractalCount:Int, barCount:Int, fractalPattern:Array
         }
     }
 
-
-    private val formatter = new SimpleDateFormat("yyy.MM.dd HH:mm")
     lazy val timestamp = {
         date.getTime
     }
 
     lazy val date = {
-        formatter.parse(time)
+        Util.parseTime(time)
     }
 }
 
