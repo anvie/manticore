@@ -98,7 +98,7 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo, startTime:String="",
 
             var legMiss = 0
 
-            print(" " + leg.directionStr + ": ")
+            print(" " + (if (leg.direction==Direction.UP) "up" else if (leg.direction==Direction.DOWN) "dn" else "-") + ": ")
 
             for (i <- 0 to leg.barCount - 1){
                 val timePos = chunkedData(curPos + i).time
@@ -109,7 +109,7 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo, startTime:String="",
                     case e:Ignored => algo.lastResult.direction
                 }
 
-                if (direction == leg.direction || (direction!=leg.direction && i==leg.barCount-1)){
+                if (direction == leg.direction){
                     passes = passes + 1
                     print(".")
                 }else if (direction == Direction.NEUTRAL){

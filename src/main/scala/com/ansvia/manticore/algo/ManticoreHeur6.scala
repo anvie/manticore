@@ -4,6 +4,7 @@ import com.ansvia.manticore._
 import com.rockymadden.stringmetric.similarity.DiceSorensenMetric
 import com.ansvia.manticore.Fractal
 import com.ansvia.manticore.Leg
+import scala.collection.mutable.ArrayBuffer
 
 
 /**
@@ -34,39 +35,78 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator)
 //        .filter(_.isInstanceOf[Fractal])
 //        .map(_.asInstanceOf[Fractal])
 
+    lazy val unknown = Result(Direction.NEUTRAL, 0.0)
+
+    private var timePunch = new ArrayBuffer[Int]()
+    private var stableLength:Int = 0
+    
+    def getStableLength = {
+//        timePunch.result().toSeq.groupBy(x => x)
+//            .toSeq.sortBy(_._1).reverse.map(_._1)
+//            .headOption.getOrElse(0)
+        val s = timePunch.result()
+        if (s.length > 0)
+            if (s.length > 1)
+                s(s.length-2)
+            else
+                s(s.length-1)
+        else
+            0
+    }
 
     def calculate(posTime:String) = {
 
         try {
 
+            if (posTime == "07.11.2013 22:30:00.000"){
+                println("break")
+            }
+
             var rv = prevResult
 
             val ts = Util.parseTime(posTime).getTime
 
-            implicit val currentData = dataGenTarget.data.filter(_.timestamp <= ts)
+            implicit lazy val currentData = dataGenTarget.chunkedData.filter(_.timestamp <= ts)
 
             val lastLeg = getLastLeg(ts)
 
-            val uLeg = getUncompletedLeg(ts)
+            val uLeg = getUncompletedLeg(lastLeg.timestamp)
+
+            lazy val lastLegOppositeDirection =
+                lastLeg.direction match {
+                    case Direction.UP => Direction.DOWN
+                    case Direction.DOWN => Direction.UP
+                }
 
 
-            var matchedLegs = legs.filter { leg =>
-                leg.fractalPattern.startsWith(lastLeg.fractalPattern ++ uLeg.fractalPattern) &&
-                    leg.length == (lastLeg.length + uLeg.length) &&
-//                    leg.direction == lastLeg.direction &&
-                    DiceSorensenMetric.compare(leg.barPattern, lastLeg.barPattern ++ uLeg.barPattern)(1).getOrElse(0.0) > 0.8
+//            if (lastLegOppositeDirection == prevResult.direction){
+//                // clear timePunch
+//                timePunch.clear()
+//            }
+
+            val mLegs = legs.filter {
+                leg =>
+                    leg.fractalPattern.startsWith(lastLeg.fractalPattern ++ uLeg.fractalPattern) &&
+                        leg.length == (lastLeg.length + uLeg.length) &&
+                        leg.direction == lastLeg.direction &&
+                        DiceSorensenMetric.compare(leg.barPattern, lastLeg.barPattern ++ uLeg.barPattern)(1).getOrElse(0.0) > 0.9
             }
 
-            val (up, down) = matchedLegs.partition(_.direction == Direction.UP)
+//            val gLegs = matchedLegs.groupBy(_.fractalPattern)
 
-            val upSize = up.size
-            val downSize = down.size
+//            print(" (" + mLegs.length + ")")
 
-            val direction = if (upSize < downSize) Direction.UP
-                else if (downSize < upSize) Direction.DOWN
-                else Direction.NEUTRAL
+            if (timePunch.length > 10){
+                timePunch.clear()
+            }
+            
+            timePunch.+=(mLegs.length)
 
-            rv = Result(direction, 0.0)
+            if (mLegs.length > 0){
+
+                rv = Result(lastLegOppositeDirection, 0.0)
+
+            }
 
             prevResult = rv
 

@@ -3,6 +3,7 @@ package com.ansvia.manticore.algo
 import com.ansvia.manticore._
 import com.ansvia.manticore.Fractal
 import com.ansvia.manticore.Record
+import com.ansvia.commons.logging.Slf4jLogger
 
 /**
  * Author: robin
@@ -19,7 +20,7 @@ import com.ansvia.manticore.Record
 case class Result(direction:Int, pips:Double)
 
 
-abstract class ManticoreAlgo(dataGenSource:DataGenerator, dataGenTarget:DataGenerator) {
+abstract class ManticoreAlgo(dataGenSource:DataGenerator, dataGenTarget:DataGenerator) extends Slf4jLogger {
 
 
     protected var _dataGenTarget = dataGenTarget

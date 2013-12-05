@@ -78,9 +78,9 @@ case class Point(value:Double, fractalPos:Int){
 class ZigZagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backstep:Int=5) {
 
     val size = data.length
-    private var lowMapBuffer = new Array[Double](size + 1)
-    private var highMapBuffer = new Array[Double](size + 1)
-    private var zigzagMapBuffer = new Array[Point](size + 1)
+    private val lowMapBuffer = new Array[Double](size + 1)
+    private val highMapBuffer = new Array[Double](size + 1)
+    private val zigzagMapBuffer = new Array[Point](size + 1)
 
     private var calculated = false
 
@@ -90,8 +90,8 @@ class ZigZagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backs
 
         var lastLow = 0.0
         var lastHigh = 0.0
-        var curLow = 0.0
-        var curHigh = 0.0
+//        var curLow = 0.0
+//        var curHigh = 0.0
         var lookFor = 0
         var idx = 0
 
@@ -121,7 +121,7 @@ class ZigZagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backs
                         if (shift - back > 0){
                             val res = lowMapBuffer(shift-back)
                             if (res != 0.0 && res > v){
-                                lowMapBuffer(shift-back)=0.0
+                                lowMapBuffer(shift-back) = 0.0
                             }
                         }
                     }
@@ -172,8 +172,8 @@ class ZigZagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backs
             lastLow = 0.0
             lastHigh = 0.0
         }else{
-            lastLow = curLow
-            lastHigh = curHigh
+            lastLow = 0.0 //curLow
+            lastHigh = 0.0 //curHigh
         }
 
         shift = 0 //size - 1
