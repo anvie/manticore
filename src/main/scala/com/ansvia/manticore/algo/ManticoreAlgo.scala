@@ -77,8 +77,8 @@ trait ZZLegOp {
 
 
 trait AI {
-    def train(posTime:String, result:Result)
-    def guess(posTime:String):Option[Result]
-    def markWrong()
+//    def train(posTime:String, result:Result)
+//    def guess(posTime:String):Option[Result]
+    def correctPrevious(result:Result)
 }
 

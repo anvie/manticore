@@ -1,12 +1,8 @@
 package com.ansvia.manticore.algo
 
 import com.ansvia.manticore._
-import com.rockymadden.stringmetric.similarity.DiceSorensenMetric
-import scala.collection.mutable.ArrayBuffer
-import java.io._
 import com.ansvia.manticore.Fractal
 import com.ansvia.manticore.DataGenerator
-import com.ansvia.manticore.Manticore.DNA
 
 
 /**
@@ -14,7 +10,7 @@ import com.ansvia.manticore.Manticore.DNA
  */
 class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, debugMode:Boolean=false)
     extends ManticoreAlgo(dataGenSource, dataGenTarget)
-        with ZZLegOp {
+        with ZZLegOp with AI {
 
     val name = "MTH6"
 
@@ -31,11 +27,17 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
     def lastResult = prevResult
 
 
+
 //    lazy val ensureProceed = dataGen.zzfRaw.process()
 
 //    lazy val fractalsData = FractalFinder.find(dataGenTarget.data)
 //        .filter(_.isInstanceOf[Fractal])
 //        .map(_.asInstanceOf[Fractal])
+
+    //    def train(posTime:String, result:Result)
+    def correctPrevious(result: Result){
+        prevResult = result
+    }
 
     case class State(mLegsLength:Int, fixedLegsLength:Int, nonFixedLegsLength:Int)
 
@@ -86,39 +88,42 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
             lazy val currentDataFractalBit = currentDataFractal.map(_.pos)
             lazy val currentDataCandleBit = currentData.map(_.bit)
 
-            val lastLeg = getLastLeg(ts)
-
-            val uLeg = getUncompletedLeg(lastLeg.timestamp)
-
-            lazy val lastLegOppositeDirection =
-                lastLeg.direction match {
-                    case Direction.UP => Direction.DOWN
-                    case Direction.DOWN => Direction.UP
-                }
+//            val lastLeg = getLastLeg(ts)
+//
+//            val uLeg = getUncompletedLeg(lastLeg.timestamp)
+//
+//            lazy val lastLegOppositeDirection =
+//                lastLeg.direction match {
+//                    case Direction.UP => Direction.DOWN
+//                    case Direction.DOWN => Direction.UP
+//                }
 
 
 //            if (lastLegOppositeDirection == prevResult.direction){
 //                // clear timePunch
 //                timePunch.clear()
 //            }
-
-            val combinedFractalPattern = lastLeg.fractalPattern ++ uLeg.fractalPattern
 //
-            val mLegs = legs.filter { leg =>
-                leg.fractalPattern.mkString("").startsWith(lastLeg.fractalPattern.mkString("")) &&
-                    leg.length == (lastLeg.length + uLeg.length)
-//                    leg.direction == lastLeg.direction &&
-//                    DiceSorensenMetric.compare(leg.barPattern, lastLeg.barPattern++uLeg.barPattern)(1).getOrElse(0.0) > 0.95
-            }
+//            val combinedFractalPattern = lastLeg.fractalPattern ++ uLeg.fractalPattern
+////
+//            val mLegs = legs.filter { leg =>
+//                leg.fractalPattern.mkString("").startsWith(combinedFractalPattern.mkString("")) &&
+//                    leg.length == (lastLeg.length + uLeg.length)
+////                    leg.direction == lastLeg.direction &&
+////                    DiceSorensenMetric.compare(leg.barPattern, lastLeg.barPattern++uLeg.barPattern)(1).getOrElse(0.0) > 0.95
+//            }
+//
+//
+//
+//            val (fixedLegs, nonFixedLegs) = mLegs.partition { leg =>
+//                leg.fractalPattern.mkString("") == combinedFractalPattern.mkString("") &&
+//                    leg.length == (lastLeg.length + uLeg.length)
+//            }
 
-
-
-            val (fixedLegs, nonFixedLegs) = mLegs.partition { leg =>
-                leg.fractalPattern.mkString("") == combinedFractalPattern.mkString("") &&
-                    leg.length == (lastLeg.length + uLeg.length)
-            }
-
+            // all match count, fixed count, non fixed count
 //            print("(%d,%d,%d)".format(mLegs.length,fixedLegs.length,nonFixedLegs.length))
+
+//            print(" (%d)".format(fixedLegs.length))
 
 //            d(" [%d|%d|%d]".format(mLegs.length, fixedLegs.length, nonFixedLegs.length))
 
@@ -170,23 +175,31 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
 //                timePunch.clear()
 //            }
 
-//            if (mLegs.length > 40){
+//            if (fixedLegs.length > 7){
 
-                val dnas = for (i <- 4 to 25)
+                val dnas1 = for (i <- 7 to 25)
                     yield currentDataFractal.slice(currentDataFractal.size-i,
                         currentDataFractal.size).zipWithIndex.map { case (f, ii) =>
                         (f.pos, ((currentDataFractal.length-i) + ii).toLong )
                     }.toSeq
 
+
                 d2.println("fractal dna leg %s: ----------------".format(posTime))
-                dnas.foreach(dna => d2.println(dna.map(_._1).mkString("")))
+                dnas1.foreach(dna => d2.println(dna.map(_._1).mkString("")))
 
+                val (up1,down1,_) = Manticore.breakDown(dnas1, historyDataCandleBit, silent=true)
+                val (up2,down2,_) = Manticore.breakDown(dnas1, historyDataFractalBit, silent=true)
 
-                val (up1,down1,_) = Manticore.breakDown(dnas, historyDataCandleBit, silent=true)
-                val (up2,down2,_) = Manticore.breakDown(dnas, historyDataFractalBit, silent=true)
+                val dnas2 = (for (i <- 7 to 25)
+                        yield currentData.slice(currentData.size-i,
+                                currentData.size).zipWithIndex.map { case (d, ii) =>
+                                (d.bit, ((currentData.length-i) + ii).toLong )
+                            }).toSeq
 
-                val up = up1 + down2
-                val down = down1 + up2
+                val (up3,down3,_) = Manticore.breakDown(dnas2, historyDataCandleBit, silent=true)
+
+                val up = up1 + down3 + down2
+                val down = down1 + up3 + up2
 
                 val dir =
                     if (up > down) Direction.UP

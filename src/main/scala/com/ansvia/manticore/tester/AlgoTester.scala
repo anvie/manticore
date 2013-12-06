@@ -106,11 +106,13 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
             for (i <- 0 to leg.barCount - 1){
                 val timePos = chunkedData(curPos + i).time
 
-                val direction = try {
-                    algo.calculate(timePos).direction
+                val result = try {
+                    algo.calculate(timePos)
                 }catch {
-                    case e:Ignored => algo.lastResult.direction
+                    case e:Ignored => algo.lastResult
                 }
+
+                val direction = result.direction
 
                 if (direction == leg.direction){
                     passes = passes + 1
@@ -119,34 +121,33 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
                 }else if (direction == Direction.NEUTRAL){
                     print("_")
                 }else{
-//                    misses = misses + 1
-//                    legMiss = legMiss + 1
-//                    print("x")
+                    misses = misses + 1
+                    legMiss = legMiss + 1
+                    print("x")
 
-                    if (direction == leg.barPattern(i).toInt){
-
-                        passes = passes + 1
-                        legPass = legPass + 1
-
-                        print(".")
-                    }else{
-
-                        misses = misses + 1
-                        legMiss = legMiss + 1
-
-                        print("x")
-
-                    }
+//                    if (direction == leg.barPattern(i).toInt){
+//
+//                        passes = passes + 1
+//                        legPass = legPass + 1
+//
+//                        print(".")
+//                    }else{
+//
+//                        misses = misses + 1
+//                        legMiss = legMiss + 1
+//
+//                        print("x")
+//
+//                    }
 
 
 //                    // train the algo if algo support AI
-//                    algo match {
-//                        case ai:AI => {
-//                            ai.markWrong()
-//                            ai.train(curPos + i, Result(leg.direction, 0.0))
-//                        }
-//                        case _ =>
-//                    }
+                    algo match {
+                        case ai:AI => {
+                            ai.correctPrevious(result)
+                        }
+                        case _ =>
+                    }
                 }
             }
 //            if (legMiss > 30){
