@@ -512,14 +512,9 @@ class ZigZagFinder(data:IndexedSeq[Record], depth:Int=13, deviation:Int=8, backs
                     pips = data(i).close
                 }
             }else if (begin && isZzPoint(zzPoint)){
-//                begin = false
+
                 fractalPattern :+= zzPoint.fractalPos.toByte
                 barPattern :+= data(i).bit.toByte
-//                fractalCount += 1
-//                barCount += 1
-//                if (data(i).time == "2013.11.15 19:50"){
-//                    println("break")
-//                }
 
                 pips = data(i).close - pips
 

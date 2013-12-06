@@ -6,6 +6,7 @@ import scala.collection.mutable.ArrayBuffer
 import java.io._
 import com.ansvia.manticore.Fractal
 import com.ansvia.manticore.DataGenerator
+import com.ansvia.manticore.Manticore.DNA
 
 
 /**
@@ -75,7 +76,9 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
             val ts = Util.parseTime(posTime).getTime
 
             implicit lazy val currentData = dataGenTarget.chunkedData.filter(_.timestamp <= ts)
-            val fractalDataCurrent = fractalData.filter(_.timestamp <= ts)
+            lazy val currentDataFractal = fractalData.filter(_.timestamp <= ts)
+            lazy val currentDataFractalBit = currentDataFractal.map(_.pos)
+            lazy val currentDataCandleBit = currentData.map(_.bit)
 
             val lastLeg = getLastLeg(ts)
 
@@ -95,12 +98,11 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
 
             val combinedFractalPattern = lastLeg.fractalPattern ++ uLeg.fractalPattern
 
-            val mLegs = legs.filter {
-                leg =>
-                    leg.fractalPattern.mkString("").startsWith(combinedFractalPattern.mkString("")) &&
-                        leg.length == (lastLeg.length + uLeg.length) &&
-                        leg.direction == lastLeg.direction &&
-                        DiceSorensenMetric.compare(leg.barPattern, lastLeg.barPattern ++ uLeg.barPattern)(1).getOrElse(0.0) > 0.9
+            val mLegs = legs.filter { leg =>
+                leg.fractalPattern.mkString("").startsWith(lastLeg.fractalPattern.mkString("")) &&
+                    leg.length == (lastLeg.length + uLeg.length) &&
+                    leg.direction == lastLeg.direction &&
+                    DiceSorensenMetric.compare(leg.barPattern, lastLeg.barPattern ++ uLeg.barPattern)(1).getOrElse(0.0) > 0.9
             }
 
             val (fixedLegs, nonFixedLegs) = mLegs.partition { leg =>
@@ -108,7 +110,43 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
                     leg.length == (lastLeg.length + uLeg.length)
             }
 
-            d("[%d|%d|%d]".format(mLegs.length, fixedLegs.length, nonFixedLegs.length))
+            d(" [%d|%d|%d]".format(mLegs.length, fixedLegs.length, nonFixedLegs.length))
+
+
+            if (fixedLegs.length > 5){
+
+                rv = Result(lastLegOppositeDirection, 0.0)
+
+            }else if (mLegs.length > 0){
+
+//
+//                val nextFixedLegs = fixedLegs.flatMap(_.nextLeg)
+//                if (nextFixedLegs.map(_.length).contains(uLeg.length)){
+//                    rv = Result(lastLeg.direction, 0.0)
+//                }
+
+//
+//                mLegs =
+//                    legs.filter { leg =>
+//                        leg.fractalPattern.mkString("").startsWith(combinedFractalPattern.mkString("")) &&
+////                            leg.length == (lastLeg.length + uLeg.length) &&
+//                            DiceSorensenMetric.compare(leg.barPattern, lastLeg.barPattern ++ uLeg.barPattern)(1).getOrElse(0.0) > 0.9
+//                    }
+//
+//                val (ups, downs) = mLegs.partition(_.direction == Direction.UP)
+//                val up = downs.length
+//                val down = ups.length
+//
+//                val direction =
+//                    if (up > down) Direction.UP
+//                    else if (up < down) Direction.DOWN
+//                    else prevResult.direction
+//
+//                rv = Result(direction, 0.0)
+
+
+            }
+
 
 //            val gLegs = matchedLegs.groupBy(_.fractalPattern)
 
@@ -118,29 +156,31 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
 //                timePunch.clear()
 //            }
 
-            val ltp = if (prevState != null)
-                prevState.mLegsLength
-            else
-                0
-
-
-            if (mLegs.length > 40){
-                val dnas = for (i <- 4 to 13)
-                yield fractalDataCurrent.slice(fractalDataCurrent.size-i, fractalDataCurrent.size-1).map( f => (f.pos, f.idx) ).toSeq
-
-                d2.println("dna: ----------------")
-                dnas.foreach(dna => d2.println(dna.map(_._1).mkString("")))
-
-                val (up,down,all) = Manticore.breakDown(dnas, currentData.map(_.bit), silent=true)
-
-                val dir =
-                    if (up > down) Direction.UP
-                    else if (up < down) Direction.DOWN
-                    else Direction.NEUTRAL
-
-                if (dir != Direction.NEUTRAL)
-                    rv = Result(dir, 0.0)
-            }
+//            if (mLegs.length > 40){
+//
+//                val dnas = for (i <- 4 to 13)
+//                    yield currentDataFractal.slice(currentDataFractal.size-i,
+//                        currentDataFractal.size).zipWithIndex.map { case (f, ii) =>
+//                        (f.pos, ((currentDataFractal.length-i) + ii).toLong )
+//                    }.toSeq
+//
+//                d2.println("fractal dna leg %s: ----------------".format(posTime))
+//                dnas.foreach(dna => d2.println(dna.map(_._1).mkString("")))
+//
+//                val (up1,down1,_) = Manticore.breakDown(dnas, currentDataCandleBit, silent=true)
+//                val (up2,down2,_) = Manticore.breakDown(dnas, currentDataFractalBit, silent=true)
+//
+//                val up = up1 + up2
+//                val down = down1 + down2
+//
+//                val dir =
+//                    if (up > down) Direction.UP
+//                    else if (up < down) Direction.DOWN
+//                    else Direction.NEUTRAL
+//
+//                if (dir != Direction.NEUTRAL)
+//                    rv = Result(dir, 0.0)
+//            }
 
 
             prevState = State(mLegs.length, fixedLegs.length, nonFixedLegs.length)

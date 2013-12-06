@@ -54,7 +54,7 @@ trait ZZLegOp {
 
 
     protected def getUncompletedLeg(ts:Long)(implicit currentData:IndexedSeq[Record]) = {
-        var trailingData = currentData.filter(_.timestamp > ts)
+        var trailingData = currentData.filter(_.timestamp > (ts + 60000) )
 
         if (trailingData.length > 3){
             trailingData = trailingData.slice(0, 3)
