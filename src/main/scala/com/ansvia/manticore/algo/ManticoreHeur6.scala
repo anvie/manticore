@@ -123,11 +123,10 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
             else
                 0
 
-//            if ((mLegs.length > 0 &&
-//                (ltp != mLegs.length)) || timePunch.length == 0){
 
+            if (mLegs.length > 40){
                 val dnas = for (i <- 4 to 13)
-                    yield fractalDataCurrent.slice(fractalDataCurrent.size-i, fractalDataCurrent.size).map( f => (f.pos, f.idx) ).toSeq
+                yield fractalDataCurrent.slice(fractalDataCurrent.size-i, fractalDataCurrent.size-1).map( f => (f.pos, f.idx) ).toSeq
 
                 d2.println("dna: ----------------")
                 dnas.foreach(dna => d2.println(dna.map(_._1).mkString("")))
@@ -141,10 +140,9 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
 
                 if (dir != Direction.NEUTRAL)
                     rv = Result(dir, 0.0)
+            }
 
-//            }
 
-//            timePunch.+=(mLegs.length)
             prevState = State(mLegs.length, fixedLegs.length, nonFixedLegs.length)
 
             prevResult = rv
@@ -164,7 +162,8 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
     }
 
 
-    lazy val d2 = new FileLoggerOutput("/tmp/mth6-out-2.log")
+    lazy val d2 = new FileLoggerOutput("/tmp/mth6-out-dna.log")
+    lazy val d3 = new FileLoggerOutput("/tmp/mth6-out-3.log")
 
 
     def close(){
@@ -173,28 +172,4 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
     }
 }
 
-class FileLoggerOutput(path:String) {
-    val f = new File(path)
 
-    if (f.exists())
-        f.delete()
-
-    val fw = new FileOutputStream(f)
-    val bw = new PrintWriter(fw)
-
-    def println(text:String) = {
-        bw.println(text)
-        bw.flush()
-    }
-
-    def print(text:String) = {
-        bw.print(text)
-        bw.flush()
-    }
-
-    def close(){
-        fw.close()
-        bw.close()
-    }
-
-}
