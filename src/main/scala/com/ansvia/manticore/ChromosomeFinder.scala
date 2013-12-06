@@ -134,4 +134,7 @@ object NonBlockingChromosomeFinder {
     val workers = system.actorOf(Props[Worker]
       .withRouter(RoundRobinRouter(nrOfInstances=4)))
 
+    def shutdown(){
+        system.shutdown()
+    }
 }

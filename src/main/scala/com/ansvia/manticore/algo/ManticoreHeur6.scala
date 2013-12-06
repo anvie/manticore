@@ -2,9 +2,10 @@ package com.ansvia.manticore.algo
 
 import com.ansvia.manticore._
 import com.rockymadden.stringmetric.similarity.DiceSorensenMetric
-import com.ansvia.manticore.Fractal
-import com.ansvia.manticore.Leg
 import scala.collection.mutable.ArrayBuffer
+import java.io._
+import com.ansvia.manticore.Fractal
+import com.ansvia.manticore.DataGenerator
 
 
 /**
@@ -35,10 +36,17 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
 //        .filter(_.isInstanceOf[Fractal])
 //        .map(_.asInstanceOf[Fractal])
 
+    case class State(mLegsLength:Int, fixedLegsLength:Int, nonFixedLegsLength:Int)
+
     lazy val unknown = Result(Direction.NEUTRAL, 0.0)
 
     private var timePunch = new ArrayBuffer[Int]()
     private var stableLength:Int = 0
+    private var prevState:State = _
+
+    private lazy val fractalData = FractalFinder.find(dataGenTarget.chunkedData)
+        .filter(_.isInstanceOf[Fractal])
+        .map(_.asInstanceOf[Fractal])
     
     def getStableLength = {
 //        timePunch.result().toSeq.groupBy(x => x)
@@ -67,6 +75,7 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
             val ts = Util.parseTime(posTime).getTime
 
             implicit lazy val currentData = dataGenTarget.chunkedData.filter(_.timestamp <= ts)
+            val fractalDataCurrent = fractalData.filter(_.timestamp <= ts)
 
             val lastLeg = getLastLeg(ts)
 
@@ -94,28 +103,49 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
                         DiceSorensenMetric.compare(leg.barPattern, lastLeg.barPattern ++ uLeg.barPattern)(1).getOrElse(0.0) > 0.9
             }
 
-            val fixedLegs = mLegs.filter { leg =>
+            val (fixedLegs, nonFixedLegs) = mLegs.partition { leg =>
                 leg.fractalPattern.mkString("") == combinedFractalPattern.mkString("") &&
-                leg.length == (lastLeg.length + uLeg.length)
+                    leg.length == (lastLeg.length + uLeg.length)
             }
 
-            d("[%d|%d]".format(mLegs.length, fixedLegs.length))
+            d("[%d|%d|%d]".format(mLegs.length, fixedLegs.length, nonFixedLegs.length))
 
 //            val gLegs = matchedLegs.groupBy(_.fractalPattern)
 
 //            print(" (" + mLegs.length + ")")
 
-            if (timePunch.length > 10){
-                timePunch.clear()
-            }
-            
-            timePunch.+=(mLegs.length)
+//            if (timePunch.length > 10){
+//                timePunch.clear()
+//            }
 
-            if (mLegs.length > 0 && mLegs.length < 40){
+            val ltp = if (prevState != null)
+                prevState.mLegsLength
+            else
+                0
 
-                rv = Result(lastLegOppositeDirection, 0.0)
+//            if ((mLegs.length > 0 &&
+//                (ltp != mLegs.length)) || timePunch.length == 0){
 
-            }
+                val dnas = for (i <- 4 to 13)
+                    yield fractalDataCurrent.slice(fractalDataCurrent.size-i, fractalDataCurrent.size).map( f => (f.pos, f.idx) ).toSeq
+
+                d2.println("dna: ----------------")
+                dnas.foreach(dna => d2.println(dna.map(_._1).mkString("")))
+
+                val (up,down,all) = Manticore.breakDown(dnas, currentData.map(_.bit), silent=true)
+
+                val dir =
+                    if (up > down) Direction.UP
+                    else if (up < down) Direction.DOWN
+                    else Direction.NEUTRAL
+
+                if (dir != Direction.NEUTRAL)
+                    rv = Result(dir, 0.0)
+
+//            }
+
+//            timePunch.+=(mLegs.length)
+            prevState = State(mLegs.length, fixedLegs.length, nonFixedLegs.length)
 
             prevResult = rv
 
@@ -133,5 +163,38 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
             print(text)
     }
 
+
+    lazy val d2 = new FileLoggerOutput("/tmp/mth6-out-2.log")
+
+
+    def close(){
+        Manticore.shutdown()
+        d2.close()
+    }
+}
+
+class FileLoggerOutput(path:String) {
+    val f = new File(path)
+
+    if (f.exists())
+        f.delete()
+
+    val fw = new FileOutputStream(f)
+    val bw = new PrintWriter(fw)
+
+    def println(text:String) = {
+        bw.println(text)
+        bw.flush()
+    }
+
+    def print(text:String) = {
+        bw.print(text)
+        bw.flush()
+    }
+
+    def close(){
+        fw.close()
+        bw.close()
+    }
 
 }

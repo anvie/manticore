@@ -22,7 +22,7 @@ object FractalPos {
     }
 }
 
-abstract class Bar(idx:Int)
+abstract class Bar(idx:Long)
 
 /**
  * Fractal representative.
@@ -30,8 +30,18 @@ abstract class Bar(idx:Int)
  * @param time time.
  * @param pos fractal position @see [[com.ansvia.manticore.FractalPos]]
  */
-case class Fractal(idx:Int, time:String, pos:Int) extends Bar(idx){
+case class Fractal(idx:Long, time:String, pos:Int) extends Bar(idx){
     override def toString:String = "Fractal(%d, %s, %s)".format(idx, time, FractalPos.toStr(pos))
+
+
+    lazy val timestamp = {
+        date.getTime
+    }
+
+    lazy val date = {
+        Util.parseTime(time)
+    }
+
 }
 case class NonFractal(idx:Int, time:String) extends Bar(idx) {
     override def toString: String = "-" + time + "-"

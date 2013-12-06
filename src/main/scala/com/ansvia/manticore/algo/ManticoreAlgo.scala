@@ -33,6 +33,7 @@ abstract class ManticoreAlgo(dataGenSource:DataGenerator, dataGenTarget:DataGene
         _dataGenTarget = dataGenTarget
     }
 
+    def close()
 }
 
 trait ZZLegOp {

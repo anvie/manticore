@@ -115,7 +115,7 @@ object Manticore extends Slf4jLogger {
 
 
 
-    def breakDown(dnas:DNAS, data:IndexedSeq[Int], basePattern:Seq[Int]=null) = {
+    def breakDown(dnas:DNAS, data:IndexedSeq[Int], basePattern:Seq[Int]=null, silent:Boolean=false) = {
 
         val dna = dnas.head
 
@@ -156,14 +156,20 @@ object Manticore extends Slf4jLogger {
 
         // wait until all calculation done
 //        threads.foreach(_.start())
-        println("    + waiting for %d background(s) calculation...".format(dnas.size))
+        if (!silent)
+            println("    + waiting for %d background(s) calculation...".format(dnas.size))
         threads.foreach(_.join())
-        println("    + calculation completed, took %sms".format(System.currentTimeMillis() - tsBefore))
+
+        if (!silent)
+            println("    + calculation completed, took %sms".format(System.currentTimeMillis() - tsBefore))
 
         (positives.get(), negatives.get(), chromosomes.get())
     }
 
 
+    def shutdown(){
+        NonBlockingChromosomeFinder.shutdown()
+    }
 
     def main(args:Array[String]){
 

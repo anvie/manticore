@@ -251,5 +251,7 @@ class ManticoreHeur5(dataGenSource:DataGenerator, dataGenTarget:DataGenerator)
 
     }
 
+    def close(){
 
+    }
 }

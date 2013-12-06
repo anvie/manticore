@@ -133,7 +133,7 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
                 }
             }
 //            if (legMiss > 30){
-                print(" -> leg[%s]".format(leg.time))
+            print(" -> leg[%s]".format(leg.time))
 
             if (debugMode){
                 print(" bc: %d, bch: %d, g: %d, b: %d".format(leg.length, leg.length/2, legPass, legMiss))
@@ -150,6 +150,9 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
     }
 
 
+    def shutdown(){
+        algo.close()
+    }
 }
 
 
@@ -249,7 +252,12 @@ object AlgoTester {
                     }else{
                         done = true
                     }
+
+                    if (done){
+                        tester.shutdown()
+                    }
                 }
+
 
                 csv.close()
 //            }
