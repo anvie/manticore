@@ -100,7 +100,7 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
             var legPass = 0
             var legMiss = 0
 
-            print(" -> leg[%s] %d".format(leg.time, leg.length))
+            print(" -> leg[%s] %02d".format(leg.time, leg.length))
             print(" " + (if (leg.direction==Direction.UP) "up" else if (leg.direction==Direction.DOWN) "dn" else "-") + ": ")
 
             for (i <- 0 to leg.barCount - 1){
@@ -119,9 +119,25 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
                 }else if (direction == Direction.NEUTRAL){
                     print("_")
                 }else{
-                    misses = misses + 1
-                    legMiss = legMiss + 1
-                    print("x")
+//                    misses = misses + 1
+//                    legMiss = legMiss + 1
+//                    print("x")
+
+                    if (direction == leg.barPattern(i).toInt){
+
+                        passes = passes + 1
+                        legPass = legPass + 1
+
+                        print(".")
+                    }else{
+
+                        misses = misses + 1
+                        legMiss = legMiss + 1
+
+                        print("x")
+
+                    }
+
 
 //                    // train the algo if algo support AI
 //                    algo match {

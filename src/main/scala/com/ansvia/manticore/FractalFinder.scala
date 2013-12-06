@@ -50,7 +50,7 @@ case class NonFractal(idx:Int, time:String) extends Bar(idx) {
 object FractalFinder extends Slf4jLogger {
 
 
-    def find(data:IndexedSeq[Record]) = {
+    def find(data:IndexedSeq[Record], includeNonFractalBar:Boolean=true) = {
 
         // index mulai dari belakang mundur
 
@@ -180,7 +180,7 @@ object FractalFinder extends Slf4jLogger {
                 }
             }
 
-            if (!foundUp && !foundDown){
+            if (!foundUp && !foundDown && includeNonFractalBar){
                 timeline(i) = NonFractal(i, data(i).time)
             }else if (foundUp && !foundDown){
                 timeline(i) = Fractal(i, data(i).time, FractalPos.TOP)

@@ -41,27 +41,33 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
 
     lazy val unknown = Result(Direction.NEUTRAL, 0.0)
 
-    private var timePunch = new ArrayBuffer[Int]()
-    private var stableLength:Int = 0
-    private var prevState:State = _
+//    private var timePunch = new ArrayBuffer[Int]()
+//    private var stableLength:Int = 0
+//    private var prevState:State = _
 
     private lazy val fractalData = FractalFinder.find(dataGenTarget.chunkedData)
         .filter(_.isInstanceOf[Fractal])
         .map(_.asInstanceOf[Fractal])
-    
-    def getStableLength = {
-//        timePunch.result().toSeq.groupBy(x => x)
-//            .toSeq.sortBy(_._1).reverse.map(_._1)
-//            .headOption.getOrElse(0)
-        val s = timePunch.result()
-        if (s.length > 0)
-            if (s.length > 1)
-                s(s.length-2)
-            else
-                s(s.length-1)
-        else
-            0
-    }
+
+    private lazy val historyDataCandleBit = dataGenSource.chunkedData.map(_.bit)
+    private lazy val historyDataFractalBit = FractalFinder.find(dataGenSource.chunkedData, includeNonFractalBar = false)
+        .filter(_.isInstanceOf[Fractal])
+        .map(_.asInstanceOf[Fractal]).map(_.pos)
+
+
+//    def getStableLength = {
+////        timePunch.result().toSeq.groupBy(x => x)
+////            .toSeq.sortBy(_._1).reverse.map(_._1)
+////            .headOption.getOrElse(0)
+//        val s = timePunch.result()
+//        if (s.length > 0)
+//            if (s.length > 1)
+//                s(s.length-2)
+//            else
+//                s(s.length-1)
+//        else
+//            0
+//    }
 
     def calculate(posTime:String) = {
 
@@ -96,19 +102,23 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
 //                timePunch.clear()
 //            }
 
-//            val combinedFractalPattern = lastLeg.fractalPattern ++ uLeg.fractalPattern
+            val combinedFractalPattern = lastLeg.fractalPattern ++ uLeg.fractalPattern
 //
-//            val mLegs = legs.filter { leg =>
-////                leg.fractalPattern.mkString("").startsWith(lastLeg.fractalPattern.mkString("")) &&
-////                    leg.length == (lastLeg.length + uLeg.length) &&
-////                    leg.direction == lastLeg.direction &&
-//                    DiceSorensenMetric.compare(leg.barPattern, lastLeg.barPattern ++ uLeg.barPattern)(1).getOrElse(0.0) > 0.95
-//            }
-//
-//            val (fixedLegs, nonFixedLegs) = mLegs.partition { leg =>
-//                leg.fractalPattern.mkString("") == combinedFractalPattern.mkString("") &&
-//                    leg.length == (lastLeg.length + uLeg.length)
-//            }
+            val mLegs = legs.filter { leg =>
+                leg.fractalPattern.mkString("").startsWith(lastLeg.fractalPattern.mkString("")) &&
+                    leg.length == (lastLeg.length + uLeg.length)
+//                    leg.direction == lastLeg.direction &&
+//                    DiceSorensenMetric.compare(leg.barPattern, lastLeg.barPattern++uLeg.barPattern)(1).getOrElse(0.0) > 0.95
+            }
+
+
+
+            val (fixedLegs, nonFixedLegs) = mLegs.partition { leg =>
+                leg.fractalPattern.mkString("") == combinedFractalPattern.mkString("") &&
+                    leg.length == (lastLeg.length + uLeg.length)
+            }
+
+//            print("(%d,%d,%d)".format(mLegs.length,fixedLegs.length,nonFixedLegs.length))
 
 //            d(" [%d|%d|%d]".format(mLegs.length, fixedLegs.length, nonFixedLegs.length))
 
@@ -171,8 +181,9 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
                 d2.println("fractal dna leg %s: ----------------".format(posTime))
                 dnas.foreach(dna => d2.println(dna.map(_._1).mkString("")))
 
-                val (up1,down1,_) = Manticore.breakDown(dnas, currentDataCandleBit, silent=true)
-                val (up2,down2,_) = Manticore.breakDown(dnas, currentDataFractalBit, silent=true)
+
+                val (up1,down1,_) = Manticore.breakDown(dnas, historyDataCandleBit, silent=true)
+                val (up2,down2,_) = Manticore.breakDown(dnas, historyDataFractalBit, silent=true)
 
                 val up = up1 + down2
                 val down = down1 + up2
