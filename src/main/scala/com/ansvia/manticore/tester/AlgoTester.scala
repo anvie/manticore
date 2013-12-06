@@ -97,6 +97,7 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
 
 //            curPos = curPos + leg.barCount
 
+            var legPass = 0
             var legMiss = 0
 
             print(" " + (if (leg.direction==Direction.UP) "up" else if (leg.direction==Direction.DOWN) "dn" else "-") + ": ")
@@ -112,6 +113,7 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
 
                 if (direction == leg.direction){
                     passes = passes + 1
+                    legPass = legPass + 1
                     print(".")
                 }else if (direction == Direction.NEUTRAL){
                     print("_")
@@ -132,6 +134,11 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
             }
 //            if (legMiss > 30){
                 print(" -> leg[%s]".format(leg.time))
+
+            if (debugMode){
+                print(" bc: %d, bch: %d, g: %d, b: %d".format(leg.length, leg.length/2, legPass, legMiss))
+            }
+
 //            }
             println("")
 

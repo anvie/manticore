@@ -84,17 +84,20 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
 //                timePunch.clear()
 //            }
 
+            val combinedFractalPattern = lastLeg.fractalPattern ++ uLeg.fractalPattern
+
             val mLegs = legs.filter {
                 leg =>
-                    leg.fractalPattern.startsWith(lastLeg.fractalPattern ++ uLeg.fractalPattern) &&
+                    leg.fractalPattern.mkString("").startsWith(combinedFractalPattern.mkString("")) &&
                         leg.length == (lastLeg.length + uLeg.length) &&
                         leg.direction == lastLeg.direction &&
                         DiceSorensenMetric.compare(leg.barPattern, lastLeg.barPattern ++ uLeg.barPattern)(1).getOrElse(0.0) > 0.9
             }
 
-            val combinedFractalPattern = lastLeg.fractalPattern ++ uLeg.fractalPattern
-
-            val fixedLegs = legs.filter(_.fractalPattern == combinedFractalPattern)
+            val fixedLegs = mLegs.filter { leg =>
+                leg.fractalPattern.mkString("") == combinedFractalPattern.mkString("") &&
+                leg.length == (lastLeg.length + uLeg.length)
+            }
 
             d("[%d|%d]".format(mLegs.length, fixedLegs.length))
 
