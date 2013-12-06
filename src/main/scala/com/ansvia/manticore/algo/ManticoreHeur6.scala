@@ -10,7 +10,7 @@ import scala.collection.mutable.ArrayBuffer
 /**
  * HEUR-6 improvements version of HEUR-3
  */
-class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator)
+class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, debugMode:Boolean=false)
     extends ManticoreAlgo(dataGenSource, dataGenTarget)
         with ZZLegOp {
 
@@ -92,6 +92,12 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator)
                         DiceSorensenMetric.compare(leg.barPattern, lastLeg.barPattern ++ uLeg.barPattern)(1).getOrElse(0.0) > 0.9
             }
 
+            val combinedFractalPattern = lastLeg.fractalPattern ++ uLeg.fractalPattern
+
+            val fixedLegs = legs.filter(_.fractalPattern == combinedFractalPattern)
+
+            d("[%d|%d]".format(mLegs.length, fixedLegs.length))
+
 //            val gLegs = matchedLegs.groupBy(_.fractalPattern)
 
 //            print(" (" + mLegs.length + ")")
@@ -102,7 +108,7 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator)
             
             timePunch.+=(mLegs.length)
 
-            if (mLegs.length > 0){
+            if (mLegs.length > 0 && mLegs.length < 40){
 
                 rv = Result(lastLegOppositeDirection, 0.0)
 
@@ -116,6 +122,12 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator)
                 prevResult
         }
 
+    }
+
+
+    def d(text:String){
+        if (debugMode)
+            print(text)
     }
 
 

@@ -14,7 +14,8 @@ import org.streum.configrity.Configuration
  * Time: 5:41 PM
  *
  */
-class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo, startTime:String="", endTime:String="") {
+class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
+                 startTime:String="", endTime:String="", debugMode:Boolean=false) {
 
     case class TesterResult(var passed:Int, var missed:Int){
         def printSummary() = {
@@ -85,9 +86,9 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo, startTime:String="",
 
             val leg = legIterator.next()
 
-            if (leg.time == "2013.11.21 20:25"){
-                println("break")
-            }
+//            if (leg.time == "2013.11.21 20:25"){
+//                println("break")
+//            }
 
 //            // fix offset
 //            while (leg.timestamp < dataGen.chunkedData(curPos).timestamp){
@@ -175,6 +176,7 @@ object AlgoTester {
         var algoName:String = ""
 
         val interactive = args(1) == "--interactive"
+        val debugMode = args.contains("--debug")
 
         if (interactive){
             println("Interactive mode")
@@ -219,13 +221,13 @@ object AlgoTester {
                 algoName.toLowerCase match {
 //                    case "mth3" => new ManticoreHeur3(dataGen)
                     case "mth5" => new ManticoreHeur5(dataGenSource, dataGenTarget)
-                    case "mth6" => new ManticoreHeur6(dataGenSource, dataGenTarget)
+                    case "mth6" => new ManticoreHeur6(dataGenSource, dataGenTarget, debugMode)
 //                    case "frac1" => new Fractal1(dataGenSource, dataGenTarget)
                 }
 
                 while(!done){
 
-                    val tester = new AlgoTester(dataGenTarget, algo, scanningStartTime)
+                    val tester = new AlgoTester(dataGenTarget, algo, scanningStartTime, "", debugMode)
                     val result = tester.play()
 
                     result.printSummary()
