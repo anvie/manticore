@@ -35,7 +35,8 @@ libraryDependencies ++= Seq(
     "com.ansvia" % "ansvia-commons" % "0.0.9-20131015-SNAPSHOT",
     "commons-io" % "commons-io" % "20030203.000550",
     "com.typesafe.akka" % "akka-actor" % "2.0.5",
-    "org.streum" %% "configrity-core" % "1.0.0"
+    "org.streum" %% "configrity-core" % "1.0.0",
+    "org.scalanlp" % "breeze-learn_2.9.2" % "0.2"
 )
 
 EclipseKeys.withSource := true

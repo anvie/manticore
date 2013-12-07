@@ -75,7 +75,7 @@ class JijiSpec extends Specification {
             i = i + 1
         }
 
-        Leg("xxx", numFracAvg, numBarAvg, Array.empty[Byte], buff.result().toArray)
+        Leg("xxx", numFracAvg, numBarAvg, Array.empty[Byte], buff.result().toArray, 0.0)
 
     }
 

@@ -169,6 +169,8 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
                         case _ =>
                     }
                 }
+
+                if (slow) Thread.sleep(500)
             }
 //            if (legMiss > 30){
 
@@ -188,7 +190,7 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
             curPos = curPos + leg.barCount
 
             if (slow){
-                Thread.sleep(500)
+                Thread.sleep(5000)
             }
         }
 
@@ -298,7 +300,7 @@ object AlgoTester {
                     val tester = new AlgoTester(dataGenTarget, algo, scanningStartTime, "",
                         mode = testingMode,
                         debugMode = debugMode)
-                    val result = tester.play()
+                    val result = tester.play(slow)
 
                     result.printSummary()
 
