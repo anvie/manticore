@@ -225,7 +225,7 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
                 val directionFromAI = predict(combinedPatGrouped)
 
 
-                val dnas1 = for (i <- 4 to 13)
+                val dnas1 = for (i <- 4 to 25)
                     yield currentDataFractal.slice(currentDataFractal.size-i,
                         currentDataFractal.size).zipWithIndex.map { case (f, ii) =>
                         (f.pos, ((currentDataFractal.length-i) + ii).toLong )
