@@ -87,7 +87,7 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
     lazy val legIterator = zzLegsChunked.toIterator //dataGen.zzLegsChunked.toIterator
 
 
-    def play():TesterResult = {
+    def play(slow:Boolean=false):TesterResult = {
 
         var curPos = 0
 
@@ -187,6 +187,9 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
 
             curPos = curPos + leg.barCount
 
+            if (slow){
+                Thread.sleep(500)
+            }
         }
 
         TesterResult(passes, misses, allLegSuccess.result())
@@ -235,6 +238,12 @@ object AlgoTester {
             case x if x.contains("--zzleg-mode") => TestingMode.ZZLEG
             case _ => TestingMode.ZZLEG
         }
+        val slow = args.contains("--slow")
+
+        val modeStr = testingMode match {
+            case TestingMode.CANDLE => "candle"
+            case TestingMode.ZZLEG => "zzleg"
+        }
 
         if (interactive){
             println("Interactive mode")
@@ -253,7 +262,7 @@ object AlgoTester {
 
         println("Setup:")
         println("   algo name: " + algoName)
-        println("   mode: " + testingMode)
+        println("   mode: " + modeStr)
         println("   source csv file: " + historyDataFile)
         println("   history start time: " + historyStartTime)
         println("   history end time: " + historyEndTime)

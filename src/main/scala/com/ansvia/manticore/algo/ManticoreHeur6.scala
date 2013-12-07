@@ -40,13 +40,13 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
         prevResult = result
     }
 
-    case class State(mLegsLength:Int, fixedLegsLength:Int, nonFixedLegsLength:Int)
+    case class State(fractal:Fractal)
 
     lazy val unknown = Result(Direction.NEUTRAL, 0.0)
 
 //    private var timePunch = new ArrayBuffer[Int]()
 //    private var stableLength:Int = 0
-//    private var prevState:State = _
+    private var prevState:State = _
 
 
 
@@ -179,9 +179,12 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
 //                timePunch.clear()
 //            }
 
-            if (isFractal(ts)){
+//            val currentFractal = fractalData.find(f => f.timestamp == ts)
+//            val prevFractal = if (prevState != null) prevState.fractal else null
+//
+//            if (currentFractal.isDefined && prevFractal != null && prevFractal.pos != currentFractal.get.pos){
 
-                val dnas1 = for (i <- 7 to 25)
+                val dnas1 = for (i <- 4 to 25)
                     yield currentDataFractal.slice(currentDataFractal.size-i,
                         currentDataFractal.size).zipWithIndex.map { case (f, ii) =>
                         (f.pos, ((currentDataFractal.length-i) + ii).toLong )
@@ -216,10 +219,10 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
 
                 if (dir != Direction.NEUTRAL)
                     rv = Result(dir, 0.0)
-            }
+//            }
 
 
-//            prevState = State(mLegs.length, fixedLegs.length, nonFixedLegs.length)
+//            prevState = State(currentFractal.getOrElse(prevFractal))
 
             prevResult = rv
 
