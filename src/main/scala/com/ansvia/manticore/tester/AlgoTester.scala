@@ -14,12 +14,20 @@ import org.streum.configrity.Configuration
  * Time: 5:41 PM
  *
  */
-class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
-                 startTime:String="", endTime:String="", debugMode:Boolean=false) {
 
-    case class TesterResult(var passed:Int, var missed:Int){
+object TestingMode {
+    val CANDLE = 1
+    val ZZLEG = 2
+}
+
+class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
+                 startTime:String="", endTime:String="", mode:Int,
+                 debugMode:Boolean=false) {
+
+    case class TesterResult(var passed:Int, var missed:Int, allLegSuccess:Seq[Double]){
         def printSummary() = {
             val accuracy = (passed * 100).toDouble / (passed + missed).toDouble
+            val legSuccessAvg = allLegSuccess.filter(!_.isNaN).sum / allLegSuccess.length.toDouble
             println(
                 """
                   |Summary:
@@ -28,9 +36,10 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
                   |   Start time: %s
                   |   End time: %s
                   |   Result: %d passed and %d missed.
+                  |   Success rate: %.02f %%
                   |   Accuracy level: %.02f %%
                 """.stripMargin.format(dataGen.data.size, dataGen.startTime, dataGen.endTime,
-                    passed, missed, accuracy)
+                    passed, missed, legSuccessAvg, accuracy)
             )
         }
 
@@ -79,6 +88,7 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
 
         var passes = 0
         var misses = 0
+        var allLegSuccess = Seq.newBuilder[Double]
 
         println("testing...")
 
@@ -100,7 +110,7 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
             var legPass = 0
             var legMiss = 0
 
-            print(" -> leg[%s] %02d".format(leg.time, leg.length))
+            print(" > leg[%s] %02d".format(leg.time, leg.length))
             print(" " + (if (leg.direction==Direction.UP) "up" else if (leg.direction==Direction.DOWN) "dn" else "-") + ": ")
 
             for (i <- 0 to leg.barCount - 1){
@@ -114,7 +124,12 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
 
                 val direction = result.direction
 
-                if (direction == leg.direction){
+                val origDirection = mode match {
+                    case TestingMode.CANDLE => leg.barPattern(i).toInt
+                    case TestingMode.ZZLEG => leg.direction
+                }
+
+                if (direction == origDirection){
                     passes = passes + 1
                     legPass = legPass + 1
                     print(".")
@@ -152,6 +167,11 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
             }
 //            if (legMiss > 30){
 
+            val legSuccessPercent = (legPass * 100).toDouble / (legPass+legMiss).toDouble
+
+            allLegSuccess += legSuccessPercent
+
+            print("    %02d %02d/%02d %.02f%%".format(leg.length, legPass, legMiss, legSuccessPercent ))
 
 //            if (debugMode){
 //                print(" bc: %d, bch: %d, g: %d, b: %d".format(leg.length, leg.length/2, legPass, legMiss))
@@ -164,7 +184,7 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
 
         }
 
-        TesterResult(passes, misses)
+        TesterResult(passes, misses, allLegSuccess.result())
     }
 
 
@@ -205,6 +225,11 @@ object AlgoTester {
 
         val interactive = args(1) == "--interactive"
         val debugMode = args.contains("--debug")
+        val testingMode = args match {
+            case x if x.contains("--candle-mode") => TestingMode.CANDLE
+            case x if x.contains("--zzleg-mode") => TestingMode.ZZLEG
+            case _ => TestingMode.ZZLEG
+        }
 
         if (interactive){
             println("Interactive mode")
@@ -255,7 +280,9 @@ object AlgoTester {
 
                 while(!done){
 
-                    val tester = new AlgoTester(dataGenTarget, algo, scanningStartTime, "", debugMode)
+                    val tester = new AlgoTester(dataGenTarget, algo, scanningStartTime, "",
+                        mode = testingMode,
+                        debugMode = debugMode)
                     val result = tester.play()
 
                     result.printSummary()
