@@ -10,7 +10,7 @@ import com.ansvia.manticore.DataGenerator
  */
 class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, debugMode:Boolean=false)
     extends ManticoreAlgo(dataGenSource, dataGenTarget)
-        with ZZLegOp with AI {
+        with ZZLegOp with AI with FractalOp {
 
     val name = "MTH6"
 
@@ -19,6 +19,7 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
         val rv = dataGenSource.zzLegsChunked
         rv
     }
+
 //    val absOffset = (dataGen.data.size - dataGen.chunkedData.size) - 1
     var prevIsWrong = false
 
@@ -47,9 +48,7 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
 //    private var stableLength:Int = 0
 //    private var prevState:State = _
 
-    private lazy val fractalData = FractalFinder.find(dataGenTarget.chunkedData)
-        .filter(_.isInstanceOf[Fractal])
-        .map(_.asInstanceOf[Fractal])
+
 
     private lazy val historyDataCandleBit = dataGenSource.chunkedData.map(_.bit)
     private lazy val historyDataFractalBit = FractalFinder.find(dataGenSource.chunkedData, includeNonFractalBar = false)
@@ -84,9 +83,14 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
             val ts = Util.parseTime(posTime).getTime
 
             implicit lazy val currentData = dataGenTarget.chunkedData.filter(_.timestamp <= ts)
+            lazy val currentDataDeltaWithSource = dataGenTarget.chunkedData.filter(d => d.timestamp > dataGenTarget.endTs && d.timestamp <= ts)
+
             lazy val currentDataFractal = fractalData.filter(_.timestamp <= ts)
             lazy val currentDataFractalBit = currentDataFractal.map(_.pos)
             lazy val currentDataCandleBit = currentData.map(_.bit)
+
+            lazy val currentDataDeltaCandleBit = currentDataDeltaWithSource.map(_.bit)
+            lazy val currentDataDeltaFractalBit = fractalData.filter(f => f.timestamp <= ts && f.timestamp > dataGenTarget.endTs) .map(_.pos)
 
 //            val lastLeg = getLastLeg(ts)
 //
@@ -175,7 +179,7 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
 //                timePunch.clear()
 //            }
 
-//            if (fixedLegs.length > 7){
+            if (isFractal(ts)){
 
                 val dnas1 = for (i <- 7 to 25)
                     yield currentDataFractal.slice(currentDataFractal.size-i,
@@ -185,21 +189,25 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
 
 
                 d2.println("fractal dna leg %s: ----------------".format(posTime))
+
                 dnas1.foreach(dna => d2.println(dna.map(_._1).mkString("")))
 
-                val (up1,down1,_) = Manticore.breakDown(dnas1, historyDataCandleBit, silent=true)
-                val (up2,down2,_) = Manticore.breakDown(dnas1, historyDataFractalBit, silent=true)
+                val sourceAndTargetCandleBit = historyDataCandleBit ++ currentDataDeltaCandleBit
+                val sourceAndTargetFractalBit = historyDataFractalBit ++ currentDataDeltaFractalBit
 
-                val dnas2 = (for (i <- 7 to 25)
-                        yield currentData.slice(currentData.size-i,
-                                currentData.size).zipWithIndex.map { case (d, ii) =>
-                                (d.bit, ((currentData.length-i) + ii).toLong )
-                            }).toSeq
+                val (up1,down1,_) = Manticore.breakDown(dnas1, sourceAndTargetCandleBit, silent=true)
+                val (up2,down2,_) = Manticore.breakDown(dnas1, sourceAndTargetFractalBit, silent=true)
 
-                val (up3,down3,_) = Manticore.breakDown(dnas2, historyDataCandleBit, silent=true)
+//                val dnas2 = (for (i <- 7 to 25)
+//                        yield currentData.slice(currentData.size-i,
+//                                currentData.size).zipWithIndex.map { case (d, ii) =>
+//                                (d.bit, ((currentData.length-i) + ii).toLong )
+//                            }).toSeq
 
-                val up = up1 + down3 + down2
-                val down = down1 + up3 + up2
+//                val (up3,down3,_) = Manticore.breakDown(dnas2, historyDataCandleBit, silent=true)
+
+                val up = up1 - up2 //+ down3 + down2
+                val down = down1 - down2 //+ up3 + up2
 
                 val dir =
                     if (up > down) Direction.UP
@@ -208,7 +216,7 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
 
                 if (dir != Direction.NEUTRAL)
                     rv = Result(dir, 0.0)
-//            }
+            }
 
 
 //            prevState = State(mLegs.length, fixedLegs.length, nonFixedLegs.length)
