@@ -91,6 +91,12 @@ trait FractalOp {
     }
 
 
+    def getCurrentDataFractal(ts:Long)(implicit currentData:IndexedSeq[Record]) = {
+        FractalFinder.find(currentData, includeNonFractalBar = false)
+            .filter(_.isInstanceOf[Fractal])
+            .map(_.asInstanceOf[Fractal])
+    }
+
 }
 
 trait AI {

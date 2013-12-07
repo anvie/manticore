@@ -85,7 +85,7 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
             implicit lazy val currentData = dataGenTarget.chunkedData.filter(_.timestamp <= ts)
             lazy val currentDataDeltaWithSource = dataGenTarget.chunkedData.filter(d => d.timestamp > dataGenTarget.endTs && d.timestamp <= ts)
 
-            lazy val currentDataFractal = fractalData.filter(_.timestamp <= ts)
+            lazy val currentDataFractal = getCurrentDataFractal(ts)
             lazy val currentDataFractalBit = currentDataFractal.map(_.pos)
             lazy val currentDataCandleBit = currentData.map(_.bit)
 
