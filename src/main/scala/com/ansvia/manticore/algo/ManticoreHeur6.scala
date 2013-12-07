@@ -30,13 +30,15 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
 
     var currentCandlePattern = ""
     var currentFractalPattern = ""
+    var needToRecalculate = false
 
     //    def train(posTime:String, result:Result)
     def correctPrevious(result: Result){
-        prevResult = result
+//        prevResult = result
+        needToRecalculate = true
     }
 
-    case class State(fractal:Fractal)
+    case class State(fractal:Fractal, lastLeg:Leg)
 
     lazy val unknown = Result(Direction.NEUTRAL, 0.0)
 
@@ -160,8 +162,14 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
 
 //            d(" [%d|%d|%d]".format(mLegs.length, fixedLegs.length, nonFixedLegs.length))
 
+            var timeToCalculate = false
 
-
+            if (prevState != null){
+                if (prevState.lastLeg.time != lastLeg.time){
+                    timeToCalculate = prevResult.direction != lastLeg.direction
+                    print(",")
+                }
+            }
 
 
 //
@@ -208,10 +216,10 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
 //                timePunch.clear()
 //            }
 
-//            val currentFractal = fractalData.find(f => f.timestamp == ts)
-//            val prevFractal = if (prevState != null) prevState.fractal else null
+            lazy val currentFractal = fractalData.find(f => f.timestamp == ts)
+            lazy val prevFractal = if (prevState != null) prevState.fractal else null
 //
-//            if (mLegs.length == 173 && currentDataCandleBit(currentDataCandleBit.length-1) != prevResult.direction){
+            if (timeToCalculate || needToRecalculate){
 
                 lazy val combinedPatGrouped = combinedBarPattern.mkString("").grouped(4).mkString(" ")
                 val directionFromAI = predict(combinedPatGrouped)
@@ -253,10 +261,12 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
                 if (dir != Direction.NEUTRAL)
                     rv = Result(dir, 0.0)
 
+                needToRecalculate = false
+
 //            d2.println("direction from ai: " + Direction.toStr(directionFromAI))
 //            d2.println("ai pattern: " + aiPattern(combinedPatGrouped).mkString(""))
 
-//            }
+            }
 
 
 
@@ -266,7 +276,7 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
 
 
 
-//            prevState = State(currentFractal.getOrElse(prevFractal))
+            prevState = State(currentFractal.getOrElse(prevFractal), lastLeg)
 
             prevResult = rv
 

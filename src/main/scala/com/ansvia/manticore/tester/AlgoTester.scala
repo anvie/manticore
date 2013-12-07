@@ -167,6 +167,10 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
 //
 //                    }
 
+                    algo match {
+                        case ai:AI =>
+                            ai.correctPrevious(result)
+                    }
 
                 }
 
@@ -181,7 +185,7 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
                 algo match {
                     case ai:AI => {
                         val result = Result(leg.direction, 0.0)
-                        ai.correctPrevious(result)
+//                        ai.correctPrevious(result)
                         ai.train(leg.barPattern.mkString("").grouped(4).mkString(" "), result)
                     }
                     case _ =>
