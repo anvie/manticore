@@ -26,19 +26,24 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
 
     case class TesterResult(var passed:Int, var missed:Int, allLegSuccess:Seq[Double]){
         def printSummary() = {
+            val modeStr = mode match {
+                case TestingMode.CANDLE => "candle"
+                case TestingMode.ZZLEG => "zzleg"
+            }
             val accuracy = (passed * 100).toDouble / (passed + missed).toDouble
             val legSuccessAvg = allLegSuccess.filter(!_.isNaN).sum / allLegSuccess.length.toDouble
             println(
                 """
                   |Summary:
                   |-----------
+                  |   Mode: %s
                   |   Data size: %d
                   |   Start time: %s
                   |   End time: %s
                   |   Result: %d passed and %d missed.
                   |   Success rate: %.02f %%
                   |   Accuracy level: %.02f %%
-                """.stripMargin.format(dataGen.data.size, dataGen.startTime, dataGen.endTime,
+                """.stripMargin.format(modeStr, dataGen.data.size, dataGen.startTime, dataGen.endTime,
                     passed, missed, legSuccessAvg, accuracy)
             )
         }
@@ -248,6 +253,7 @@ object AlgoTester {
 
         println("Setup:")
         println("   algo name: " + algoName)
+        println("   mode: " + testingMode)
         println("   source csv file: " + historyDataFile)
         println("   history start time: " + historyStartTime)
         println("   history end time: " + historyEndTime)

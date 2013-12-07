@@ -90,7 +90,7 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
             lazy val currentDataCandleBit = currentData.map(_.bit)
 
             lazy val currentDataDeltaCandleBit = currentDataDeltaWithSource.map(_.bit)
-            lazy val currentDataDeltaFractalBit = fractalData.filter(f => f.timestamp <= ts && f.timestamp > dataGenTarget.endTs) .map(_.pos)
+            lazy val currentDataDeltaFractalBit = fractalData.filter(f => f.timestamp <= ts && f.timestamp > dataGenTarget.endTs).map(_.pos)
 
 //            val lastLeg = getLastLeg(ts)
 //
@@ -206,8 +206,8 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
 
 //                val (up3,down3,_) = Manticore.breakDown(dnas2, historyDataCandleBit, silent=true)
 
-                val up = up1 - up2 //+ down3 + down2
-                val down = down1 - down2 //+ up3 + up2
+                val up = up1 + down2 //+ down3 + down2
+                val down = down1 + up2 //+ up3 + up2
 
                 val dir =
                     if (up > down) Direction.UP
