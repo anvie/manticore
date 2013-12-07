@@ -170,6 +170,7 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
                     algo match {
                         case ai:AI =>
                             ai.correctPrevious(result)
+                        case _ =>
                     }
 
                 }
