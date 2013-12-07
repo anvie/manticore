@@ -110,7 +110,7 @@ trait AI {
 //    def train(posTime:String, result:Result)
 //    def guess(posTime:String):Option[Result]
 
-    var _aiData = Seq.newBuilder[(String,Result)]
+    var _aiData = Seq.newBuilder[(String, Double, Result)]
     var ml:NaiveBayes[Int,String] = _
 
     def correctPrevious(result:Result)
@@ -118,28 +118,53 @@ trait AI {
 
     def train(pattern:String,result:Result) = {
 
-        _aiData ++= pattern.split(" ").map(p => (p, result) )
+        _aiData ++= pattern.split(" ").groupBy(x => x).map(p => (p._1, p._2.length.toDouble, result) )
 
+        reloadAI()
+
+        ml
+    }
+
+    def reloadAI(){
         val data = _aiData.result()
-        val (upData, downData) = data.partition(_._2.direction == Direction.UP)
+        val (upData, downData) = data.partition(_._3.direction == Direction.UP)
         val trainedData = Array(
-            Example(Direction.UP, Counter( upData.map(x => (x._1, 1.0)) ) ),
-            Example(Direction.DOWN, Counter( downData.map(x => (x._1, 1.0)) ))
+            Example(Direction.UP, Counter( upData.map(x => (x._1, x._2)) ) ),
+            Example(Direction.DOWN, Counter( downData.map(x => (x._1, x._2)) ))
         )
 
         val nb = new NaiveBayes.Trainer[Int,String]()
         ml = nb.train(trainedData)
-
-        ml
     }
-    
+
+    def aiPattern(pattern:String) = {
+        val normPat = pattern.split(" ").groupBy(x => x)
+            .map(p => Counter((p._1, p._2.length.toDouble)))
+
+        val result = normPat.map(x => ml.classify(x))
+        result
+    }
+
+
     def predict(pattern:String) = {
-        if (ml!=null)
-            ml.classify(Counter((pattern,1.0)))
-        else
+        if (ml != null){
+            val result = aiPattern(pattern)
+
+            val up = result.count(_ == Direction.UP)
+            val down = result.count(_ == Direction.DOWN)
+            
+            if (up > down) Direction.UP
+                else if (up < down) Direction.DOWN
+                else Direction.NEUTRAL
+        }else
             Direction.NEUTRAL
     }
-    
+
+
+    def preTrain(){
+        // override this
+    }
+
 
 }
 

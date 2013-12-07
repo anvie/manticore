@@ -87,6 +87,13 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
     lazy val legIterator = zzLegsChunked.toIterator //dataGen.zzLegsChunked.toIterator
 
 
+    algo match {
+        case ai:AI => {
+            ai.preTrain()
+        }
+        case _ =>
+    }
+
     def play(slow:Boolean=false):TesterResult = {
 
         var curPos = 0
