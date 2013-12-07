@@ -30,9 +30,9 @@ abstract class ManticoreAlgo(dataGenSource:DataGenerator, dataGenTarget:DataGene
 
     def calculate(posTime:String):Result
 
-    var currentCandlePattern:String
-
-    var currentFractalPattern:String
+//    var currentCandlePattern:String = ""
+//
+//    var currentFractalPattern:String = ""
 
     def lastResult:Result
 
@@ -40,7 +40,7 @@ abstract class ManticoreAlgo(dataGenSource:DataGenerator, dataGenTarget:DataGene
         _dataGenTarget = dataGenTarget
     }
 
-    def close()
+    def close(){}
 }
 
 trait ZZLegOp {

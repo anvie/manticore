@@ -305,10 +305,10 @@ object AlgoTester {
 
                 val algo =
                 algoName.toLowerCase match {
+                    case "frac1" => new Fractal1(dataGenSource, dataGenTarget)
 //                    case "mth3" => new ManticoreHeur3(dataGen)
-//                    case "mth5" => new ManticoreHeur5(dataGenSource, dataGenTarget)
+                    case "mth5" => new ManticoreHeur5(dataGenSource, dataGenTarget)
                     case "mth6" => new ManticoreHeur6(dataGenSource, dataGenTarget, debugMode)
-//                    case "frac1" => new Fractal1(dataGenSource, dataGenTarget)
                 }
 
                 while(!done){

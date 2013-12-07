@@ -28,8 +28,8 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
     def lastResult = prevResult
 
 
-    var currentCandlePattern = ""
-    var currentFractalPattern = ""
+//    override var currentCandlePattern = ""
+//    override var currentFractalPattern = ""
     var needToRecalculate = false
 
     //    def train(posTime:String, result:Result)
@@ -97,9 +97,9 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
 
         try {
 
-            if (posTime == "07.11.2013 22:30:00.000"){
-                println("break")
-            }
+//            if (posTime == "07.11.2013 22:30:00.000"){
+//                println("break")
+//            }
 
             var rv = prevResult
 
@@ -299,7 +299,7 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
     lazy val d3 = new FileLoggerOutput("/tmp/mth6-out-3.log")
 
 
-    def close(){
+    override def close(){
         Manticore.shutdown()
         d2.close()
     }
