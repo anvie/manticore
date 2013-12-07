@@ -10,4 +10,13 @@ object Direction {
     val UP = 1
     val DOWN = 0
     val NEUTRAL = -1
+
+    def toStr(d:Int) = {
+        d match {
+            case UP => "up"
+            case DOWN => "down"
+            case NEUTRAL => "-"
+        }
+    }
+
 }

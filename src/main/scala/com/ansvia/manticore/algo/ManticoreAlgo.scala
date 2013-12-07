@@ -4,6 +4,9 @@ import com.ansvia.manticore._
 import com.ansvia.manticore.Fractal
 import com.ansvia.manticore.Record
 import com.ansvia.commons.logging.Slf4jLogger
+import breeze.data.Example
+import breeze.linalg.Counter
+import breeze.classify.NaiveBayes
 
 /**
  * Author: robin
@@ -26,6 +29,10 @@ abstract class ManticoreAlgo(dataGenSource:DataGenerator, dataGenTarget:DataGene
     protected var _dataGenTarget = dataGenTarget
 
     def calculate(posTime:String):Result
+
+    var currentCandlePattern:String
+
+    var currentFractalPattern:String
 
     def lastResult:Result
 
@@ -102,6 +109,37 @@ trait FractalOp {
 trait AI {
 //    def train(posTime:String, result:Result)
 //    def guess(posTime:String):Option[Result]
+
+    var _aiData = Seq.newBuilder[(String,Result)]
+    var ml:NaiveBayes[Int,String] = _
+
     def correctPrevious(result:Result)
+
+
+    def train(pattern:String,result:Result) = {
+
+        _aiData ++= pattern.split(" ").map(p => (p, result) )
+
+        val data = _aiData.result()
+        val (upData, downData) = data.partition(_._2.direction == Direction.UP)
+        val trainedData = Array(
+            Example(Direction.UP, Counter( upData.map(x => (x._1, 1.0)) ) ),
+            Example(Direction.DOWN, Counter( downData.map(x => (x._1, 1.0)) ))
+        )
+
+        val nb = new NaiveBayes.Trainer[Int,String]()
+        ml = nb.train(trainedData)
+
+        ml
+    }
+    
+    def predict(pattern:String) = {
+        if (ml!=null)
+            ml.classify(Counter((pattern,1.0)))
+        else
+            Direction.NEUTRAL
+    }
+    
+
 }
 

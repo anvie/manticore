@@ -80,7 +80,8 @@ object AlgoRunner {
                 val algo =
                     algoName.toLowerCase match {
     //                    case "mth3" => new ManticoreHeur3(dataGen)
-                        case "mth5" => new ManticoreHeur5(dataGen, dataGenTarget)
+//                        case "mth5" => new ManticoreHeur5(dataGen, dataGenTarget)
+                        case "mth6" => new ManticoreHeur6(dataGen, dataGenTarget)
     //                    case "frac1" => new Fractal1(dataGen)
                     }
 

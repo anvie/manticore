@@ -28,12 +28,8 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
     def lastResult = prevResult
 
 
-
-//    lazy val ensureProceed = dataGen.zzfRaw.process()
-
-//    lazy val fractalsData = FractalFinder.find(dataGenTarget.data)
-//        .filter(_.isInstanceOf[Fractal])
-//        .map(_.asInstanceOf[Fractal])
+    var currentCandlePattern = ""
+    var currentFractalPattern = ""
 
     //    def train(posTime:String, result:Result)
     def correctPrevious(result: Result){
@@ -221,6 +217,13 @@ class ManticoreHeur6(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
                     rv = Result(dir, 0.0)
 //            }
 
+
+
+            currentCandlePattern = currentDataCandleBit.slice(currentDataCandleBit.length-10,currentDataCandleBit.length).mkString("")
+            currentFractalPattern = currentDataFractalBit.slice(currentDataFractalBit.length-10,currentDataFractalBit.length).mkString("")
+
+            val directionFromAI = predict(currentCandlePattern)
+            d2.println("direction from ai: " + Direction.toStr(directionFromAI))
 
 //            prevState = State(currentFractal.getOrElse(prevFractal))
 

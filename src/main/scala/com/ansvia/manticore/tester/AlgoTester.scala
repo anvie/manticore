@@ -161,13 +161,6 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
 //                    }
 
 
-//                    // train the algo if algo support AI
-                    algo match {
-                        case ai:AI => {
-                            ai.correctPrevious(result)
-                        }
-                        case _ =>
-                    }
                 }
 
                 if (slow) Thread.sleep(500)
@@ -175,6 +168,18 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
 //            if (legMiss > 30){
 
             val legSuccessPercent = (legPass * 100).toDouble / (legPass+legMiss).toDouble
+
+            if (legSuccessPercent < 60.0){
+                //                    // train the algo if algo support AI
+                algo match {
+                    case ai:AI => {
+                        val result = Result(leg.direction, 0.0)
+                        ai.correctPrevious(result)
+                        ai.train(leg.barPattern.mkString("").grouped(4).mkString(" "), result)
+                    }
+                    case _ =>
+                }
+            }
 
             allLegSuccess += legSuccessPercent
 
@@ -290,7 +295,7 @@ object AlgoTester {
                 val algo =
                 algoName.toLowerCase match {
 //                    case "mth3" => new ManticoreHeur3(dataGen)
-                    case "mth5" => new ManticoreHeur5(dataGenSource, dataGenTarget)
+//                    case "mth5" => new ManticoreHeur5(dataGenSource, dataGenTarget)
                     case "mth6" => new ManticoreHeur6(dataGenSource, dataGenTarget, debugMode)
 //                    case "frac1" => new Fractal1(dataGenSource, dataGenTarget)
                 }
