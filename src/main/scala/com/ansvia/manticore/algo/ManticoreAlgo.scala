@@ -75,6 +75,23 @@ trait ZZLegOp {
     }
 }
 
+trait FractalOp {
+
+    protected var _dataGenTarget:DataGenerator
+
+    protected lazy val fractalData = FractalFinder.find(_dataGenTarget.chunkedData)
+        .filter(_.isInstanceOf[Fractal])
+        .map(_.asInstanceOf[Fractal])
+
+    def isFractal(ts:Long) = {
+
+        val rv = fractalData.find(f => f.timestamp == ts)
+
+        rv.isDefined
+    }
+
+
+}
 
 trait AI {
 //    def train(posTime:String, result:Result)
