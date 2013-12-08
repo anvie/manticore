@@ -300,6 +300,8 @@ object AlgoTester {
         val targetDataFile = if (args.length > 2) args(2) else ""
 
         var scanningStartTime:String = ""
+        var scanningEndTime:String = ""
+
         var algoName:String = ""
 
         val interactive = args(1) == "--interactive"
@@ -323,6 +325,7 @@ object AlgoTester {
         }else{
             algoName = args(1)
             scanningStartTime = if (args.length > 3) args(3) else ""
+            scanningEndTime = if (args.length > 4 && !args(4).startsWith("--")) args(4) else ""
         }
 
         if (!availableAlgos.map(_.toLowerCase).contains(algoName.toLowerCase)){
@@ -367,7 +370,7 @@ object AlgoTester {
 
                 while(!done){
 
-                    val tester = new AlgoTester(dataGenTarget, algo, scanningStartTime, "",
+                    val tester = new AlgoTester(dataGenTarget, algo, scanningStartTime, scanningEndTime,
                         mode = testingMode,
                         debugMode = debugMode)
                     val result = tester.play(slow)
