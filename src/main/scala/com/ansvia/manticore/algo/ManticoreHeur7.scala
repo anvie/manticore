@@ -3,6 +3,8 @@ package com.ansvia.manticore.algo
 import com.ansvia.manticore._
 import com.ansvia.manticore.Fractal
 import com.ansvia.manticore.DataGenerator
+import java.util.Random
+import com.rockymadden.stringmetric.similarity.DiceSorensenMetric
 
 
 /**
@@ -31,7 +33,7 @@ class ManticoreHeur7(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
 //    override var currentCandlePattern = ""
 //    override var currentFractalPattern = ""
     var needToRecalculate = false
-    private var swingCorner = 0
+    private var recalculateCountDown = 0
 
     //    def train(posTime:String, result:Result)
     def correctPrevious(result: Result){
@@ -93,6 +95,7 @@ class ManticoreHeur7(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
         }
     }
 
+    var repaintCount = 0
 
     def calculate(posTime:String) = {
 
@@ -167,7 +170,15 @@ class ManticoreHeur7(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
 
             if (prevState != null){
                 if (prevState.lastLeg.time != lastLeg.time){
-                    timeToCalculate = prevResult.direction != lastLeg.direction
+
+                    if (prevResult.direction != lastLeg.direction){
+                        timeToCalculate = true
+                        repaintCount = 0
+                    }
+
+                    recalculateCountDown = 2
+                    repaintCount += 1
+
                     print(",")
                 }
             }
@@ -220,13 +231,21 @@ class ManticoreHeur7(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
             lazy val currentFractal = fractalData.find(f => f.timestamp == ts)
             lazy val prevFractal = if (prevState != null) prevState.fractal else null
 //
-            if (timeToCalculate || needToRecalculate){
+            if (timeToCalculate || needToRecalculate || recalculateCountDown > 0){
+
+                recalculateCountDown = recalculateCountDown - 1
 
                 lazy val combinedPatGrouped = combinedBarPattern.mkString("").grouped(4).mkString(" ")
                 val directionFromAI = predict(combinedPatGrouped)
 
+                val sourceAndTargetCandleBit = historyDataCandleBit ++ currentDataDeltaCandleBit
+                val sourceAndTargetFractalBit = historyDataFractalBit ++ currentDataDeltaFractalBit
 
-                val dnas1 = for (i <- 4 to 25)
+//                val dnas1 = (for(i <- 7 to 13)
+//                    yield Manticore.getDnas(new InlineDataSource(sourceAndTargetFractalBit.slice(sourceAndTargetFractalBit.length-25000,sourceAndTargetFractalBit.length-1)), i))
+//                        .flatMap(x => x.slice(0, 13))
+
+                val dnas1 = for (i <- 7 to 25)
                     yield currentDataFractal.slice(currentDataFractal.size-i,
                         currentDataFractal.size).zipWithIndex.map { case (f, ii) =>
                         (f.pos, ((currentDataFractal.length-i) + ii).toLong )
@@ -237,11 +256,11 @@ class ManticoreHeur7(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
 
                 dnas1.foreach(dna => d2.println(dna.map(_._1).mkString("")))
 
-                val sourceAndTargetCandleBit = historyDataCandleBit ++ currentDataDeltaCandleBit
-                val sourceAndTargetFractalBit = historyDataFractalBit ++ currentDataDeltaFractalBit
 
                 val (up1,down1,_) = Manticore.breakDown(dnas1, sourceAndTargetCandleBit, silent=true)
                 val (up2,down2,_) = Manticore.breakDown(dnas1, sourceAndTargetFractalBit, silent=true)
+
+                d2.println(" [%d,%d/%d,%d] (%d)".format(up1, down1, up2, down2, repaintCount))
 
 //                val dnas2 = (for (i <- 4 to 25)
 //                        yield currentData.slice(currentData.size-i,
@@ -254,20 +273,37 @@ class ManticoreHeur7(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
                 val up = up1 - up2 //+ down3 + down2
                 val down = down1 - down2 //+ up3 + up2
 
-                val dir =
+                val predictedDirection =
                     if (up > down) Direction.UP
                     else if (up < down) Direction.DOWN
                     else directionFromAI
 
-                if (dir != Direction.NEUTRAL){
+                if (predictedDirection != Direction.NEUTRAL){
 //                    if (swingCorner == 1){
 //                        rv = Result(getOppositeDirection(dir), 0.0)
 //                        swingCorner = swingCorner + 1
 //                    }else
-                        rv = Result(dir, 0.0)
+                        rv = Result(predictedDirection, 0.0)
                 }
 
-                needToRecalculate = false
+                if (recalculateCountDown == 0){
+//
+//                    val matchedLegs = legs.filter { leg =>
+//                        leg.fractalPattern.mkString("") == (lastLeg.fractalPattern ++ uLeg.fractalPattern).mkString("") &&
+//                        leg.length == (lastLeg.length + uLeg.length)
+////                        DiceSorensenMetric.compare(leg.barPattern, lastLeg.barPattern)(1).getOrElse(0.0) > 0.9
+//                    }
+////
+//                    needToRecalculate = matchedLegs.length / 100 < 10
+//
+//                    d2.println("matchedLegs.length: " + matchedLegs.length)
+
+//                    val neededPattern =
+
+                }else{
+
+                    needToRecalculate = false
+                }
 
 //            d2.println("direction from ai: " + Direction.toStr(directionFromAI))
 //            d2.println("ai pattern: " + aiPattern(combinedPatGrouped).mkString(""))

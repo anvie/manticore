@@ -102,6 +102,7 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
         var misses = 0
         var allLegSuccess = Seq.newBuilder[Double]
         var lastTimePos:Long = 0L
+        var lastLeg:Leg = null
 
         println("testing...")
 
@@ -110,6 +111,7 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
             val leg = legIterator.next()
 
             lastTimePos = leg.timestamp
+            lastLeg = leg
 
 //            if (leg.time == "2013.11.21 20:25"){
 //                println("break")
@@ -170,11 +172,11 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
 //
 //                    }
 
-                    algo match {
-                        case ai:AI =>
-                            ai.correctPrevious(result)
-                        case _ =>
-                    }
+//                    algo match {
+//                        case ai:AI =>
+//                            ai.correctPrevious(result)
+//                        case _ =>
+//                    }
 
                 }
 
@@ -182,7 +184,9 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
             }
 //            if (legMiss > 30){
 
-            val legSuccessPercent = (legPass * 100).toDouble / (legPass+legMiss).toDouble
+            var legSuccessPercent = (legPass * 100).toDouble / (legPass+legMiss).toDouble
+            if (legSuccessPercent.isNaN)
+                legSuccessPercent = 0.0
 
             if (legSuccessPercent < 60.0){
                 //                    // train the algo if algo support AI
@@ -219,12 +223,41 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
         println(" -----------------------------------------")
         println(" > rest candles: " + restCandles.length)
         print  (" > prediction: ")
-        restCandles.foreach { candle =>
-            val direction = algo.calculate(candle.time).direction
+        val predicts =
+        restCandles.map { candle =>
+            val result = algo.calculate(candle.time)
+            val direction = result.direction
+
             direction match {
-                case Direction.UP => print("U ")
-                case Direction.DOWN => print(Console.RED + "D " + Console.RESET)
+                case Direction.UP => print(Console.BLUE + " U" + Console.RESET)
+                case Direction.DOWN => print(Console.RED + " D" + Console.RESET)
                 case Direction.UP => print("? ")
+            }
+
+            direction
+//
+//            algo match {
+//                case ai:AI =>
+//                    ai.correctPrevious(result)
+//                case _ =>
+//            }
+        }
+        println("")
+
+        if (predicts.length > 0){
+            print(" > recommendation: ")
+            predicts(predicts.length-1) match {
+                case Direction.UP =>
+                    if (lastLeg.direction == Direction.DOWN)
+                        println("BUY")
+                    else
+                        println("HOLD")
+                case Direction.DOWN =>
+                    if (lastLeg.direction == Direction.UP)
+                        println("SELL")
+                    else
+                        println("HOLD")
+                case Direction.NEUTRAL => print("? ")
             }
         }
         println("")
