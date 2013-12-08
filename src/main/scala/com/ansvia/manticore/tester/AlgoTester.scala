@@ -218,7 +218,7 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
         val restCandles = chunkedData.filter(_.timestamp > lastTimePos)
         println(" -----------------------------------------")
         println(" > rest candles: " + restCandles.length)
-        print("  > prediction: ")
+        print  (" > prediction: ")
         restCandles.foreach { candle =>
             val direction = algo.calculate(candle.time).direction
             direction match {
