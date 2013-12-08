@@ -3,18 +3,14 @@ package com.ansvia.manticore.algo
 import com.ansvia.manticore._
 import com.ansvia.manticore.Fractal
 import com.ansvia.manticore.DataGenerator
-import java.util.Random
-import com.rockymadden.stringmetric.similarity.DiceSorensenMetric
 
 
-/**
- * HEUR-7 improvements version of HEUR-6
- */
-class ManticoreHeur7(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, debugMode:Boolean=false)
+
+class ManticoreHeur8(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, debugMode:Boolean=false)
     extends ManticoreAlgo(dataGenSource, dataGenTarget)
         with ZZLegOp with AI with FractalOp {
 
-    val name = "MTH7"
+    val name = "MTH8"
 
     // only in range max startTs
     lazy val legs = {
@@ -171,8 +167,9 @@ class ManticoreHeur7(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
             if (prevState != null){
                 if (prevState.lastLeg.time != lastLeg.time){
 
+                    timeToCalculate = true
+
                     if (prevResult.direction != lastLeg.direction){
-                        timeToCalculate = true
                         repaintCount = 0
                     }
 
@@ -230,13 +227,16 @@ class ManticoreHeur7(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
 
             lazy val currentFractal = fractalData.find(f => f.timestamp == ts)
             lazy val prevFractal = if (prevState != null) prevState.fractal else null
+
+            lazy val combinedPatGrouped = currentDataCandleBit.slice(currentDataCandleBit.length-1000,currentDataCandleBit.length-1).mkString("").grouped(4).mkString(" ")
+            val directionFromAI = predict(combinedPatGrouped)
+
+            d2.println("direction from ai: " + Direction.toStr(directionFromAI))
+            d2.println("ai pattern: " + aiPattern(combinedPatGrouped).mkString(""))
 //
-            if (timeToCalculate || needToRecalculate || recalculateCountDown > 0){
+//            if (timeToCalculate && recalculateCountDown > 0){
 
                 recalculateCountDown = recalculateCountDown - 1
-
-                lazy val combinedPatGrouped = combinedBarPattern.mkString("").grouped(4).mkString(" ")
-                val directionFromAI = predict(combinedPatGrouped)
 
                 val sourceAndTargetCandleBit = historyDataCandleBit ++ currentDataDeltaCandleBit
                 val sourceAndTargetFractalBit = historyDataFractalBit ++ currentDataDeltaFractalBit
@@ -286,29 +286,11 @@ class ManticoreHeur7(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
                         rv = Result(predictedDirection, 0.0)
                 }
 
-                if (recalculateCountDown == 0){
-//
-//                    val matchedLegs = legs.filter { leg =>
-//                        leg.fractalPattern.mkString("") == (lastLeg.fractalPattern ++ uLeg.fractalPattern).mkString("") &&
-//                        leg.length == (lastLeg.length + uLeg.length)
-////                        DiceSorensenMetric.compare(leg.barPattern, lastLeg.barPattern)(1).getOrElse(0.0) > 0.9
-//                    }
-////
-//                    needToRecalculate = matchedLegs.length / 100 < 10
-//
-//                    d2.println("matchedLegs.length: " + matchedLegs.length)
+//                rv = Result(directionFromAI, 0.0)
 
-//                    val neededPattern =
+                needToRecalculate = false
 
-                }else{
-
-                    needToRecalculate = false
-                }
-
-//            d2.println("direction from ai: " + Direction.toStr(directionFromAI))
-//            d2.println("ai pattern: " + aiPattern(combinedPatGrouped).mkString(""))
-
-            }
+//            }
 
 //            currentCandlePattern = currentDataCandleBit.slice(currentDataCandleBit.length-10,currentDataCandleBit.length).mkString("")
 //            currentFractalPattern = currentDataFractalBit.slice(currentDataFractalBit.length-10,currentDataFractalBit.length).mkString("")

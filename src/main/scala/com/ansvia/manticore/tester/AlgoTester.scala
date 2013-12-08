@@ -275,7 +275,7 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
 
 object AlgoTester {
 
-    val availableAlgos = Seq("MTH5", "FRAC1", "MTH6", "MTH7")
+    val availableAlgos = Seq("MTH5", "FRAC1", "MTH6", "MTH7", "MTH8")
 
     def showUsage(){
         println("Usage: \n" +
@@ -366,6 +366,7 @@ object AlgoTester {
                     case "mth5" => new ManticoreHeur5(dataGenSource, dataGenTarget)
                     case "mth6" => new ManticoreHeur6(dataGenSource, dataGenTarget, debugMode)
                     case "mth7" => new ManticoreHeur7(dataGenSource, dataGenTarget, debugMode)
+                    case "mth8" => new ManticoreHeur8(dataGenSource, dataGenTarget, debugMode)
                 }
 
                 while(!done){
