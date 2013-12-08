@@ -172,6 +172,7 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
 //
 //                    }
 
+                    // auto-correct
 //                    algo match {
 //                        case ai:AI =>
 //                            ai.correctPrevious(result)
@@ -234,13 +235,14 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
                 case Direction.UP => print("? ")
             }
 
-            direction
-//
+            // auto correct
 //            algo match {
 //                case ai:AI =>
 //                    ai.correctPrevious(result)
 //                case _ =>
 //            }
+
+            direction
         }
         println("")
 

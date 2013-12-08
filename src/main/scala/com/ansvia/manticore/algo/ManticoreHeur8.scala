@@ -3,7 +3,7 @@ package com.ansvia.manticore.algo
 import com.ansvia.manticore._
 import com.ansvia.manticore.Fractal
 import com.ansvia.manticore.DataGenerator
-
+import scala.collection.mutable.Queue
 
 
 class ManticoreHeur8(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, debugMode:Boolean=false)
@@ -45,6 +45,7 @@ class ManticoreHeur8(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
 //    private var stableLength:Int = 0
     private var prevState:State = _
 
+    private var bitStack = new Queue[Int]()
 
 
     private lazy val historyDataCandleBit = dataGenSource.chunkedData.map(_.bit)
@@ -52,20 +53,6 @@ class ManticoreHeur8(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
         .filter(_.isInstanceOf[Fractal])
         .map(_.asInstanceOf[Fractal]).map(_.pos)
 
-
-//    def getStableLength = {
-////        timePunch.result().toSeq.groupBy(x => x)
-////            .toSeq.sortBy(_._1).reverse.map(_._1)
-////            .headOption.getOrElse(0)
-//        val s = timePunch.result()
-//        if (s.length > 0)
-//            if (s.length > 1)
-//                s(s.length-2)
-//            else
-//                s(s.length-1)
-//        else
-//            0
-//    }
 
 
     override def preTrain(){
@@ -92,6 +79,7 @@ class ManticoreHeur8(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
     }
 
     var repaintCount = 0
+    var afterCorrection = 0
 
     def calculate(posTime:String) = {
 
@@ -167,14 +155,18 @@ class ManticoreHeur8(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
             if (prevState != null){
                 if (prevState.lastLeg.time != lastLeg.time){
 
+
                     timeToCalculate = true
 
-                    if (prevResult.direction != lastLeg.direction){
+                    if (prevState.lastLeg.direction != lastLeg.direction){
                         repaintCount = 0
                     }
 
                     recalculateCountDown = 2
                     repaintCount += 1
+
+                    if (afterCorrection > 0)
+                        afterCorrection -= 1
 
                     print(",")
                 }
@@ -228,15 +220,15 @@ class ManticoreHeur8(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
             lazy val currentFractal = fractalData.find(f => f.timestamp == ts)
             lazy val prevFractal = if (prevState != null) prevState.fractal else null
 
-            lazy val combinedPatGrouped = currentDataCandleBit.slice(currentDataCandleBit.length-1000,currentDataCandleBit.length-1).mkString("").grouped(4).mkString(" ")
+            lazy val combinedPatGrouped = currentDataCandleBit.slice(currentDataCandleBit.length-100,currentDataCandleBit.length-1).mkString("").grouped(4).mkString(" ")
             val directionFromAI = predict(combinedPatGrouped)
 
             d2.println("direction from ai: " + Direction.toStr(directionFromAI))
             d2.println("ai pattern: " + aiPattern(combinedPatGrouped).mkString(""))
 //
-//            if (timeToCalculate && recalculateCountDown > 0){
+//            if (timeToCalculate){
 
-                recalculateCountDown = recalculateCountDown - 1
+//                recalculateCountDown = recalculateCountDown - 1
 
                 val sourceAndTargetCandleBit = historyDataCandleBit ++ currentDataDeltaCandleBit
                 val sourceAndTargetFractalBit = historyDataFractalBit ++ currentDataDeltaFractalBit
@@ -245,17 +237,18 @@ class ManticoreHeur8(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
 //                    yield Manticore.getDnas(new InlineDataSource(sourceAndTargetFractalBit), i))
 //                        .flatMap(x => x.slice(0, 50))
 
-                val dnas1 = for (i <- 4 to 25)
+
+//                val combinedFractal = currentDataFractal.map(_.pos) ++ uLeg.fractalPattern.map(_.toInt)
+
+                val dnas1 = for (i <- 4 to 13; if i % 2 == 0)
                     yield currentDataFractal.slice(currentDataFractal.size-i,
                         currentDataFractal.size).zipWithIndex.map { case (f, ii) =>
                         (f.pos, ((currentDataFractal.length-i) + ii).toLong )
                     }.toSeq
 
-
                 d2.println("fractal dna leg %s: ----------------".format(posTime))
 
                 dnas1.foreach(dna => d2.println(dna.map(_._1).mkString("")))
-
 
                 val (up1,down1,_) = Manticore.breakDown(dnas1, sourceAndTargetCandleBit, silent=true)
                 val (up2,down2,_) = Manticore.breakDown(dnas1, sourceAndTargetFractalBit, silent=true)
@@ -270,8 +263,25 @@ class ManticoreHeur8(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
 //
 //                val (up3,down3,_) = Manticore.breakDown(dnas2, sourceAndTargetCandleBit, silent=true)
 
-                val up = up1 - up2 //+ down3 + down2
-                val down = down1 - down2 //+ up3 + up2
+                val upPref = if (uLeg.barPattern.length > 0) {
+                    uLeg.barPattern(uLeg.barPattern.length-1) match {
+                        case 0x00 => 5
+                        case 0x01 => 3
+                    }
+                }else{
+                    1
+                }
+                val downPref = if (uLeg.fractalPattern.length > 0) {
+                    uLeg.fractalPattern(uLeg.fractalPattern.length-1) match {
+                        case 0x00 => 3
+                        case 0x01 => 5
+                    }
+                }else{
+                    1
+                }
+
+                val up = (up1 * upPref ) - (up2 * upPref) //+ down3 + down2
+                val down = (down1 * downPref ) - (down2 * downPref ) //+ up3 + up2
 
                 val predictedDirection =
                     if (up > down) Direction.UP
@@ -283,10 +293,32 @@ class ManticoreHeur8(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
 //                        rv = Result(getOppositeDirection(dir), 0.0)
 //                        swingCorner = swingCorner + 1
 //                    }else
-                        rv = Result(predictedDirection, 0.0)
+//                        rv = Result(predictedDirection, 0.0)
                 }
 
-//                rv = Result(directionFromAI, 0.0)
+
+
+                if (recalculateCountDown == 1 && !bitStack.isEmpty){
+
+                    val ls = bitStack.toList.reverse
+
+                    if (ls(0) == ls(1) && predictedDirection != ls(0)){
+//                        val x = afterCorrection match {
+//                            case z if z % 2 != 0 =>
+//                                getOppositeDirection(predictedDirection)
+//                            case 2 =>
+//                                recalculateCountDown = 2
+//                                predictedDirection
+//                            case _ =>
+//                                predictedDirection
+//                        }
+                        rv = Result(predictedDirection, 0.0)
+//                        afterCorrection = 4
+                    }
+                }
+
+                recalculateCountDown -= 1
+
 
                 needToRecalculate = false
 
@@ -298,6 +330,8 @@ class ManticoreHeur8(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
 
 
             prevState = State(currentFractal.getOrElse(prevFractal), lastLeg)
+
+            bitStack.enqueue(rv.direction)
 
             prevResult = rv
 
