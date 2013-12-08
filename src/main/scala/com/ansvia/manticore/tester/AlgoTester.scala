@@ -101,12 +101,15 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
         var passes = 0
         var misses = 0
         var allLegSuccess = Seq.newBuilder[Double]
+        var lastTimePos:Long = 0L
 
         println("testing...")
 
         while(legIterator.hasNext){
 
             val leg = legIterator.next()
+
+            lastTimePos = leg.timestamp
 
 //            if (leg.time == "2013.11.21 20:25"){
 //                println("break")
@@ -211,6 +214,22 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
             }
         }
 
+        // rest bars
+        val restCandles = chunkedData.filter(_.timestamp > lastTimePos)
+        println(" -----------------------------------------")
+        println(" > rest candles: " + restCandles.length)
+        print("  > prediction: ")
+        restCandles.foreach { candle =>
+            val direction = algo.calculate(candle.time).direction
+            direction match {
+                case Direction.UP => print("U ")
+                case Direction.DOWN => print(Console.RED + "D " + Console.RESET)
+                case Direction.UP => print("? ")
+            }
+        }
+        println("")
+
+
         TesterResult(passes, misses, allLegSuccess.result())
     }
 
@@ -223,7 +242,7 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
 
 object AlgoTester {
 
-    val availableAlgos = Seq("MTH3", "MTH5", "FRAC1", "MTH6")
+    val availableAlgos = Seq("MTH5", "FRAC1", "MTH6", "MTH7")
 
     def showUsage(){
         println("Usage: \n" +
@@ -310,6 +329,7 @@ object AlgoTester {
 //                    case "mth3" => new ManticoreHeur3(dataGen)
                     case "mth5" => new ManticoreHeur5(dataGenSource, dataGenTarget)
                     case "mth6" => new ManticoreHeur6(dataGenSource, dataGenTarget, debugMode)
+                    case "mth7" => new ManticoreHeur7(dataGenSource, dataGenTarget, debugMode)
                 }
 
                 while(!done){
