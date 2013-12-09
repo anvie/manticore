@@ -1,8 +1,6 @@
 package com.ansvia.manticore.tester
 
 import com.ansvia.manticore._
-import java.text.SimpleDateFormat
-import com.ansvia.manticore.Record
 import com.ansvia.manticore.algo._
 import com.ansvia.manticore.algo.Ignored
 import com.ansvia.manticore.DataGenerator
@@ -22,7 +20,9 @@ object TestingMode {
 
 class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
                  startTime:String="", endTime:String="", mode:Int,
-                 debugMode:Boolean=false) {
+                 config:Configuration) {
+
+    val debugMode = config("debugMode",false)
 
     case class TesterResult(var passed:Int, var missed:Int, allLegSuccess:Seq[Double]){
         def printSummary() = {
@@ -173,11 +173,13 @@ class AlgoTester(dataGen:DataGenerator, algo:ManticoreAlgo,
 //                    }
 
                     // auto-correct
-//                    algo match {
-//                        case ai:AI =>
-//                            ai.correctPrevious(result)
-//                        case _ =>
-//                    }
+                    if (config("autoCorrect", false)){
+                        algo match {
+                            case ai:AI =>
+                                ai.correctPrevious(result)
+                            case _ =>
+                        }
+                    }
 
                 }
 
@@ -294,6 +296,7 @@ object AlgoTester {
         val configFile = args(0)
 
         val conf = Configuration.load(configFile)
+        
 
         val historyDataFile = conf[String]("manticore.history.data")
         val historyStartTime = conf[String]("manticore.history.range-start")
@@ -319,6 +322,11 @@ object AlgoTester {
             case TestingMode.CANDLE => "candle"
             case TestingMode.ZZLEG => "zzleg"
         }
+
+        val configTester = Configuration()
+        
+        configTester.set("debugMode", debugMode)
+        configTester.set("autoCorrect", args.contains("--autocorrect"))
 
         if (interactive){
             println("Interactive mode")
@@ -375,7 +383,7 @@ object AlgoTester {
 
                     val tester = new AlgoTester(dataGenTarget, algo, scanningStartTime, scanningEndTime,
                         mode = testingMode,
-                        debugMode = debugMode)
+                        configTester)
                     val result = tester.play(slow)
 
                     result.printSummary()

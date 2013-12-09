@@ -9,6 +9,7 @@ import com.rockymadden.stringmetric.similarity.DiceSorensenMetric
 
 /**
  * HEUR-7 improvements version of HEUR-6
+ * Using double calculation after repaint.
  */
 class ManticoreHeur7(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, debugMode:Boolean=false)
     extends ManticoreAlgo(dataGenSource, dataGenTarget)

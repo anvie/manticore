@@ -5,7 +5,12 @@ import com.ansvia.manticore.Fractal
 import com.ansvia.manticore.DataGenerator
 import scala.collection.mutable.Queue
 
-
+/**
+ * MTH8 algorithm improvements of MTH7
+ *
+ * Using 3-repaint pattern detection for recalculation.
+ *
+ */
 class ManticoreHeur8(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, debugMode:Boolean=false)
     extends ManticoreAlgo(dataGenSource, dataGenTarget)
         with ZZLegOp with AI with FractalOp {
@@ -263,25 +268,27 @@ class ManticoreHeur8(dataGenSource:DataGenerator, dataGenTarget:DataGenerator, d
 //
 //                val (up3,down3,_) = Manticore.breakDown(dnas2, sourceAndTargetCandleBit, silent=true)
 
-                val upPref = if (uLeg.barPattern.length > 0) {
-                    uLeg.barPattern(uLeg.barPattern.length-1) match {
-                        case 0x00 => 5
-                        case 0x01 => 3
-                    }
-                }else{
-                    1
-                }
-                val downPref = if (uLeg.fractalPattern.length > 0) {
-                    uLeg.fractalPattern(uLeg.fractalPattern.length-1) match {
-                        case 0x00 => 3
-                        case 0x01 => 5
-                    }
-                }else{
-                    1
-                }
 
-                val up = (up1 * upPref ) - (up2 * upPref) //+ down3 + down2
-                val down = (down1 * downPref ) - (down2 * downPref ) //+ up3 + up2
+//
+//                val upPref = if (uLeg.barPattern.length > 0) {
+//                    uLeg.barPattern(0) match {
+//                        case 0x00 => 5
+//                        case 0x01 => 3
+//                    }
+//                }else{
+//                    1
+//                }
+//                val downPref = if (uLeg.fractalPattern.length > 0) {
+//                    uLeg.fractalPattern(0) match {
+//                        case 0x00 => 11
+//                        case 0x01 => 12
+//                    }
+//                }else{
+//                    1
+//                }
+
+                val up = up1 - up2 //+ down3 + down2
+                val down = down1 - down2 //+ up3 + up2
 
                 val predictedDirection =
                     if (up > down) Direction.UP
