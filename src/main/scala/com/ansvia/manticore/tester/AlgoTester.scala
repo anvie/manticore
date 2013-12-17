@@ -323,10 +323,11 @@ object AlgoTester {
             case TestingMode.ZZLEG => "zzleg"
         }
 
-        val configTester = Configuration()
-        
-        configTester.set("debugMode", debugMode)
-        configTester.set("autoCorrect", args.contains("--autocorrect"))
+        val configTester = Configuration(
+            "debugMode" -> debugMode,
+            "autoCorrect" -> args.contains("--autocorrect")
+        )
+
 
         if (interactive){
             println("Interactive mode")
@@ -352,6 +353,7 @@ object AlgoTester {
         println("   history end time: " + historyEndTime)
         println("   target csv file: " + targetDataFile)
         println("   scanning start time: " + scanningStartTime)
+        println("   auto correct: " + configTester("autoCorrect", false))
         println("")
 
 //        Console.readLine("ready? [Y/n] ").trim match {
